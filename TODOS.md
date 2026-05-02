@@ -1,27 +1,27 @@
-# TODOs Deferred From Autoplan
+# Autoplan 延后事项
 
-Date: 2026-05-02
+日期：2026-05-02
 
-These items are useful, but intentionally deferred so the MVP stays a single-user personal job-search growth workspace.
+这些事项有价值，但为了让 MVP 保持“单用户个人求职成长工作台”的边界，当前阶段先延后。
 
-## Deferred Product Scope
+## 延后的产品能力
 
-- Add optional resume export after the optimization suggestion flow is stable.
-- Add optional PDF/DOCX resume parsing after text input works end to end.
-- Add optional background worker after the task API is stable.
-- Add optional local markdown resume import.
+- 简历优化建议稳定后，再增加简历导出。
+- 文本输入端到端跑通后，再增加 PDF/DOCX 简历解析。
+- 任务式 API 稳定后，再引入后台 worker。
+- 后续可增加本地 Markdown 简历导入。
 
-## Explicitly Out of Scope
+## 明确不做的范围
 
-- Login, registration, and multi-user account management.
-- HR candidate screening and ranking workflows.
-- Teacher, mentor, or admin dashboards.
-- Payment, notification, calendar, or enterprise collaboration features.
-- Production job-board crawling.
+- 登录、注册和多用户账号管理。
+- HR 候选人筛选和排序流程。
+- 导师、就业老师或管理员看板。
+- 支付、通知、日历或企业协作功能。
+- 生产级岗位网站爬取。
 
-## Later Quality Upgrades
+## 后续质量升级
 
-- Add a larger curated knowledge base for more job families.
-- Add weekly progress summaries.
-- Add an optional interview practice answer scoring loop.
-- Add report export once the report format proves useful.
+- 为更多岗位族扩充高质量知识库。
+- 增加每周求职进展总结。
+- 增加面试回答评分闭环。
+- 报告格式稳定后，再增加报告导出。

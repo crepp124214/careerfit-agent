@@ -1,234 +1,151 @@
-# CareerFit Agent Design
+# CareerFit Agent 设计文档
 
-Date: 2026-05-02
+日期：2026-05-02
 
-## Product Positioning
+## 产品定位
 
-CareerFit Agent is a personal job-search growth workspace for computer science new graduates. It is not a one-shot JD and resume analyzer. The product helps a student maintain target jobs, resume versions, matching reports, interview preparation, learning tasks, and score trends over time.
+CareerFit Agent 是一个面向计算机专业应届生的个人求职成长工作台。它不是一次性的 JD 和简历分析器，而是帮助学生长期维护目标岗位、简历版本、匹配报告、面试训练、学习任务和分数趋势的个人系统。
 
-The core value is an explainable RAG and multi-agent workflow that helps students understand how well a resume matches a target job, what evidence supports the score, which gaps are real capability gaps, which gaps are expression issues, and how to improve honestly without fabricating experience.
+核心价值是用 RAG 和多 Agent 工作流，让学生知道：自己的简历和目标岗位匹配到什么程度，评分依据是什么，哪些差距是真实能力差距，哪些只是表达问题，以及如何在不造假的前提下改进简历和补齐能力。
 
-## Target User
+## 目标用户
 
-The target user is a computer science student or new graduate applying for software engineering, backend, frontend, full-stack, AI application, or large language model application development roles.
+目标用户是正在申请软件开发、后端、前端、全栈、AI 应用开发或大模型应用开发岗位的计算机专业学生和应届毕业生。
 
-The system is designed as a single-user product for portfolio and personal use. It persists data locally in PostgreSQL but does not include account login, multi-tenant permissions, HR workflows, teacher workflows, payment, or enterprise collaboration.
+系统定位为单用户作品级产品，数据持久化到 PostgreSQL。本阶段不包含账号登录、多租户权限、HR 流程、导师流程、支付、通知或企业协作。
 
-## Business Flow
+## 业务闭环
 
-The product supports a long-term job-search loop:
+产品支持长期求职成长流程：
 
 ```text
-Save target jobs
-  -> Upload or maintain resume versions
-  -> Run JD-resume matching analysis
-  -> Review explainable score and evidence chain
-  -> Identify capability gaps
-  -> Generate honest resume optimization suggestions
-  -> Generate interview questions and learning path
-  -> Complete learning tasks
-  -> Create a new resume version
-  -> Re-run matching analysis
-  -> Compare score and gap trends
+保存目标岗位
+  -> 上传或维护简历版本
+  -> 执行 JD-简历匹配分析
+  -> 查看可解释评分和证据链
+  -> 识别能力缺口
+  -> 生成诚实简历优化建议
+  -> 生成面试题和学习路径
+  -> 完成学习任务
+  -> 创建新的简历版本
+  -> 再次匹配分析
+  -> 对比分数和缺口趋势
 ```
 
-This loop makes the system a persistent workspace rather than a demo that only accepts one JD and one resume.
+这个闭环让系统成为可持续使用的个人工作台，而不是只接收一份 JD 和一份简历的 Demo。
 
-## Scope
+## 范围
 
-### In Scope
+### 范围内
 
-- Target job library with JD parsing.
-- Resume version library with structured resume parsing.
-- JD-resume matching analysis.
-- Explainable score breakdown.
-- Evidence chain linking JD requirements, resume evidence, and knowledge-base standards.
-- Capability gap analysis.
-- Integrity guard to prevent resume fabrication.
-- Honest resume optimization suggestions.
-- Interview question generation.
-- Learning path planning.
-- Learning task completion tracking.
-- Score and gap trend tracking across resume versions.
-- Agent run trace logging.
-- RAG knowledge base using PostgreSQL and pgvector.
-- Single-user persistent data model.
-- Docker Compose deployment.
+- 目标岗位库和 JD 解析。
+- 简历版本库和结构化简历解析。
+- JD-简历匹配分析。
+- 可解释分项评分。
+- JD 要求、简历证据、知识库标准之间的证据链。
+- 能力缺口分析。
+- 防止简历造假的 Integrity Guard。
+- 诚实简历优化建议。
+- 面试题生成。
+- 学习路径规划。
+- 学习任务完成状态跟踪。
+- 不同简历版本的分数和缺口趋势。
+- Agent 运行轨迹记录。
+- 基于 PostgreSQL 和 pgvector 的 RAG 知识库。
+- 单用户数据持久化。
+- Docker Compose 部署。
 
-### Out of Scope
+### 范围外
 
-- Login, registration, and user permission management.
-- HR candidate screening workflows.
-- Teacher or mentor dashboards.
-- Multi-tenant SaaS features.
-- Payment, notification, and calendar integration.
-- Fully automated resume rewriting that overwrites the user's resume.
-- Claims that invent companies, projects, metrics, responsibilities, or technologies not supported by resume evidence.
+- 登录、注册和用户权限管理。
+- HR 候选人筛选流程。
+- 导师或就业老师看板。
+- 多租户 SaaS 能力。
+- 支付、通知和日历集成。
+- 自动覆盖用户简历的完整改写。
+- 无证据编造公司、项目、指标、职责或技术栈。
 
-## Core Product Modules
+## 核心产品模块
 
-### 1. Target Job Library
+### 1. 目标岗位库
 
-The user can create and manage multiple target jobs by pasting or uploading JD text. Each JD is parsed into a structured job profile containing:
+用户可以通过粘贴或上传 JD 文本创建多个目标岗位。每个 JD 会被解析为结构化岗位画像，包括：岗位名称、公司名称、岗位级别、岗位职责、必备技能、加分技能、技术栈、项目经验偏好、学历或毕业要求、面试关注点。
 
-- Job title.
-- Company name if available.
-- Job level if inferable.
-- Responsibilities.
-- Required skills.
-- Preferred skills.
-- Technology stack.
-- Project experience preferences.
-- Education or graduation requirements.
-- Interview focus areas.
+解析后的岗位画像会被保存，后续分析不需要重复解析未变更的 JD。
 
-The parsed profile is stored so later analysis does not need to re-parse unchanged JDs.
+### 2. 简历版本库
 
-### 2. Resume Version Library
+用户可以维护多个简历版本，例如：
 
-The user can maintain multiple resume versions, such as:
+```text
+v1-original
+v2-project-expression-improved
+v3-rag-project-added
+```
 
-- `v1-original`
-- `v2-project-expression-improved`
-- `v3-rag-project-added`
+每个版本保存原始简历文本和结构化画像，包括教育背景、技术技能、项目经历、实习经历、竞赛/论文/证书/开源经历、量化成果，以及每项能力对应的证据片段。
 
-Each version stores the raw resume text and a structured profile containing:
+系统支持比较两个简历版本，展示表达、证据和匹配分的变化。
 
-- Education background.
-- Technical skills.
-- Project experience.
-- Internship experience.
-- Competition, paper, certificate, or open-source experience.
-- Quantified outcomes.
-- Evidence snippets for each extracted capability.
+### 3. 匹配分析
 
-The system supports comparing resume versions to show how expression, evidence, and matching scores changed.
+用户选择一个目标岗位和一个简历版本后，系统创建匹配分析任务。任务运行 LangGraph 工作流并持久化任务状态、Agent 运行轨迹、解析快照、评分拆解、证据项、能力缺口、真实性风险、简历建议、面试题和学习计划。
 
-### 3. Matching Analysis
+MVP 可以在 FastAPI 内同步执行工作流，但 API 设计必须采用任务式接口，便于后续切换到后台 worker。
 
-The user selects one target job and one resume version, then starts a matching analysis task. The task runs a LangGraph workflow and persists:
+### 4. 可解释匹配报告
 
-- Task status.
-- Agent run traces.
-- Parsed input snapshots.
-- Score breakdown.
-- Evidence items.
-- Gap analysis.
-- Integrity risks.
-- Resume suggestions.
-- Interview questions.
-- Learning plan.
+报告展示总分、分项评分、主要优势、能力缺口、表达问题、证据质量问题、真实性风险、优化建议、面试题和学习路径。
 
-The MVP may execute the workflow synchronously inside FastAPI, but the API is task-based so it can later move to a background worker without changing the frontend contract.
+每个评分项必须能追溯到：JD 要求、简历证据、知识库标准，以及受证据约束的解释。
 
-### 4. Explainable Matching Report
+### 5. 能力缺口分析
 
-The report shows:
+缺口分为三类：
 
-- Overall score.
-- Score breakdown by dimension.
-- Main strengths.
-- Capability gaps.
-- Resume expression gaps.
-- Evidence quality issues.
-- Integrity risks.
-- Optimization suggestions.
-- Interview questions.
-- Learning path.
+- `missing_skill`：目标岗位要求某项能力，但简历完全没有体现。
+- `weak_evidence`：简历提到了能力，但项目或结果证据不足。
+- `expression_gap`：能力可能存在，但表达和 JD 不匹配。
 
-Each score item must be traceable to:
-
-- A JD requirement.
-- A resume evidence snippet.
-- A retrieved knowledge-base standard when available.
-- A generated explanation constrained by the evidence.
-
-### 5. Capability Gap Analysis
-
-Gaps are classified into three categories:
-
-- `missing_skill`: the target job requires a capability that the resume does not mention.
-- `weak_evidence`: the resume mentions a capability, but the project or outcome evidence is weak.
-- `expression_gap`: the capability may exist, but the resume wording does not align with the JD.
-
-This distinction prevents the system from treating every issue as a writing problem. Some issues require learning or project work, not resume polishing.
+这个分类可以避免把所有问题都粗暴归为“简历不会写”。有些问题需要学习和项目实践，而不是润色。
 
 ### 6. Integrity Guard
 
-The integrity guard enforces this rule:
+Integrity Guard 的核心规则是：
 
-> The system may improve expression, but it must not invent facts.
+> 系统可以增强表达，但不能编造事实。
 
-It checks whether generated suggestions introduce unsupported:
+它会检查生成建议是否引入无证据的公司、项目、技术栈、性能指标、职责、生产部署、领导力、时间范围、奖项或证书。
 
-- Company names.
-- Project names.
-- Technical stacks.
-- Performance metrics.
-- User responsibilities.
-- Production deployment claims.
-- Leadership claims.
-- Time ranges.
-- Awards or certifications.
+它还会识别夸大表达，例如把“学习过”“使用过”“参与过”改成“主导”“负责架构”“生产落地”，但原简历没有对应证据。
 
-It also detects exaggeration patterns, such as changing "learned", "used", or "participated in" into "led", "designed the architecture", or "optimized performance by 40%" without evidence.
+高风险建议必须被阻止，或改写成诚实版本。
 
-High-risk suggestions are either blocked or rewritten into honest alternatives.
+### 7. 简历优化
 
-### 7. Resume Optimization
+简历优化以“建议”形式输出，而不是静默生成一份新简历。每条建议包含原文、问题诊断、优化表达、关联 JD 要求、使用的简历证据、真实性风险等级和原因。
 
-Resume optimization output is structured as suggestions rather than a silently rewritten resume. Each suggestion contains:
+这种结构让优化过程可审计，也能避免用户误用虚假表达。
 
-- Original text.
-- Problem diagnosis.
-- Optimized text.
-- Related JD requirement.
-- Resume evidence used.
-- Integrity risk level.
-- Reasoning.
+### 8. 面试训练
 
-This makes the optimization auditable and protects the user from accidental fabrication.
+系统根据目标岗位、简历项目和能力缺口生成面试准备内容，包括基础技术题、项目深挖题、场景设计题、追问题、回答建议和面试官关注点。
 
-### 8. Interview Training
+问题应尽量引用用户真实简历项目。
 
-The system generates interview preparation content based on the target job, resume projects, and gaps:
+### 9. 学习路径
 
-- Fundamental technical questions.
-- Project deep-dive questions.
-- Scenario design questions.
-- Follow-up questions.
-- Answer guidance.
-- Interviewer evaluation focus.
+学习规划器把缺口转成 7 天、14 天、30 天任务。每个任务包含目标技能、学习目标、推荐资源或资源类型、实践任务、验收标准、关联 JD 要求和状态。
 
-Questions should reference the user's actual resume projects where possible.
+完成任务后，用户可以创建新的简历版本并再次分析。
 
-### 9. Learning Path
+### 10. 成长趋势
 
-The learning planner turns gaps into 7-day, 14-day, and 30-day tasks. Each task includes:
+系统记录不同岗位和简历版本组合的分数快照。用户可以查看同一目标岗位下不同简历版本的分数变化、剩余缺口、已完成学习任务、简历优化历史和面试训练历史。
 
-- Target skill.
-- Learning objective.
-- Recommended resource or resource type.
-- Practice task.
-- Acceptance criteria.
-- Related JD requirement.
-- Status: `todo`, `doing`, or `done`.
+## 多 Agent 工作流
 
-Completed tasks can be used as context when the user creates a new resume version and re-runs analysis.
-
-### 10. Growth Trends
-
-The system records score snapshots across job and resume combinations. The user can view:
-
-- Score changes for the same target job across resume versions.
-- Remaining gaps over time.
-- Completed learning tasks.
-- Resume optimization history.
-- Interview preparation history.
-
-## Multi-Agent Workflow
-
-The workflow is implemented with LangGraph and a shared state object.
+工作流使用 LangGraph 和共享状态对象实现：
 
 ```text
 START
@@ -245,88 +162,33 @@ START
   -> END
 ```
 
-### Shared State
+共享状态 `CareerFitState` 包含原始 JD、原始简历、岗位画像、简历画像、检索结果、匹配结果、缺口分析、真实性报告、简历优化、面试计划、学习计划、最终报告和 trace 日志。
 
-```text
-CareerFitState
-  raw_jd
-  raw_resume
-  jd_profile
-  resume_profile
-  retrieved_knowledge
-  match_result
-  gap_analysis
-  integrity_report
-  resume_optimization
-  interview_plan
-  learning_plan
-  report
-  trace_logs
-```
+各 Agent 职责：
 
-### Agent Responsibilities
+- JD Parser Agent：解析 JD 并标准化技能名称。
+- Resume Parser Agent：解析简历并把技能、项目、成果绑定到证据片段。
+- RAG Retriever Agent：从 pgvector 检索技能定义、岗位画像、面试题和学习资源。
+- Match Scoring Agent：基于规则计算分数，LLM 只负责解释，不直接决定最终分数。
+- Gap Analysis Agent：识别缺失能力、证据不足和表达问题。
+- Integrity Guard Agent：审查无证据事实和夸大表达。
+- Resume Optimizer Agent：生成受证据约束的简历优化建议。
+- Interview Coach Agent：生成面试题和回答建议。
+- Learning Planner Agent：生成阶段化学习路径。
+- Report Composer Agent：组装最终报告并确保结论包含证据引用。
 
-#### JD Parser Agent
+## RAG 知识库
 
-Parses raw JD text into a structured job profile and normalizes skill names, such as mapping "Vue.js", "Vue", and "Vue3" to a consistent skill label.
+知识库使用 PostgreSQL 和 pgvector。文档按类型拆分，而不是混在一个向量表里。
 
-#### Resume Parser Agent
+文档类型：
 
-Parses raw resume text into a structured resume profile and attaches evidence snippets to skills, projects, and achievements.
+- `skill`：技能定义、同义词、能力层级、项目证据标准。
+- `job_profile`：后端、前端、全栈、AI 应用、大模型应用等岗位画像。
+- `interview`：面试题、追问题、难度和评价点。
+- `learning`：学习资源、实践任务和验收标准。
 
-#### RAG Retriever Agent
-
-Retrieves relevant knowledge documents from pgvector, including skill definitions, job profiles, interview questions, and learning resources.
-
-#### Match Scoring Agent
-
-Computes a rule-based score using JD requirements, resume evidence, and retrieved skill standards. It uses the LLM to generate explanations, not to invent the final score.
-
-#### Gap Analysis Agent
-
-Classifies gaps into missing skills, weak evidence, and expression gaps.
-
-#### Integrity Guard Agent
-
-Audits downstream suggestions for unsupported claims and exaggeration. It annotates risk levels and blocks or rewrites unsafe suggestions.
-
-#### Resume Optimizer Agent
-
-Generates evidence-constrained resume optimization suggestions.
-
-#### Interview Coach Agent
-
-Generates interview questions and answer guidance based on the JD, resume projects, and capability gaps.
-
-#### Learning Planner Agent
-
-Creates a staged learning path with measurable tasks and acceptance criteria.
-
-#### Report Composer Agent
-
-Assembles the final report and ensures each conclusion includes evidence references.
-
-## RAG Knowledge Base
-
-The knowledge base uses PostgreSQL and pgvector. Documents are split by type instead of being placed into one undifferentiated vector store.
-
-### Document Types
-
-```text
-skill
-  Skill definitions, synonyms, capability levels, project evidence standards.
-
-job_profile
-  Typical job profiles for backend, frontend, full-stack, AI application, and LLM application roles.
-
-interview
-  Interview questions, follow-up questions, difficulty levels, and evaluation points.
-
-learning
-  Learning resources, practice tasks, and acceptance criteria.
-```
-
-### Knowledge Document Model
+核心表：
 
 ```text
 knowledge_documents
@@ -339,11 +201,11 @@ knowledge_documents
   created_at
 ```
 
-The `metadata` field stores skill names, difficulty, related job family, source type, and tags.
+`metadata` 保存技能名、难度、岗位族、来源类型和标签。
 
-## Explainable Scoring
+## 可解释评分
 
-The final score is computed using rules, retrieved standards, and evidence. The LLM explains the result but does not directly decide the number.
+最终分数由规则、检索标准和证据共同计算。LLM 负责解释结果，但不直接拍数字。
 
 ```text
 final_score =
@@ -355,7 +217,7 @@ final_score =
   integrity_risk_penalty * 0.05
 ```
 
-### Capability Level Mapping
+能力层级映射：
 
 ```text
 not_mentioned     0.00
@@ -365,228 +227,43 @@ project_practice  0.75
 deep_experience   1.00
 ```
 
-Each skill score is calculated from the required skill weight and the matched resume capability level.
+每个评分项必须包含技能、岗位要求等级、简历体现等级、得分、JD 证据、简历证据、知识库证据和原因。
 
-### Score Item Structure
+## 后端架构
 
-```json
-{
-  "skill": "LangGraph",
-  "required_level": "project_practice",
-  "resume_level": "project_practice",
-  "score": 7,
-  "jd_evidence": "熟悉 LangChain / LangGraph Agent 编排",
-  "resume_evidence": "使用 LangGraph 编排 JD 解析、简历解析、评分等节点",
-  "knowledge_evidence": "project_practice requires state design, node IO contracts, and error handling",
-  "reason": "The resume shows project practice, but does not yet show checkpointing, retry handling, or human review nodes."
-}
-```
+技术栈：FastAPI、Pydantic、SQLAlchemy、PostgreSQL、pgvector、LangGraph、Docker Compose。
 
-## Backend Architecture
-
-### Technology
-
-- FastAPI.
-- Pydantic.
-- SQLAlchemy.
-- PostgreSQL.
-- pgvector.
-- LangGraph.
-- Docker Compose.
-
-### Suggested Structure
+建议结构：
 
 ```text
-backend/
-  app/
-    main.py
-    api/
-      routes/
-        jobs.py
-        resumes.py
-        analysis.py
-        reports.py
-        learning.py
-        interview.py
-        knowledge.py
-    core/
-      config.py
-      logging.py
-    db/
-      session.py
-      models.py
-      migrations/
-    schemas/
-      jobs.py
-      resumes.py
-      analysis.py
-      reports.py
-    services/
-      job_service.py
-      resume_service.py
-      analysis_service.py
-      knowledge_service.py
-    agents/
-      graph.py
-      state.py
-      nodes/
-        jd_parser.py
-        resume_parser.py
-        retriever.py
-        scorer.py
-        gap_analyzer.py
-        integrity_guard.py
-        resume_optimizer.py
-        interview_coach.py
-        learning_planner.py
-        report_composer.py
-    rag/
-      embeddings.py
-      retriever.py
-      chunker.py
-      loaders.py
-    scoring/
-      rules.py
-      rubric.py
-      evidence.py
+backend/app
+  api/routes        HTTP 路由
+  core              配置和日志
+  db                数据库连接和模型
+  schemas           Pydantic 输入输出结构
+  services          业务编排
+  agents            LangGraph 状态和节点
+  rag               chunk、embedding、retrieval、loader
+  scoring           规则评分、rubric、证据处理
 ```
 
-## Database Tables
+## 数据库表
 
-### job_descriptions
+核心表：
 
-Stores target jobs and parsed JD profiles.
+- `job_descriptions`：目标岗位和解析后的 JD 画像。
+- `resume_versions`：简历版本和解析画像。
+- `analysis_tasks`：每次分析任务状态。
+- `analysis_reports`：最终报告。
+- `agent_runs`：Agent 节点运行轨迹。
+- `evidence_items`：评分和解释使用的证据。
+- `learning_tasks`：学习任务和完成状态。
+- `interview_sessions`：生成的面试训练内容。
+- `score_snapshots`：趋势数据。
 
-```text
-id
-title
-company
-raw_text
-parsed_profile JSONB
-created_at
-updated_at
-```
+所有结构化 JSON 必须带 `schema_version`，方便后续演进。
 
-### resume_versions
-
-Stores raw resume text and parsed profiles.
-
-```text
-id
-name
-raw_text
-parsed_profile JSONB
-created_at
-updated_at
-```
-
-### analysis_tasks
-
-Stores task status for each JD-resume analysis.
-
-```text
-id
-job_id
-resume_version_id
-status
-error_message
-created_at
-updated_at
-```
-
-### analysis_reports
-
-Stores final reports.
-
-```text
-id
-task_id
-final_score
-score_breakdown JSONB
-strengths JSONB
-gaps JSONB
-integrity_risks JSONB
-resume_suggestions JSONB
-interview_questions JSONB
-learning_plan JSONB
-created_at
-```
-
-### agent_runs
-
-Stores workflow observability data.
-
-```text
-id
-task_id
-node_name
-input_snapshot JSONB
-output_snapshot JSONB
-latency_ms
-token_usage JSONB
-status
-error_message
-created_at
-```
-
-### evidence_items
-
-Stores evidence used in scoring and explanation.
-
-```text
-id
-report_id
-evidence_type
-source_ref
-content
-related_skill
-created_at
-```
-
-### learning_tasks
-
-Stores generated learning tasks and completion state.
-
-```text
-id
-report_id
-skill
-objective
-resource
-practice_task
-acceptance_criteria
-related_job_requirement
-status
-created_at
-updated_at
-```
-
-### interview_sessions
-
-Stores generated interview training sessions.
-
-```text
-id
-report_id
-questions JSONB
-created_at
-```
-
-### score_snapshots
-
-Stores trend data.
-
-```text
-id
-job_id
-resume_version_id
-report_id
-final_score
-score_breakdown JSONB
-created_at
-```
-
-## API Design
+## API 设计
 
 ```text
 POST /api/jobs
@@ -617,42 +294,24 @@ GET  /api/knowledge/search
 GET  /api/trends/scores
 ```
 
-## Frontend Design
+## 前端设计
 
-### Technology
+技术栈：Vue3、TypeScript、Vite、REST API client。
 
-- Vue3.
-- TypeScript.
-- Vite.
-- REST API client.
+页面：工作台、目标岗位库、简历版本库、匹配分析页、分析报告页、证据解释页、面试训练页、学习路径页、成长趋势页、Agent 轨迹页。
 
-### Pages
+体验原则：
 
-```text
-Workspace
-Target Job Library
-Resume Version Library
-Matching Analysis
-Analysis Report
-Evidence Explanation
-Interview Training
-Learning Path
-Growth Trends
-Agent Trace
-```
+- 第一屏是个人求职工作台，不是营销落地页。
+- 报告优先展示清晰结论、证据和下一步动作。
+- 评分解释可按维度和技能展开。
+- 简历优化以可审计建议展示。
+- 真实性风险必须可见，不能隐藏在漂亮文案后面。
+- Agent 轨迹用于技术展示和调试。
 
-### UX Principles
+## Docker 部署
 
-- The first screen is the personal job-search workspace, not a marketing landing page.
-- Reports prioritize clarity, evidence, and next actions.
-- Score explanations are expandable by dimension and skill.
-- Resume optimization is shown as auditable suggestions.
-- Integrity risks are visible and cannot be hidden behind polished wording.
-- Agent traces are available for technical demonstration.
-
-## Docker Deployment
-
-Docker Compose includes:
+Docker Compose 包含：
 
 ```text
 frontend
@@ -660,302 +319,144 @@ backend
 postgres-pgvector
 ```
 
-Optional later services:
+可选后续服务：
 
 ```text
 redis
 worker
 ```
 
-The MVP should run with one command:
+MVP 应支持：
 
 ```text
 docker compose up --build
 ```
 
-## Portfolio Positioning
+## 简历项目包装
 
-Suggested resume description:
+简历描述建议：
 
-> Designed and implemented CareerFit Agent, a personal AI job-search growth workspace for computer science new graduates. Built a RAG and LangGraph multi-agent workflow with FastAPI, PostgreSQL, pgvector, Vue3, and Docker, supporting target job management, resume versioning, explainable JD-resume matching, capability gap analysis, integrity-guarded resume optimization, interview question generation, learning path planning, and score trend tracking.
+> 设计并实现 CareerFit Agent，一个面向计算机应届生的 AI 求职成长工作台。项目基于 FastAPI、LangGraph、PostgreSQL、pgvector、Vue3 和 Docker 构建 RAG + 多 Agent 工作流，支持目标岗位管理、简历版本管理、可解释 JD-简历匹配、能力缺口分析、Integrity Guard 简历优化、面试题生成、学习路径规划和分数趋势追踪。
 
-Suggested technical highlight:
+技术亮点建议：
 
-> Decomposed JD parsing, resume parsing, RAG retrieval, matching scoring, gap analysis, integrity review, resume optimization, interview coaching, and learning planning into observable LangGraph nodes. Persisted node inputs, outputs, latency, token usage, evidence chains, and score breakdowns to PostgreSQL, enabling explainable and traceable AI workflow execution.
+> 将 JD 解析、简历解析、RAG 检索、匹配评分、缺口分析、真实性审查、简历优化、面试训练和学习规划拆分为可观测 LangGraph 节点，并将节点输入输出、耗时、token 使用、证据链和评分拆解持久化到 PostgreSQL，实现可解释、可追踪的 AI 工作流。
 
-## Success Criteria
+## 成功标准
 
-- A user can save multiple target jobs.
-- A user can save multiple resume versions.
-- A user can run analysis between any job and resume version.
-- The report includes final score, score breakdown, evidence, gaps, integrity risks, resume suggestions, interview questions, and learning tasks.
-- Every score explanation references JD evidence and resume evidence.
-- Resume optimization suggestions do not invent unsupported facts.
-- The user can mark learning tasks as done.
-- The user can compare score changes across resume versions.
-- Agent run traces are persisted and viewable.
-- The whole system can run locally through Docker Compose.
+- 用户可以保存多个目标岗位。
+- 用户可以保存多个简历版本。
+- 用户可以在任意岗位和简历版本之间执行分析。
+- 报告包含总分、分项评分、证据、缺口、真实性风险、简历建议、面试题和学习任务。
+- 每个评分解释都引用 JD 证据和简历证据。
+- 简历优化建议不能引入无证据事实。
+- 用户可以标记学习任务完成。
+- 用户可以比较不同简历版本的分数变化。
+- Agent 运行轨迹被持久化并可查看。
+- 系统可以通过 Docker Compose 本地启动。
 
-## Risks and Mitigations
+## 风险与缓解
 
-### Risk: The project becomes a simple prompt wrapper.
-
-Mitigation: Persist jobs, resume versions, reports, learning tasks, score snapshots, and agent traces. Use rule-based scoring and evidence chains instead of direct LLM scoring.
-
-### Risk: The system accidentally encourages resume fabrication.
-
-Mitigation: Add an integrity guard before final resume suggestions. Require each suggestion to reference existing resume evidence. Block unsupported metrics and exaggerated responsibility claims.
-
-### Risk: RAG becomes cosmetic.
-
-Mitigation: Use retrieved documents in scoring standards, interview generation, and learning tasks. Store knowledge evidence in score items.
-
-### Risk: Scope expands into a full HR SaaS.
-
-Mitigation: Keep the system single-user and personal. Exclude login, multi-role dashboards, HR workflows, and enterprise collaboration.
-
-### Risk: Synchronous analysis blocks API requests for too long.
-
-Mitigation: Keep the task-based API shape from the start. The MVP can run synchronously, and a later version can move execution to a worker.
+- 风险：项目变成 prompt 包装器。缓解：持久化岗位、简历版本、报告、学习任务、分数快照和 Agent 轨迹，使用规则评分和证据链。
+- 风险：系统鼓励简历造假。缓解：最终建议前必须运行 Integrity Guard，所有建议引用简历证据。
+- 风险：RAG 变成装饰。缓解：检索结果必须进入评分标准、面试题和学习任务。
+- 风险：范围扩张成 HR SaaS。缓解：保持单用户个人工作台，不做 HR、导师、登录和多租户。
+- 风险：同步分析阻塞接口太久。缓解：从一开始采用任务式 API，后续可迁移到 worker。
 
 ---
 
-## Autoplan Review
+## Autoplan 审查
 
-Date: 2026-05-02
+日期：2026-05-02
 
-Branch: `main`
+分支：`main`
 
-Plan file: `docs/superpowers/specs/2026-05-02-careerfit-agent-design.md`
+计划文件：`docs/superpowers/specs/2026-05-02-careerfit-agent-design.md`
 
-External review status:
+外部审查状态：
 
-- Codex CLI voice: unavailable. The Windows read-only runner failed before file access with `CreateProcessAsUserW failed: 5`.
-- Claude subagent voice: unavailable in this session due tool policy limiting subagent creation unless explicitly requested.
+- Codex CLI voice：不可用。Windows read-only runner 在读取文件前失败，错误为 `CreateProcessAsUserW failed: 5`。
+- Claude subagent voice：当前会话工具策略不允许在用户未明确要求时创建 subagent，因此不可用。
 
-The review below is the local autoplan review across product, design, and engineering dimensions.
+以下为本地 autoplan 对产品、设计和工程三个维度的审查结果。
 
-### Phase 1: CEO / Product Review
+### Phase 1：产品 / CEO 审查
 
-#### Premise Challenge
+核心判断：持久化个人工作台的方向正确，明显强于一次性 JD-简历分析器。但产品不能只是 AI 输出合集，必须让用户知道“今天最该做什么”。
 
-The plan's strongest premise is correct: a persistent personal workspace is much better than a one-shot JD-resume analyzer. The danger is that the product still reads like many AI outputs grouped under one shell. The product becomes real only if the growth loop has friction, memory, and before/after proof.
+自动决策：在工作台加入 `Next Best Action`。它从最新报告中选择一个高影响动作，例如改写某条项目经历、补齐 pgvector 索引实践、准备 5 个 LangGraph 追问题。
 
-The current spec has the right objects: target jobs, resume versions, reports, learning tasks, score snapshots. The missing product sharpness is the "daily use" path. A student needs to know what to do today, not just see a beautiful analysis report.
+已有内容：当前仓库是新仓库，只有设计文档，没有应用代码、数据库 schema、UI、测试或 Docker 文件。
 
-Auto-decision: add a `Next Best Action` concept to the workspace. It should pick one high-impact task from the latest report, such as "rewrite project bullet with existing evidence", "finish pgvector indexing practice", or "prepare 5 LangGraph follow-up answers".
+保持范围外：登录、多用户、HR 排名、导师管理、支付、通知、日历、企业协作、自动简历造假、生产级岗位爬虫。
 
-#### What Already Exists
+推荐实现顺序：
 
-This is a new repository with only this design document. No application code, database schema, UI components, tests, or Docker files exist yet.
+1. 先做单用户持久化工作台。
+2. 为 3 类岗位准备高质量种子知识库：大模型应用开发、后端、前端/全栈。
+3. 先实现确定性评分，再做复杂 UI。
+4. 做报告、证据链和 Agent trace。
+5. 在端到端报告稳定后再做学习任务和趋势图。
 
-Existing assets:
+### 错误与救援表
 
-```text
-docs/superpowers/specs/2026-05-02-careerfit-agent-design.md
-```
-
-#### NOT in Scope
-
-The following remain intentionally out of scope:
-
-- Login and multi-user accounts. This would turn the project into auth work.
-- HR ranking workflows. The user explicitly rejected a dual-end or HR product.
-- Teacher or mentor management. Same reason.
-- Payment, notifications, calendar integrations, and enterprise collaboration.
-- Automatic resume fabrication or full resume overwrite.
-- Production-scale job board crawling.
-
-Deferred but worth tracking:
-
-- Optional import from local markdown resume files.
-- Optional export of an optimized resume draft.
-- Optional background worker after the MVP task contract is stable.
-
-#### Implementation Alternatives
-
-Recommended path:
-
-1. Build the single-user persistent workspace first.
-2. Seed a small but high-quality knowledge base for 3 job families: LLM application developer, backend developer, frontend/full-stack developer.
-3. Implement deterministic scoring before making the UI fancy.
-4. Build the report, evidence chain, and agent trace views.
-5. Add learning tasks and trend charts after the first end-to-end report works.
-
-Rejected alternatives:
-
-- Build all pages first with mocked data. This creates a pretty shell with no trust.
-- Build LangGraph first without data persistence. This becomes a prompt demo.
-- Build HR or mentor workflows. This violates the chosen product shape.
-
-#### Error & Rescue Registry
-
-| Error | User Experience | Rescue Path | Owner |
+| 错误 | 用户体验 | 救援方式 | 责任层 |
 |---|---|---|---|
-| JD parse fails | User cannot create a useful target job | Save raw JD, show editable fallback fields, allow re-parse | Backend + UI |
-| Resume parse fails | User cannot analyze their resume | Save raw text, ask user to confirm extracted sections manually | Backend + UI |
-| LLM returns invalid JSON | Analysis task fails | Validate with Pydantic, retry once with repair prompt, then mark failed with node trace | Agent layer |
-| RAG returns no useful documents | Score explanation feels made up | Continue with rule scoring and mark knowledge evidence as missing | RAG + scoring |
-| Integrity guard blocks too much | User gets no useful optimization | Return safer expression suggestions and explain what evidence is missing | Integrity agent |
-| Long analysis time | User thinks app is frozen | Task timeline, node status, retry button | API + UI |
+| JD 解析失败 | 用户无法创建有效目标岗位 | 保存原文，展示可编辑字段，允许重新解析 | 后端 + UI |
+| 简历解析失败 | 用户无法分析简历 | 保存原文，让用户确认抽取结果 | 后端 + UI |
+| LLM 返回非法 JSON | 分析任务失败 | Pydantic 校验，修复 prompt 重试一次，失败节点写入 trace | Agent 层 |
+| RAG 无结果 | 解释像编的 | 继续规则评分，并标记知识证据不足 | RAG + scoring |
+| Integrity Guard 过度拦截 | 用户得不到建议 | 给出更保守的表达建议，并说明缺少什么证据 | Integrity Agent |
+| 分析时间太长 | 用户以为卡死 | 时间线、节点状态、重试按钮 | API + UI |
 
-#### Failure Modes Registry
+### 失败模式表
 
-| Failure Mode | Severity | Mitigation |
+| 失败模式 | 严重度 | 缓解 |
 |---|---:|---|
-| The score looks scientific but is arbitrary | High | Keep scoring deterministic, expose rubric, store score items with evidence |
-| Resume optimization fabricates achievements | Critical | Integrity guard must run before final report and block unsupported claims |
-| Knowledge base is too thin | High | Seed curated documents before evaluating RAG quality |
-| User does not know what to do after report | High | Add Next Best Action and convert gaps into tasks |
-| Agent trace leaks full sensitive resume text | Medium | Store redacted summaries for UI trace, keep raw snapshots server-side only |
-| Sync workflow times out | Medium | Task API shape now, worker later |
+| 分数看似科学但实际随意 | 高 | 确定性评分、公开 rubric、保存评分因子和证据 |
+| 简历优化编造成果 | 致命 | Integrity Guard 必须在最终报告前运行 |
+| 知识库太薄 | 高 | 先准备高质量种子文档 |
+| 用户看完报告不知道下一步 | 高 | 加入 Next Best Action，把缺口转为任务 |
+| Agent trace 泄露完整简历 | 中 | UI 只展示脱敏摘要，原始快照仅服务端保存 |
+| 同步工作流超时 | 中 | API 保持任务式，后续切 worker |
 
-#### Dream State Delta
+### 产品结论
 
-The 12-month ideal is a personal career operating system: it observes applications, interview outcomes, learning progress, project work, and resume changes, then gives the user weekly actions that improve their odds for specific roles.
+产品方向通过。评分：用户价值 8/10，差异化 7/10，范围控制 8/10，简历项目强度 9/10。主要补强点是 `Next Best Action`。
 
-This plan stops earlier, intentionally. It builds the core data loop and explainable analysis engine. That is enough for a strong portfolio project if the MVP proves score changes across resume versions.
+### Phase 2：设计审查
 
-#### CEO Completion Summary
+UI 范围存在。当前页面列表完整，但设计还需要补足首屏层级、首次使用、加载、空状态、失败状态、弱证据状态和可访问性要求。
 
-| Area | Rating | Decision |
-|---|---:|---|
-| User value | 8/10 | Keep the personal growth loop |
-| Differentiation | 7/10 | Strengthen with evidence chain, integrity guard, and score trends |
-| Scope control | 8/10 | Keep single-user, no HR SaaS |
-| Portfolio strength | 9/10 | Excellent if implemented with traces, tests, and real seed data |
-| Main risk | 6/10 | Too many generated artifacts, not enough "what should I do today" |
+工作台首屏必须优先展示：当前目标岗位、当前主简历版本、最近分数、Top 3 缺口、Next Best Action、最近分数趋势。
 
-Phase 1 result: passed with one required product addition, `Next Best Action`.
+缺失状态必须补齐：无目标岗位、无简历版本、岗位已解析但需确认、简历解析低置信度、分析运行中、某个 Agent 节点失败、报告生成但 RAG 证据弱、学习任务全部完成。
 
-### Phase 2: Design Review
-
-UI scope detected. The plan includes Vue3 pages and user-facing workflows.
-
-#### Design Scope Rating
-
-Current design completeness: 6/10.
-
-The page list is solid, but it is still too generic. The spec names pages but does not define first-run onboarding, loading states, empty states, failure states, report scan order, or accessibility requirements.
-
-#### Pass 1: Information Architecture
-
-Finding: the workspace needs to lead with "today's next action", not just navigation to libraries and reports.
-
-Fix: the first screen should show:
+用户情绪路径应是：
 
 ```text
-Current target job
-Current primary resume version
-Latest score
-Top 3 gaps
-Next Best Action
-Recent score trend
+我知道自己处在哪
+  -> 我知道为什么
+  -> 我知道能诚实改什么
+  -> 我知道下一步学什么
+  -> 更新简历后能看到进步
 ```
 
-#### Pass 2: Interaction State Coverage
+报告不能是一整墙 AI 文本。应使用结构化卡片和表格：评分卡、技能证据行、缺口行、建议行、风险行。
 
-Missing states:
+前端实施时需要小型内部组件体系：Button、Input、Textarea、File Upload、Status Badge、Score Card、Evidence Table、Agent Timeline、Drawer。
 
-- No target jobs.
-- No resume versions.
-- Job parsed but needs user confirmation.
-- Resume parsed but low confidence.
-- Analysis running.
-- Analysis failed at a specific agent node.
-- Report generated with weak RAG evidence.
-- Learning tasks all completed.
+可访问性要求：键盘可操作、焦点可见、风险不能只靠颜色表达、移动端报告表格可读、长文本区域高度稳定、Agent 时间线有文字标签。
 
-Fix: every main page must define empty, loading, error, success, and partial-data states before implementation.
+设计结论：通过，但必须补齐状态设计和结构化报告。当前完整度 6/10。
 
-#### Pass 3: User Journey
+### Phase 3：工程审查
 
-The emotional arc should be:
+架构方向正确，但实现难点集中在：LLM 结构化输出、JD/简历 schema 版本、确定性评分、证据可追溯、pgvector 种子数据质量、Agent 重试和失败隔离。
 
-```text
-I know where I stand
-  -> I know why
-  -> I know what I can honestly improve
-  -> I know what to learn next
-  -> I can see progress after updating my resume
-```
+自动决策：实现必须从 schema contract 和确定性评分测试开始，而不是先铺满前端页面。
 
-The current spec covers the mechanics, but the UI must make the final step obvious. Add a prominent "Create next resume version" action after optimization and learning tasks.
-
-#### Pass 4: AI Slop Risk
-
-Risk: the report could become a wall of generated text.
-
-Fix: report content should use structured cards and tables:
-
-- Score cards for dimensions.
-- Evidence rows for each skill.
-- Gap rows with category, severity, and action.
-- Suggestion rows with original text, improved text, evidence, and risk.
-
-#### Pass 5: Design System Alignment
-
-No existing `DESIGN.md` or component system exists.
-
-Auto-decision: create a small internal design system during implementation:
-
-- Buttons.
-- Inputs.
-- Text areas.
-- File upload.
-- Status badges.
-- Score cards.
-- Evidence table.
-- Agent timeline.
-- Drawer.
-
-#### Pass 6: Responsive & Accessibility
-
-Add minimum requirements:
-
-- Keyboard-accessible navigation and buttons.
-- Visible focus states.
-- Color is not the only signal for risk.
-- Report tables remain readable on mobile via stacked rows.
-- Long JD and resume text areas have stable heights.
-- Agent timeline has text labels, not only icons.
-
-#### Pass 7: Unresolved Design Decisions
-
-No taste decision needs user input now. The product should use a practical workbench UI, not a marketing or dashboard-heavy layout.
-
-#### Design Completion Summary
-
-| Dimension | Rating | Decision |
-|---|---:|---|
-| Information architecture | 7/10 | Add Next Best Action to workspace |
-| State coverage | 5/10 | Must specify empty, loading, partial, error states |
-| Journey clarity | 7/10 | Add Create Next Resume Version action |
-| AI output readability | 6/10 | Use structured report components |
-| Accessibility | 5/10 | Add explicit baseline requirements |
-
-Phase 2 result: passed with required UI state and report structure additions.
-
-### Phase 3: Engineering Review
-
-#### Scope Challenge
-
-The architecture is directionally sound, but several pieces that look simple are hard:
-
-- LLM structured extraction.
-- Resume and JD schema versioning.
-- Deterministic scoring.
-- Evidence traceability.
-- pgvector seed data quality.
-- Agent retry and failure isolation.
-
-Auto-decision: implementation must start with schema contracts and deterministic scoring tests before building all frontend pages.
-
-#### What Already Exists
-
-No code exists yet. The implementation will start from scratch using the documented stack.
-
-#### Architecture Diagram
+架构图：
 
 ```text
 Vue3 App
@@ -964,11 +465,11 @@ Vue3 App
   v
 FastAPI API
   |
-  | creates analysis task
+  | 创建分析任务
   v
 Analysis Service
   |
-  | invokes
+  | 调用
   v
 LangGraph Workflow
   |        |          |
@@ -992,144 +493,66 @@ PostgreSQL + pgvector
   +--> knowledge_documents
 ```
 
-#### Engineering Findings
+工程发现：
 
-| Finding | Severity | Fix |
+| 问题 | 严重度 | 修复 |
 |---|---:|---|
-| Parsed profiles lack schema version fields | High | Add `schema_version` to parsed JD, parsed resume, report, and score breakdown |
-| Score formula has no clamping or calibration rules | High | Clamp all dimensions to 0-100 and store raw factors |
-| LLM output validation not explicit enough | High | Define Pydantic output schemas for every agent node |
-| Agent snapshots may store too much raw personal data | Medium | Store full data internally, expose redacted summaries in UI |
-| Knowledge import API lacks source quality controls | Medium | Seed from checked-in fixture files first, then allow import |
-| File upload parsing is underspecified | Medium | MVP should support text first, then PDF/DOCX if dependencies are stable |
-| Task API supports polling but not retry semantics | Medium | Add retry endpoint or retry action for failed node/task |
+| 解析画像缺少 schema version | 高 | JD、简历、报告、评分拆解都加 `schema_version` |
+| 评分公式缺少 clamp 和校准规则 | 高 | 所有维度限制在 0-100，并保存原始因子 |
+| LLM 输出校验不明确 | 高 | 每个 Agent 节点定义 Pydantic 输出结构 |
+| Agent 快照可能保存过多个人数据 | 中 | 服务端保存完整数据，UI 展示脱敏摘要 |
+| 知识导入缺少质量控制 | 中 | 先使用仓库内 fixture 种子文档 |
+| 文件上传解析不明确 | 中 | MVP 先支持文本，再加 PDF/DOCX |
+| 任务 API 没有重试语义 | 中 | 后续增加任务或节点重试接口 |
 
-#### Code Quality Review
+测试图：
 
-No code exists, so there are no concrete code smells yet. The biggest future code quality risk is mixing LLM prompts, parsing, scoring, DB writes, and HTTP handlers in the same files.
-
-Auto-decision: keep these boundaries strict:
-
-- API routes only handle request and response.
-- Services coordinate use cases.
-- Agents own prompt and node logic.
-- Scoring owns deterministic math.
-- RAG owns chunking, embeddings, and retrieval.
-- Repositories or DB layer own persistence.
-
-#### Test Review
-
-Test diagram:
-
-| Flow / Codepath | Test Type | Required Coverage |
+| 流程 | 测试类型 | 覆盖 |
 |---|---|---|
-| Create target job from text | API + service test | Valid JD, empty JD, parse failure |
-| Create resume version from text | API + service test | Valid resume, empty resume, low-confidence parse |
-| Run analysis task | Integration test | Success path, agent failure, invalid LLM JSON |
-| Score calculation | Unit test | Skill score, project score, risk penalty, clamping |
-| Evidence chain creation | Unit + integration test | Every score item has JD and resume evidence |
-| Integrity guard | Unit + eval tests | Unsupported metric, exaggerated responsibility, safe rewrite |
-| RAG retrieval | Integration test | Seed docs retrieve expected skill documents |
-| Learning task update | API test | todo -> doing -> done transitions |
-| Resume version comparison | Service test | Added, removed, changed sections |
-| Frontend report page | Component/E2E test | Loading, error, success, weak evidence state |
-| Agent trace page | Component/E2E test | Redacted node summaries and failure node |
-| Docker boot | Smoke test | frontend, backend, postgres health |
+| 创建目标岗位 | API + service | 有效 JD、空 JD、解析失败 |
+| 创建简历版本 | API + service | 有效简历、空简历、低置信度解析 |
+| 运行分析任务 | 集成测试 | 成功、Agent 失败、非法 JSON |
+| 评分计算 | 单元测试 | 技能分、项目分、风险扣分、clamp |
+| 证据链 | 单元 + 集成 | 每个评分项都有 JD 和简历证据 |
+| Integrity Guard | 单元 + eval | 无证据指标、夸大职责、安全改写 |
+| RAG 检索 | 集成测试 | 种子文档能召回预期技能 |
+| 前端报告页 | 组件/E2E | 加载、错误、成功、弱证据状态 |
+| Agent trace 页 | 组件/E2E | 脱敏摘要和失败节点 |
+| Docker 启动 | Smoke | frontend、backend、postgres health |
 
-LLM evals required:
+工程结论：通过。架构 8/10，数据模型 7/10，测试计划 5/10，性能 7/10，隐私安全 6/10，部署 7/10。
 
-- JD parser extraction accuracy on 5 sample JDs.
-- Resume parser extraction accuracy on 5 sample resumes.
-- Integrity guard blocks unsupported claims.
-- Report composer includes evidence references.
+### 跨阶段主题
 
-#### Performance Review
+- 产品必须产生行动，而不只是分析。`Next Best Action` 和“创建下一版简历”是必要流程。
+- 信任就是产品核心。确定性评分、证据链、Integrity Guard、脱敏和弱证据标签不是附加项。
+- 范围现在是正确的。不要重新加入 HR、导师、登录、多租户。
 
-Main risks:
+### Autoplan 决策日志
 
-- Embedding all knowledge on every boot.
-- Large JSON snapshots in `agent_runs`.
-- Re-running JD and resume parsing for unchanged inputs.
-- Slow report rendering if every evidence item is expanded by default.
-
-Fixes:
-
-- Seed embeddings once.
-- Store summaries plus references for trace UI.
-- Reuse parsed profiles.
-- Paginate or collapse evidence-heavy sections.
-
-#### Security and Privacy Review
-
-Even single-user apps handle sensitive resume data.
-
-Minimum requirements:
-
-- Do not log raw resume text to console.
-- Redact personal contact fields in agent trace UI.
-- Validate file size and type before upload.
-- Store API keys only in environment variables.
-- Do not expose `.env` through Docker or frontend build.
-
-#### Failure Modes Registry
-
-| Failure Mode | Critical Gap? | Mitigation |
-|---|---|---|
-| Invalid LLM JSON breaks workflow | Yes | Pydantic schemas, repair retry, node-level error |
-| Score cannot be reproduced | Yes | Deterministic score engine and stored raw factors |
-| RAG evidence missing but report sounds confident | Yes | Mark weak evidence and lower confidence |
-| Resume data leaks through logs or UI traces | Yes | Redaction and logging rules |
-| Docker setup fails due pgvector extension | Medium | Health checks and migration script enabling extension |
-| Upload parser fails on PDF/DOCX | Medium | Text-first MVP, optional parsers later |
-
-#### Engineering Completion Summary
-
-| Area | Rating | Decision |
-|---|---:|---|
-| Architecture | 8/10 | Good boundaries, add schema contracts |
-| Data model | 7/10 | Add schema versions and score raw factors |
-| Testing | 5/10 | Needs explicit unit, integration, E2E, and LLM evals |
-| Performance | 7/10 | Manageable if embeddings and trace data are controlled |
-| Security/privacy | 6/10 | Add redaction and upload validation |
-| Deployment | 7/10 | Docker Compose is right, pgvector migration must be explicit |
-
-Phase 3 result: passed with engineering additions required before implementation.
-
-### Cross-Phase Themes
-
-Theme: the app must produce action, not just analysis. Flagged in product and design review. Add `Next Best Action` and "Create next resume version" flows.
-
-Theme: trust is the product. Flagged in all phases. Deterministic scoring, evidence chains, integrity guard, redaction, and weak-evidence labels are not extras. They are the core.
-
-Theme: scope is correct now. Flagged in product and engineering review. Do not re-add HR, mentor, or auth scope.
-
-### Autoplan Decision Audit Trail
-
-| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+| # | 阶段 | 决策 | 类型 | 原则 | 理由 | 拒绝方案 |
 |---|---|---|---|---|---|---|
-| 1 | Product | Add `Next Best Action` to workspace | Auto-decided | Complete user loop | The user needs an action today, not only a report | Report-only workspace |
-| 2 | Product | Keep single-user scope | Auto-decided | Respect explicit user direction | User rejected dual-end product | HR/mentor workflows |
-| 3 | Design | Add explicit empty/loading/error/partial states | Auto-decided | Complete implementation | These states appear in normal use and affect trust | Happy-path UI only |
-| 4 | Design | Use structured report rows, not long generated prose | Auto-decided | User comprehension | Evidence and risk must be scannable | Wall-of-text report |
-| 5 | Design | Add accessibility baseline | Auto-decided | Quality bar | Keyboard and non-color risk signals are cheap to include | Visual-only UI |
-| 6 | Engineering | Start with schemas and deterministic scoring tests | Auto-decided | De-risk core system | Trust depends on reproducible scoring | Frontend-first build |
-| 7 | Engineering | Add schema version fields | Auto-decided | Future-proof data | Parsed JSON will evolve during development | Unversioned JSONB |
-| 8 | Engineering | Use redacted agent trace summaries in UI | Auto-decided | Privacy | Resume data is sensitive even in a local app | Raw trace display |
+| 1 | 产品 | 增加 `Next Best Action` | 自动决策 | 完成用户闭环 | 用户需要今天能做的动作，而不只是报告 | 只有报告的工作台 |
+| 2 | 产品 | 保持单用户范围 | 自动决策 | 尊重用户边界 | 用户明确拒绝双端产品 | HR/导师流程 |
+| 3 | 设计 | 补齐空/加载/错误/部分数据状态 | 自动决策 | 完整实现 | 这些状态在真实使用中必然出现 | 只做 happy path |
+| 4 | 设计 | 报告使用结构化行而非长文本 | 自动决策 | 可读性 | 证据和风险必须可扫描 | AI 文本墙 |
+| 5 | 设计 | 加入可访问性基线 | 自动决策 | 质量基线 | 键盘和非颜色提示成本低但价值高 | 只做视觉 UI |
+| 6 | 工程 | 先做 schema 和确定性评分测试 | 自动决策 | 降低核心风险 | 信任依赖可复现评分 | 前端优先 |
+| 7 | 工程 | 增加 schema version | 自动决策 | 支持演进 | JSONB 结构会持续变化 | 无版本 JSON |
+| 8 | 工程 | UI 展示脱敏 Agent trace | 自动决策 | 隐私保护 | 简历数据敏感 | 原始 trace 直出 |
 
-### Autoplan Final Recommendation
+### 最终建议
 
-Approve the plan with the additions above. The direction is strong now: a single-user career growth workspace with persistent memory, explainable scoring, integrity protection, and score trends.
-
-Do not start by building all pages. Start by making one analysis trustworthy end to end:
+批准当前计划，并按 Phase 1 先实现可信端到端闭环：
 
 ```text
-seed knowledge
+准备种子知识库
   -> create job
-  -> create resume
-  -> parse both
-  -> retrieve standards
-  -> score deterministically
-  -> produce evidence-backed report
-  -> block fabricated suggestions
-  -> persist trace
+  -> 创建简历
+  -> 解析岗位和简历
+  -> 检索能力标准
+  -> 执行确定性评分
+  -> 生成带证据链的报告
+  -> 阻止无证据建议
+  -> 持久化运行轨迹
 ```

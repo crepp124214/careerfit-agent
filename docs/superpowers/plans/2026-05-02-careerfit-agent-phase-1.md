@@ -1,79 +1,70 @@
-# CareerFit Agent Phase 1 Implementation Plan
+# CareerFit Agent Phase 1 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给智能执行代理的要求：** 实施本计划时必须使用 `superpowers:subagent-driven-development`，推荐方式；或使用 `superpowers:executing-plans`。执行时必须逐项更新 checklist，把完成的步骤从 `- [ ]` 改成 `- [x]`。
 
-**Goal:** Build the first trustworthy end-to-end vertical slice: create a target job, create a resume version, run deterministic JD-resume analysis, persist an evidence-backed report, expose agent traces, and show the result in a Vue3 workspace.
+**目标：** 实现第一条可信端到端主路径：创建目标岗位、创建简历版本、执行确定性 JD-简历分析、持久化带证据链的报告、暴露 Agent 轨迹，并在 Vue3 工作台展示结果。
 
-**Architecture:** Use a FastAPI backend with SQLAlchemy models, Pydantic schemas, deterministic scoring, a LangGraph-compatible workflow boundary, PostgreSQL + pgvector storage, and a Vue3 frontend. Phase 1 keeps LLM calls behind replaceable agent node interfaces and ships with rule-based local fallbacks so the system can run in development without paid model access.
+**架构：** 后端使用 FastAPI、SQLAlchemy、Pydantic、PostgreSQL/pgvector 和 LangGraph-compatible workflow boundary。Phase 1 把 LLM 调用封装在可替换 Agent 节点接口后面，并提供规则化本地 fallback，保证开发环境没有付费模型也能跑通核心流程。
 
-**Tech Stack:** FastAPI, Pydantic, SQLAlchemy, PostgreSQL, pgvector, LangGraph, Vue3, TypeScript, Vite, Docker Compose, pytest, Vitest, Playwright.
+**技术栈：** FastAPI、Pydantic、SQLAlchemy、PostgreSQL、pgvector、LangGraph、Vue3、TypeScript、Vite、Docker Compose、pytest、Vitest、Playwright。
 
 ---
 
-## Scope
+## 范围
 
-This plan implements Phase 1 only. It intentionally does not implement login, HR workflows, mentor dashboards, PDF/DOCX parsing, full interview sessions, or production background workers.
+本计划只实现 Phase 1。明确不做登录、HR 流程、导师看板、PDF/DOCX 解析、完整面试会话和生产级后台 worker。
 
-Phase 1 must prove the core trust loop:
+Phase 1 必须证明核心信任链路：
 
 ```text
-seed knowledge
-  -> create target job
-  -> create resume version
-  -> parse both
-  -> retrieve standards
-  -> score deterministically
-  -> produce evidence-backed report
-  -> block fabricated suggestions
-  -> persist trace
-  -> show report and next best action
+准备种子知识库
+  -> 创建目标岗位
+  -> 创建简历版本
+  -> 解析岗位和简历
+  -> 检索能力标准
+  -> 执行确定性评分
+  -> 生成带证据链的报告
+  -> 阻止无证据建议
+  -> 持久化运行轨迹
+  -> 展示报告和下一步最佳行动
 ```
 
-## File Structure
+## 文件结构
 
-Create this structure:
+需要创建以下结构：
 
 ```text
 backend/
   app/
     main.py
-    api/
-      routes/
-        jobs.py
-        resumes.py
-        analysis.py
-        reports.py
-        agent_runs.py
-        knowledge.py
-    agents/
-      graph.py
-      nodes.py
-      state.py
-    core/
-      config.py
-      logging.py
-    db/
-      base.py
-      models.py
-      session.py
-    rag/
-      seed_data.py
-      retriever.py
-    schemas/
-      jobs.py
-      resumes.py
-      analysis.py
-      reports.py
-      knowledge.py
-    scoring/
-      evidence.py
-      rules.py
-      rubric.py
-    services/
-      analysis_service.py
-      job_service.py
-      resume_service.py
-      knowledge_service.py
+    api/routes/jobs.py
+    api/routes/resumes.py
+    api/routes/analysis.py
+    api/routes/reports.py
+    api/routes/agent_runs.py
+    api/routes/knowledge.py
+    agents/graph.py
+    agents/nodes.py
+    agents/state.py
+    core/config.py
+    core/logging.py
+    db/base.py
+    db/models.py
+    db/session.py
+    rag/seed_data.py
+    rag/retriever.py
+    schemas/jobs.py
+    schemas/resumes.py
+    schemas/analysis.py
+    schemas/reports.py
+    schemas/knowledge.py
+    scoring/evidence.py
+    scoring/rules.py
+    scoring/rubric.py
+    services/analysis_service.py
+    services/job_service.py
+    services/resume_service.py
+    services/knowledge_service.py
   tests/
     test_jobs_api.py
     test_resumes_api.py
@@ -84,311 +75,88 @@ frontend/
   src/
     App.vue
     main.ts
-    api/
-      client.ts
-      jobs.ts
-      resumes.ts
-      analysis.ts
-      reports.ts
-    components/
-      AgentTimeline.vue
-      EvidenceTable.vue
-      ScoreBreakdown.vue
-      StatusBadge.vue
-    views/
-      WorkspaceView.vue
-      ReportView.vue
-  tests/
-    WorkspaceView.test.ts
+    api/client.ts
+    api/jobs.ts
+    api/resumes.ts
+    api/analysis.ts
+    api/reports.ts
+    components/AgentTimeline.vue
+    components/EvidenceTable.vue
+    components/ScoreBreakdown.vue
+    components/StatusBadge.vue
+    views/WorkspaceView.vue
+    views/ReportView.vue
+  tests/WorkspaceView.test.ts
 docker-compose.yml
 ```
 
-Each layer has one job:
+分层职责：
 
-- API routes translate HTTP requests into service calls.
-- Services coordinate database, scoring, and workflow execution.
-- Agents create structured intermediate outputs and trace records.
-- Scoring contains deterministic math only.
-- RAG contains seed knowledge and retrieval.
-- Frontend views compose reusable components.
+- API routes 只处理 HTTP 请求和响应。
+- Services 编排数据库、评分和 workflow。
+- Agents 负责结构化中间结果和 trace。
+- Scoring 只放确定性评分逻辑。
+- RAG 负责种子知识、chunk、embedding 和 retrieval。
+- Frontend views 组合可复用组件。
 
-## Task 1: Backend Project Skeleton
+## Task 1：后端项目骨架
 
-**Files:**
+**文件：**
 
-- Create: `backend/pyproject.toml`
-- Create: `backend/app/main.py`
-- Create: `backend/app/core/config.py`
-- Create: `backend/app/db/session.py`
-- Create: `backend/app/db/base.py`
-- Create: `backend/app/db/models.py`
-- Create: `backend/tests/conftest.py`
+- 创建 `backend/pyproject.toml`
+- 创建 `backend/app/main.py`
+- 创建 `backend/app/core/config.py`
+- 创建 `backend/app/db/session.py`
+- 创建 `backend/app/db/base.py`
+- 创建 `backend/app/db/models.py`
+- 创建 `backend/tests/conftest.py`
 
-- [ ] **Step 1: Create backend dependencies**
+- [ ] **Step 1：创建后端依赖配置**
 
-Create `backend/pyproject.toml`:
+`backend/pyproject.toml` 必须包含 FastAPI、uvicorn、Pydantic、SQLAlchemy、psycopg、pgvector、LangGraph，以及 dev 依赖 pytest、httpx、ruff。配置 `setuptools` build backend，并让 pytest 的 `pythonpath` 指向当前目录。
 
-```toml
-[project]
-name = "careerfit-agent-backend"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = [
-  "fastapi>=0.115.0",
-  "uvicorn[standard]>=0.30.0",
-  "pydantic>=2.8.0",
-  "pydantic-settings>=2.4.0",
-  "sqlalchemy>=2.0.32",
-  "psycopg[binary]>=3.2.1",
-  "pgvector>=0.3.2",
-  "langgraph>=0.2.0",
-]
+- [ ] **Step 2：创建配置模块**
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=8.3.0",
-  "httpx>=0.27.0",
-  "ruff>=0.6.0",
-]
-
-[build-system]
-requires = ["setuptools>=72.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["app*"]
-
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["tests"]
-
-[tool.ruff]
-line-length = 100
-```
-
-- [ ] **Step 2: Add configuration**
-
-Create `backend/app/core/config.py`:
+在 `backend/app/core/config.py` 中定义 `Settings`，至少包含：
 
 ```python
-from functools import lru_cache
-
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-class Settings(BaseSettings):
-    database_url: str = "sqlite+pysqlite:///./careerfit_dev.db"
-    app_name: str = "CareerFit Agent"
-    environment: str = "development"
-
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="CAREERFIT_")
-
-
-@lru_cache
-def get_settings() -> Settings:
-    return Settings()
+database_url = "sqlite+pysqlite:///./careerfit_dev.db"
+app_name = "CareerFit Agent"
+environment = "development"
 ```
 
-- [ ] **Step 3: Add database session**
+使用 `pydantic-settings` 和 `CAREERFIT_` 环境变量前缀。
 
-Create `backend/app/db/session.py`:
+- [ ] **Step 3：创建数据库 session**
 
-```python
-from collections.abc import Generator
+在 `backend/app/db/session.py` 中创建 SQLAlchemy engine、`SessionLocal` 和 `get_db()` 依赖。
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+- [ ] **Step 4：创建 Declarative Base**
 
-from app.core.config import get_settings
+在 `backend/app/db/base.py` 中定义 `Base(DeclarativeBase)`。
 
+- [ ] **Step 5：创建初始模型**
 
-settings = get_settings()
-engine = create_engine(settings.database_url, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+在 `backend/app/db/models.py` 中创建：
 
+- `JobDescription`
+- `ResumeVersion`
+- `AnalysisTask`
+- `AnalysisReport`
+- `AgentRun`
+- `AnalysisStatus`
 
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-```
+JSON 字段使用 SQLAlchemy 通用 `JSON` 类型，方便 SQLite 测试和 PostgreSQL 运行都能工作。
 
-- [ ] **Step 4: Add declarative base**
+- [ ] **Step 6：创建 FastAPI app**
 
-Create `backend/app/db/base.py`:
+在 `backend/app/main.py` 中实现 `create_app()`，启动时调用 `Base.metadata.create_all(bind=engine)`，并提供 `/health`。
 
-```python
-from sqlalchemy.orm import DeclarativeBase
+- [ ] **Step 7：创建测试 fixture**
 
+`backend/tests/conftest.py` 使用内存 SQLite，覆盖 `get_db`，返回 `TestClient`。
 
-class Base(DeclarativeBase):
-    pass
-```
-
-- [ ] **Step 5: Add initial models**
-
-Create `backend/app/db/models.py`:
-
-```python
-from datetime import datetime
-from enum import Enum
-
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, func
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.db.base import Base
-
-
-class AnalysisStatus(str, Enum):
-    pending = "pending"
-    running = "running"
-    success = "success"
-    failed = "failed"
-
-
-class JobDescription(Base):
-    __tablename__ = "job_descriptions"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    company: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
-    parsed_profile: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
-
-
-class ResumeVersion(Base):
-    __tablename__ = "resume_versions"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
-    parsed_profile: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
-
-
-class AnalysisTask(Base):
-    __tablename__ = "analysis_tasks"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    job_id: Mapped[int] = mapped_column(ForeignKey("job_descriptions.id"), nullable=False)
-    resume_version_id: Mapped[int] = mapped_column(ForeignKey("resume_versions.id"), nullable=False)
-    status: Mapped[AnalysisStatus] = mapped_column(SQLEnum(AnalysisStatus), nullable=False)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    job: Mapped[JobDescription] = relationship()
-    resume_version: Mapped[ResumeVersion] = relationship()
-
-
-class AnalysisReport(Base):
-    __tablename__ = "analysis_reports"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    task_id: Mapped[int] = mapped_column(ForeignKey("analysis_tasks.id"), nullable=False, unique=True)
-    final_score: Mapped[float] = mapped_column(Float, nullable=False)
-    score_breakdown: Mapped[dict] = mapped_column(JSON, nullable=False)
-    strengths: Mapped[list] = mapped_column(JSON, nullable=False)
-    gaps: Mapped[list] = mapped_column(JSON, nullable=False)
-    integrity_risks: Mapped[list] = mapped_column(JSON, nullable=False)
-    resume_suggestions: Mapped[list] = mapped_column(JSON, nullable=False)
-    interview_questions: Mapped[list] = mapped_column(JSON, nullable=False)
-    learning_plan: Mapped[list] = mapped_column(JSON, nullable=False)
-    next_best_action: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-
-
-class AgentRun(Base):
-    __tablename__ = "agent_runs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    task_id: Mapped[int] = mapped_column(ForeignKey("analysis_tasks.id"), nullable=False)
-    node_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    input_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
-    output_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
-    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
-    token_usage: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    status: Mapped[str] = mapped_column(String(50), nullable=False)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-```
-
-- [ ] **Step 6: Add FastAPI app**
-
-Create `backend/app/main.py`:
-
-```python
-from fastapi import FastAPI
-
-from app.db.base import Base
-from app.db.session import engine
-
-
-def create_app() -> FastAPI:
-    app = FastAPI(title="CareerFit Agent")
-
-    @app.on_event("startup")
-    def create_tables() -> None:
-        Base.metadata.create_all(bind=engine)
-
-    @app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    return app
-
-
-app = create_app()
-```
-
-- [ ] **Step 7: Add test database fixture**
-
-Create `backend/tests/conftest.py`:
-
-```python
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-
-from app.db.base import Base
-from app.db.session import get_db
-from app.main import create_app
-
-
-@pytest.fixture()
-def db_session() -> Session:
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
-    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
-    Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
-
-
-@pytest.fixture()
-def client(db_session: Session) -> TestClient:
-    app = create_app()
-
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-    return TestClient(app)
-```
-
-- [ ] **Step 8: Run skeleton test**
-
-Run:
+- [ ] **Step 8：运行骨架测试**
 
 ```powershell
 cd backend
@@ -396,1725 +164,386 @@ python -m pip install -e ".[dev]"
 pytest -q
 ```
 
-Expected:
+预期：没有测试或测试通过。
 
-```text
-no tests ran
-```
-
-- [ ] **Step 9: Commit**
+- [ ] **Step 9：提交**
 
 ```powershell
 git add backend
 git commit -m "chore: scaffold backend application"
 ```
 
-## Task 2: Job And Resume APIs
+## Task 2：目标岗位和简历 API
 
-**Files:**
+**文件：**
 
-- Create: `backend/app/schemas/jobs.py`
-- Create: `backend/app/schemas/resumes.py`
-- Create: `backend/app/services/job_service.py`
-- Create: `backend/app/services/resume_service.py`
-- Create: `backend/app/api/routes/jobs.py`
-- Create: `backend/app/api/routes/resumes.py`
-- Modify: `backend/app/main.py`
-- Test: `backend/tests/test_jobs_api.py`
-- Test: `backend/tests/test_resumes_api.py`
+- 创建 `backend/app/schemas/jobs.py`
+- 创建 `backend/app/schemas/resumes.py`
+- 创建 `backend/app/services/job_service.py`
+- 创建 `backend/app/services/resume_service.py`
+- 创建 `backend/app/api/routes/jobs.py`
+- 创建 `backend/app/api/routes/resumes.py`
+- 修改 `backend/app/main.py`
+- 测试 `backend/tests/test_jobs_api.py`
+- 测试 `backend/tests/test_resumes_api.py`
 
-- [ ] **Step 1: Write failing job API tests**
+- [ ] **Step 1：先写失败的岗位 API 测试**
 
-Create `backend/tests/test_jobs_api.py`:
+测试 `POST /api/jobs` 能创建岗位，并从 JD 文本中抽取 `FastAPI` 等技能；空 JD 返回 422。
 
-```python
-def test_create_job_from_text(client):
-    response = client.post(
-        "/api/jobs",
-        json={
-            "title": "大模型应用开发工程师",
-            "company": "Example AI",
-            "raw_text": "负责 RAG 应用开发，熟悉 FastAPI、LangGraph、PostgreSQL、pgvector。",
-        },
-    )
+- [ ] **Step 2：先写失败的简历 API 测试**
 
-    assert response.status_code == 201
-    body = response.json()
-    assert body["id"] > 0
-    assert body["title"] == "大模型应用开发工程师"
-    assert "FastAPI" in body["parsed_profile"]["required_skills"]
+测试 `POST /api/resumes` 能创建简历版本，并从简历文本中抽取 `FastAPI` 等技能；空简历返回 422。
 
-
-def test_reject_empty_job(client):
-    response = client.post("/api/jobs", json={"title": "空岗位", "raw_text": "   "})
-
-    assert response.status_code == 422
-```
-
-- [ ] **Step 2: Write failing resume API tests**
-
-Create `backend/tests/test_resumes_api.py`:
-
-```python
-def test_create_resume_version_from_text(client):
-    response = client.post(
-        "/api/resumes",
-        json={
-            "name": "v1-original",
-            "raw_text": "项目：CareerFit Agent。使用 FastAPI、Vue3、PostgreSQL 和 LangGraph 构建求职分析系统。",
-        },
-    )
-
-    assert response.status_code == 201
-    body = response.json()
-    assert body["id"] > 0
-    assert body["name"] == "v1-original"
-    assert "FastAPI" in body["parsed_profile"]["skills"]
-
-
-def test_reject_empty_resume(client):
-    response = client.post("/api/resumes", json={"name": "empty", "raw_text": ""})
-
-    assert response.status_code == 422
-```
-
-- [ ] **Step 3: Run tests and verify failure**
-
-Run:
+- [ ] **Step 3：运行测试确认失败**
 
 ```powershell
 cd backend
 pytest tests/test_jobs_api.py tests/test_resumes_api.py -q
 ```
 
-Expected: failures because routes do not exist.
+预期：因为路由不存在而失败。
 
-- [ ] **Step 4: Add schemas**
+- [ ] **Step 4：创建 Pydantic schemas**
 
-Create `backend/app/schemas/jobs.py`:
+`jobs.py` 定义 `JobCreate` 和 `JobRead`。
 
-```python
-from pydantic import BaseModel, Field
+`resumes.py` 定义 `ResumeCreate` 和 `ResumeRead`。
 
+输入文本最小长度为 20，标题和名称不能为空。
 
-class JobCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
-    company: str | None = Field(default=None, max_length=200)
-    raw_text: str = Field(min_length=20)
+- [ ] **Step 5：实现 service**
 
+`job_service.py` 提供：
 
-class JobRead(BaseModel):
-    id: int
-    title: str
-    company: str | None
-    raw_text: str
-    parsed_profile: dict
+- `KNOWN_SKILLS`
+- `parse_job_profile(raw_text)`
+- `create_job(db, payload)`
+- `list_jobs(db)`
+- `get_job(db, job_id)`
 
-    model_config = {"from_attributes": True}
+`resume_service.py` 提供：
+
+- `parse_resume_profile(raw_text)`
+- `create_resume(db, payload)`
+- `list_resumes(db)`
+- `get_resume(db, resume_id)`
+
+解析结果必须包含 `schema_version` 和证据字段。
+
+- [ ] **Step 6：实现路由**
+
+`jobs.py` 暴露：
+
+```text
+POST /api/jobs
+GET /api/jobs
+GET /api/jobs/{job_id}
 ```
 
-Create `backend/app/schemas/resumes.py`:
+`resumes.py` 暴露：
 
-```python
-from pydantic import BaseModel, Field
-
-
-class ResumeCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-    raw_text: str = Field(min_length=20)
-
-
-class ResumeRead(BaseModel):
-    id: int
-    name: str
-    raw_text: str
-    parsed_profile: dict
-
-    model_config = {"from_attributes": True}
+```text
+POST /api/resumes
+GET /api/resumes
+GET /api/resumes/{resume_id}
 ```
 
-- [ ] **Step 5: Add services**
+不存在时返回 404。
 
-Create `backend/app/services/job_service.py`:
+- [ ] **Step 7：注册路由**
 
-```python
-from sqlalchemy.orm import Session
+在 `backend/app/main.py` 中 include `jobs.router` 和 `resumes.router`。
 
-from app.db.models import JobDescription
-from app.schemas.jobs import JobCreate
-
-
-KNOWN_SKILLS = ["FastAPI", "LangGraph", "PostgreSQL", "pgvector", "Vue3", "Docker", "RAG"]
-
-
-def parse_job_profile(raw_text: str) -> dict:
-    required_skills = [skill for skill in KNOWN_SKILLS if skill.lower() in raw_text.lower()]
-    return {
-        "schema_version": "job_profile.v1",
-        "required_skills": required_skills,
-        "preferred_skills": [],
-        "responsibilities": [raw_text[:160]],
-        "evidence": [{"source": "raw_jd", "text": raw_text[:240]}],
-    }
-
-
-def create_job(db: Session, payload: JobCreate) -> JobDescription:
-    job = JobDescription(
-        title=payload.title,
-        company=payload.company,
-        raw_text=payload.raw_text,
-        parsed_profile=parse_job_profile(payload.raw_text),
-    )
-    db.add(job)
-    db.commit()
-    db.refresh(job)
-    return job
-
-
-def list_jobs(db: Session) -> list[JobDescription]:
-    return list(db.query(JobDescription).order_by(JobDescription.id.desc()).all())
-
-
-def get_job(db: Session, job_id: int) -> JobDescription | None:
-    return db.get(JobDescription, job_id)
-```
-
-Create `backend/app/services/resume_service.py`:
-
-```python
-from sqlalchemy.orm import Session
-
-from app.db.models import ResumeVersion
-from app.schemas.resumes import ResumeCreate
-from app.services.job_service import KNOWN_SKILLS
-
-
-def parse_resume_profile(raw_text: str) -> dict:
-    skills = [skill for skill in KNOWN_SKILLS if skill.lower() in raw_text.lower()]
-    return {
-        "schema_version": "resume_profile.v1",
-        "skills": skills,
-        "projects": [{"name": "Parsed Project", "description": raw_text[:240]}],
-        "evidence": [
-            {"skill": skill, "source": "raw_resume", "text": raw_text[:240]} for skill in skills
-        ],
-    }
-
-
-def create_resume(db: Session, payload: ResumeCreate) -> ResumeVersion:
-    resume = ResumeVersion(
-        name=payload.name,
-        raw_text=payload.raw_text,
-        parsed_profile=parse_resume_profile(payload.raw_text),
-    )
-    db.add(resume)
-    db.commit()
-    db.refresh(resume)
-    return resume
-
-
-def list_resumes(db: Session) -> list[ResumeVersion]:
-    return list(db.query(ResumeVersion).order_by(ResumeVersion.id.desc()).all())
-
-
-def get_resume(db: Session, resume_id: int) -> ResumeVersion | None:
-    return db.get(ResumeVersion, resume_id)
-```
-
-- [ ] **Step 6: Add routes**
-
-Create `backend/app/api/routes/jobs.py`:
-
-```python
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from app.db.session import get_db
-from app.schemas.jobs import JobCreate, JobRead
-from app.services.job_service import create_job, get_job, list_jobs
-
-router = APIRouter(prefix="/api/jobs", tags=["jobs"])
-
-
-@router.post("", response_model=JobRead, status_code=status.HTTP_201_CREATED)
-def create_job_endpoint(payload: JobCreate, db: Session = Depends(get_db)):
-    return create_job(db, payload)
-
-
-@router.get("", response_model=list[JobRead])
-def list_jobs_endpoint(db: Session = Depends(get_db)):
-    return list_jobs(db)
-
-
-@router.get("/{job_id}", response_model=JobRead)
-def get_job_endpoint(job_id: int, db: Session = Depends(get_db)):
-    job = get_job(db, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
-```
-
-Create `backend/app/api/routes/resumes.py`:
-
-```python
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from app.db.session import get_db
-from app.schemas.resumes import ResumeCreate, ResumeRead
-from app.services.resume_service import create_resume, get_resume, list_resumes
-
-router = APIRouter(prefix="/api/resumes", tags=["resumes"])
-
-
-@router.post("", response_model=ResumeRead, status_code=status.HTTP_201_CREATED)
-def create_resume_endpoint(payload: ResumeCreate, db: Session = Depends(get_db)):
-    return create_resume(db, payload)
-
-
-@router.get("", response_model=list[ResumeRead])
-def list_resumes_endpoint(db: Session = Depends(get_db)):
-    return list_resumes(db)
-
-
-@router.get("/{resume_id}", response_model=ResumeRead)
-def get_resume_endpoint(resume_id: int, db: Session = Depends(get_db)):
-    resume = get_resume(db, resume_id)
-    if resume is None:
-        raise HTTPException(status_code=404, detail="Resume not found")
-    return resume
-```
-
-- [ ] **Step 7: Register routes**
-
-Modify `backend/app/main.py`:
-
-```python
-from fastapi import FastAPI
-
-from app.api.routes import jobs, resumes
-from app.db.base import Base
-from app.db.session import engine
-
-
-def create_app() -> FastAPI:
-    app = FastAPI(title="CareerFit Agent")
-
-    @app.on_event("startup")
-    def create_tables() -> None:
-        Base.metadata.create_all(bind=engine)
-
-    @app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    app.include_router(jobs.router)
-    app.include_router(resumes.router)
-    return app
-
-
-app = create_app()
-```
-
-- [ ] **Step 8: Run tests and verify pass**
-
-Run:
+- [ ] **Step 8：运行测试确认通过**
 
 ```powershell
 cd backend
 pytest tests/test_jobs_api.py tests/test_resumes_api.py -q
 ```
 
-Expected: all tests pass.
-
-- [ ] **Step 9: Commit**
+- [ ] **Step 9：提交**
 
 ```powershell
 git add backend/app backend/tests
 git commit -m "feat: add job and resume APIs"
 ```
 
-## Task 3: Deterministic Scoring And Integrity Guard
+## Task 3：确定性评分和 Integrity Guard
 
-**Files:**
+**文件：**
 
-- Create: `backend/app/scoring/rubric.py`
-- Create: `backend/app/scoring/rules.py`
-- Create: `backend/app/scoring/evidence.py`
-- Create: `backend/tests/test_scoring.py`
-- Create: `backend/tests/test_integrity_guard.py`
+- 创建 `backend/app/scoring/rubric.py`
+- 创建 `backend/app/scoring/rules.py`
+- 创建 `backend/app/scoring/evidence.py`
+- 创建 `backend/tests/test_scoring.py`
+- 创建 `backend/tests/test_integrity_guard.py`
 
-- [ ] **Step 1: Write failing scoring tests**
+- [ ] **Step 1：先写失败的评分测试**
 
-Create `backend/tests/test_scoring.py`:
+测试 `score_match(jd_profile, resume_profile)`：
 
-```python
-from app.scoring.rules import score_match
+- 返回 `final_score`，范围必须在 0-100。
+- `score_breakdown.skill_score` 大于 0。
+- 每个 required skill 都有 `score_items`。
+- 每个评分项包含 JD evidence。
+- 空输入时最终分数为 0。
 
+- [ ] **Step 2：先写失败的 Integrity Guard 测试**
 
-def test_score_match_uses_shared_skills_and_evidence():
-    jd_profile = {
-        "required_skills": ["FastAPI", "LangGraph", "pgvector"],
-        "evidence": [{"source": "raw_jd", "text": "需要 FastAPI、LangGraph、pgvector"}],
-    }
-    resume_profile = {
-        "skills": ["FastAPI", "LangGraph"],
-        "evidence": [
-            {"skill": "FastAPI", "source": "raw_resume", "text": "使用 FastAPI 构建接口"},
-            {"skill": "LangGraph", "source": "raw_resume", "text": "使用 LangGraph 编排 Agent"},
-        ],
-    }
+测试 `assess_integrity_risk(suggestion, resume_text)`：
 
-    result = score_match(jd_profile, resume_profile)
+- 无证据百分比指标触发 `unsupported_metric`。
+- 无证据“主导/生产级/架构设计”触发 `unsupported_leadership_claim`。
+- 安全改写返回 `risk_level = low`。
 
-    assert 0 <= result["final_score"] <= 100
-    assert result["score_breakdown"]["skill_score"] > 0
-    assert len(result["score_items"]) == 3
-    assert result["score_items"][0]["jd_evidence"]
-
-
-def test_score_match_clamps_empty_inputs():
-    result = score_match({"required_skills": []}, {"skills": []})
-
-    assert result["final_score"] == 0
-    assert result["score_breakdown"]["skill_score"] == 0
-```
-
-- [ ] **Step 2: Write failing integrity tests**
-
-Create `backend/tests/test_integrity_guard.py`:
-
-```python
-from app.scoring.evidence import assess_integrity_risk
-
-
-def test_blocks_unsupported_metric():
-    suggestion = "将系统性能提升 40%，主导生产级招聘平台落地。"
-    resume_text = "使用 FastAPI 构建求职分析系统原型。"
-
-    risk = assess_integrity_risk(suggestion, resume_text)
-
-    assert risk["risk_level"] == "high"
-    assert "unsupported_metric" in risk["risk_types"]
-    assert "unsupported_leadership_claim" in risk["risk_types"]
-
-
-def test_allows_safe_rewording():
-    suggestion = "使用 FastAPI 构建求职分析系统原型，支持岗位与简历文本分析。"
-    resume_text = "使用 FastAPI 构建求职分析系统原型。"
-
-    risk = assess_integrity_risk(suggestion, resume_text)
-
-    assert risk["risk_level"] == "low"
-```
-
-- [ ] **Step 3: Run tests and verify failure**
-
-Run:
+- [ ] **Step 3：运行测试确认失败**
 
 ```powershell
 cd backend
 pytest tests/test_scoring.py tests/test_integrity_guard.py -q
 ```
 
-Expected: import errors because scoring modules do not exist.
+预期：模块不存在导致失败。
 
-- [ ] **Step 4: Implement rubric**
+- [ ] **Step 4：实现 rubric**
 
-Create `backend/app/scoring/rubric.py`:
+`rubric.py` 定义能力层级分数：
 
-```python
-LEVEL_SCORES = {
-    "not_mentioned": 0.0,
-    "mentioned": 0.3,
-    "basic_usage": 0.5,
-    "project_practice": 0.75,
-    "deep_experience": 1.0,
-}
-
-
-def clamp_score(value: float) -> float:
-    return max(0.0, min(100.0, round(value, 2)))
+```text
+not_mentioned -> 0.0
+mentioned -> 0.3
+basic_usage -> 0.5
+project_practice -> 0.75
+deep_experience -> 1.0
 ```
 
-- [ ] **Step 5: Implement evidence and integrity risk**
+并提供 `clamp_score(value)`，把分数限制在 0-100。
 
-Create `backend/app/scoring/evidence.py`:
+- [ ] **Step 5：实现 evidence 和 Integrity Guard**
 
-```python
-import re
+`evidence.py` 提供：
 
+- `find_resume_evidence(skill, resume_profile)`
+- `assess_integrity_risk(suggestion, resume_text)`
 
-LEADERSHIP_TERMS = ["主导", "负责架构", "架构设计", "落地生产", "生产级"]
+需要识别百分比、倍数、ms 指标，以及“主导”“负责架构”“生产级”等领导力或生产化表述。
 
+- [ ] **Step 6：实现确定性评分**
 
-def find_resume_evidence(skill: str, resume_profile: dict) -> str:
-    for item in resume_profile.get("evidence", []):
-        if item.get("skill") == skill:
-            return item.get("text", "")
-    return ""
+`rules.py` 提供 `score_match()`。最终分数使用固定权重：
 
-
-def assess_integrity_risk(suggestion: str, resume_text: str) -> dict:
-    risk_types: list[str] = []
-    if re.search(r"\d+%|\d+倍|\d+\s*ms", suggestion) and not re.search(r"\d+%|\d+倍|\d+\s*ms", resume_text):
-        risk_types.append("unsupported_metric")
-    if any(term in suggestion for term in LEADERSHIP_TERMS) and not any(term in resume_text for term in LEADERSHIP_TERMS):
-        risk_types.append("unsupported_leadership_claim")
-    return {
-        "risk_level": "high" if risk_types else "low",
-        "risk_types": risk_types,
-        "suggestion": suggestion,
-    }
+```text
+skill_score * 0.35
+project_score * 0.25
+domain_score * 0.15
+basic_requirement_score * 0.10
+expression_score * 0.10
+integrity_risk_penalty * 0.05
 ```
 
-- [ ] **Step 6: Implement scoring**
+LLM 不参与数字计算。
 
-Create `backend/app/scoring/rules.py`:
-
-```python
-from app.scoring.evidence import find_resume_evidence
-from app.scoring.rubric import clamp_score
-
-
-def score_match(jd_profile: dict, resume_profile: dict) -> dict:
-    required_skills = jd_profile.get("required_skills", [])
-    resume_skills = set(resume_profile.get("skills", []))
-    jd_evidence = " ".join(item.get("text", "") for item in jd_profile.get("evidence", []))
-
-    if not required_skills:
-        return {
-            "final_score": 0,
-            "score_breakdown": {
-                "skill_score": 0,
-                "project_score": 0,
-                "domain_score": 0,
-                "basic_requirement_score": 0,
-                "expression_score": 0,
-                "integrity_risk_penalty": 0,
-            },
-            "score_items": [],
-        }
-
-    score_items = []
-    matched = 0
-    for skill in required_skills:
-        is_matched = skill in resume_skills
-        matched += 1 if is_matched else 0
-        score_items.append(
-            {
-                "skill": skill,
-                "required_level": "project_practice",
-                "resume_level": "project_practice" if is_matched else "not_mentioned",
-                "score": 75 if is_matched else 0,
-                "jd_evidence": jd_evidence,
-                "resume_evidence": find_resume_evidence(skill, resume_profile),
-                "knowledge_evidence": "Phase 1 local rubric: project evidence is required for strong match.",
-                "reason": "Matched with resume evidence." if is_matched else "Required skill missing in resume.",
-            }
-        )
-
-    skill_score = clamp_score((matched / len(required_skills)) * 100)
-    project_score = clamp_score(skill_score * 0.8)
-    domain_score = clamp_score(skill_score * 0.7)
-    basic_requirement_score = 80 if matched else 0
-    expression_score = clamp_score(skill_score * 0.75)
-    integrity_risk_penalty = 0
-    final_score = clamp_score(
-        skill_score * 0.35
-        + project_score * 0.25
-        + domain_score * 0.15
-        + basic_requirement_score * 0.10
-        + expression_score * 0.10
-        - integrity_risk_penalty * 0.05
-    )
-
-    return {
-        "final_score": final_score,
-        "score_breakdown": {
-            "skill_score": skill_score,
-            "project_score": project_score,
-            "domain_score": domain_score,
-            "basic_requirement_score": basic_requirement_score,
-            "expression_score": expression_score,
-            "integrity_risk_penalty": integrity_risk_penalty,
-        },
-        "score_items": score_items,
-    }
-```
-
-- [ ] **Step 7: Run tests and verify pass**
-
-Run:
+- [ ] **Step 7：运行测试确认通过**
 
 ```powershell
 cd backend
 pytest tests/test_scoring.py tests/test_integrity_guard.py -q
 ```
 
-Expected: all tests pass.
-
-- [ ] **Step 8: Commit**
+- [ ] **Step 8：提交**
 
 ```powershell
 git add backend/app/scoring backend/tests/test_scoring.py backend/tests/test_integrity_guard.py
 git commit -m "feat: add deterministic scoring and integrity guard"
 ```
 
-## Task 4: Analysis Workflow And Reports
+## Task 4：分析工作流和报告
 
-**Files:**
+**文件：**
 
-- Create: `backend/app/schemas/analysis.py`
-- Create: `backend/app/schemas/reports.py`
-- Create: `backend/app/agents/state.py`
-- Create: `backend/app/agents/nodes.py`
-- Create: `backend/app/agents/graph.py`
-- Create: `backend/app/services/analysis_service.py`
-- Create: `backend/app/api/routes/analysis.py`
-- Create: `backend/app/api/routes/reports.py`
-- Create: `backend/app/api/routes/agent_runs.py`
-- Modify: `backend/app/main.py`
-- Test: `backend/tests/test_analysis_flow.py`
+- 创建 `backend/app/schemas/analysis.py`
+- 创建 `backend/app/schemas/reports.py`
+- 创建 `backend/app/agents/state.py`
+- 创建 `backend/app/agents/nodes.py`
+- 创建 `backend/app/agents/graph.py`
+- 创建 `backend/app/services/analysis_service.py`
+- 创建 `backend/app/api/routes/analysis.py`
+- 创建 `backend/app/api/routes/reports.py`
+- 创建 `backend/app/api/routes/agent_runs.py`
+- 修改 `backend/app/main.py`
+- 测试 `backend/tests/test_analysis_flow.py`
 
-- [ ] **Step 1: Write failing analysis flow test**
+- [ ] **Step 1：先写失败的分析流程测试**
 
-Create `backend/tests/test_analysis_flow.py`:
+测试完整路径：创建 JD、创建简历、`POST /api/analysis`、读取报告、读取 Agent runs。
 
-```python
-def test_run_analysis_creates_report_and_agent_runs(client):
-    job = client.post(
-        "/api/jobs",
-        json={
-            "title": "大模型应用开发工程师",
-            "raw_text": "负责 RAG 应用开发，熟悉 FastAPI、LangGraph、PostgreSQL、pgvector。",
-        },
-    ).json()
-    resume = client.post(
-        "/api/resumes",
-        json={
-            "name": "v1",
-            "raw_text": "使用 FastAPI、LangGraph、PostgreSQL 构建 CareerFit Agent 求职分析系统。",
-        },
-    ).json()
+断言：
 
-    task_response = client.post(
-        "/api/analysis",
-        json={"job_id": job["id"], "resume_version_id": resume["id"]},
-    )
+- 任务状态为 `success`。
+- 报告 `final_score > 0`。
+- 报告包含 `next_best_action.title`。
+- 报告包含分项评分。
+- Agent runs 至少包含多个节点，首个节点是 `jd_parser`。
 
-    assert task_response.status_code == 201
-    task = task_response.json()
-    assert task["status"] == "success"
-
-    report = client.get(f"/api/reports/{task['id']}").json()
-    assert report["final_score"] > 0
-    assert report["next_best_action"]["title"]
-    assert report["score_breakdown"]["skill_score"] > 0
-
-    runs = client.get(f"/api/agent-runs/{task['id']}").json()
-    assert len(runs) >= 5
-    assert runs[0]["node_name"] == "jd_parser"
-```
-
-- [ ] **Step 2: Run test and verify failure**
-
-Run:
+- [ ] **Step 2：运行测试确认失败**
 
 ```powershell
 cd backend
 pytest tests/test_analysis_flow.py -q
 ```
 
-Expected: route not found.
+预期：路由不存在。
 
-- [ ] **Step 3: Add schemas**
+- [ ] **Step 3：创建 schemas**
 
-Create `backend/app/schemas/analysis.py`:
+`analysis.py` 定义 `AnalysisCreate` 和 `AnalysisTaskRead`。
 
-```python
-from pydantic import BaseModel
+`reports.py` 定义 `ReportRead` 和 `AgentRunRead`。
 
+- [ ] **Step 4：创建 workflow state 和节点**
 
-class AnalysisCreate(BaseModel):
-    job_id: int
-    resume_version_id: int
+`state.py` 定义 `CareerFitState`。
 
+`nodes.py` 实现：
 
-class AnalysisTaskRead(BaseModel):
-    id: int
-    job_id: int
-    resume_version_id: int
-    status: str
-    error_message: str | None
+- `jd_parser`
+- `resume_parser`
+- `match_scorer`
+- `gap_analyzer`
+- `resume_optimizer`
+- `interview_coach`
+- `learning_planner`
+- `next_best_action`
 
-    model_config = {"from_attributes": True}
+`next_best_action` 必须在有缺口时返回优先补齐技能；没有缺口时建议创建下一版简历并重新分析。
+
+- [ ] **Step 5：实现 graph runner 和 trace logging**
+
+`graph.py` 定义节点序列、`redact_state()` 和 `run_workflow()`。
+
+UI trace 中必须把 `raw_jd` 和 `raw_resume` 替换成 `[redacted]`。
+
+- [ ] **Step 6：实现分析 service 和路由**
+
+`analysis_service.py` 负责：
+
+1. 校验 job 和 resume 是否存在。
+2. 创建 `AnalysisTask`。
+3. 执行 workflow。
+4. 创建 `AnalysisReport`。
+5. 成功时把 task 标记为 `success`。
+6. 失败时把 task 标记为 `failed` 并保存错误。
+
+路由：
+
+```text
+POST /api/analysis
+GET /api/reports/{task_id}
+GET /api/agent-runs/{task_id}
 ```
 
-Create `backend/app/schemas/reports.py`:
+- [ ] **Step 7：注册路由**
 
-```python
-from pydantic import BaseModel
+在 `main.py` 中 include `analysis`、`reports`、`agent_runs`。
 
-
-class ReportRead(BaseModel):
-    id: int
-    task_id: int
-    final_score: float
-    score_breakdown: dict
-    strengths: list
-    gaps: list
-    integrity_risks: list
-    resume_suggestions: list
-    interview_questions: list
-    learning_plan: list
-    next_best_action: dict
-
-    model_config = {"from_attributes": True}
-
-
-class AgentRunRead(BaseModel):
-    id: int
-    task_id: int
-    node_name: str
-    input_snapshot: dict
-    output_snapshot: dict
-    latency_ms: int
-    token_usage: dict
-    status: str
-    error_message: str | None
-
-    model_config = {"from_attributes": True}
-```
-
-- [ ] **Step 4: Add workflow state and nodes**
-
-Create `backend/app/agents/state.py`:
-
-```python
-from typing import TypedDict
-
-
-class CareerFitState(TypedDict, total=False):
-    raw_jd: str
-    raw_resume: str
-    jd_profile: dict
-    resume_profile: dict
-    match_result: dict
-    gaps: list
-    integrity_risks: list
-    resume_suggestions: list
-    interview_questions: list
-    learning_plan: list
-    next_best_action: dict
-```
-
-Create `backend/app/agents/nodes.py`:
-
-```python
-from app.scoring.evidence import assess_integrity_risk
-from app.scoring.rules import score_match
-from app.services.job_service import parse_job_profile
-from app.services.resume_service import parse_resume_profile
-
-
-def jd_parser(state: dict) -> dict:
-    state["jd_profile"] = parse_job_profile(state["raw_jd"])
-    return state
-
-
-def resume_parser(state: dict) -> dict:
-    state["resume_profile"] = parse_resume_profile(state["raw_resume"])
-    return state
-
-
-def match_scorer(state: dict) -> dict:
-    state["match_result"] = score_match(state["jd_profile"], state["resume_profile"])
-    return state
-
-
-def gap_analyzer(state: dict) -> dict:
-    gaps = []
-    for item in state["match_result"]["score_items"]:
-        if item["resume_level"] == "not_mentioned":
-            gaps.append({"type": "missing_skill", "skill": item["skill"], "action": "Add learning task"})
-        elif not item["resume_evidence"]:
-            gaps.append({"type": "weak_evidence", "skill": item["skill"], "action": "Add project evidence"})
-    state["gaps"] = gaps
-    return state
-
-
-def resume_optimizer(state: dict) -> dict:
-    suggestions = []
-    risks = []
-    for item in state["match_result"]["score_items"]:
-        if item["resume_evidence"]:
-            text = f"围绕 {item['skill']} 补充项目中的具体职责和结果，但不新增未发生的指标。"
-            risk = assess_integrity_risk(text, state["raw_resume"])
-            suggestions.append({"skill": item["skill"], "optimized_text": text, "risk": risk})
-            risks.append(risk)
-    state["resume_suggestions"] = suggestions
-    state["integrity_risks"] = [risk for risk in risks if risk["risk_level"] != "low"]
-    return state
-
-
-def interview_coach(state: dict) -> dict:
-    state["interview_questions"] = [
-        {"skill": item["skill"], "question": f"请讲讲你在项目中如何使用 {item['skill']}？"}
-        for item in state["match_result"]["score_items"]
-    ]
-    return state
-
-
-def learning_planner(state: dict) -> dict:
-    state["learning_plan"] = [
-        {
-            "skill": gap["skill"],
-            "objective": f"补齐 {gap['skill']} 的项目证据",
-            "status": "not_started",
-            "acceptance_criteria": f"能用一段项目经历解释 {gap['skill']} 的实际使用",
-        }
-        for gap in state["gaps"]
-    ]
-    return state
-
-
-def next_best_action(state: dict) -> dict:
-    if state["gaps"]:
-        first_gap = state["gaps"][0]
-        state["next_best_action"] = {
-            "title": f"优先补齐 {first_gap['skill']}",
-            "reason": "这是当前目标岗位中影响匹配分的最高优先级缺口。",
-            "action_type": first_gap["type"],
-        }
-    else:
-        state["next_best_action"] = {
-            "title": "创建下一版简历并重新分析",
-            "reason": "当前主要技能已经匹配，可以通过表达和证据质量继续提升。",
-            "action_type": "create_resume_version",
-        }
-    return state
-```
-
-- [ ] **Step 5: Add graph runner with trace logging**
-
-Create `backend/app/agents/graph.py`:
-
-```python
-from collections.abc import Callable
-from time import perf_counter
-
-from sqlalchemy.orm import Session
-
-from app.agents import nodes
-from app.db.models import AgentRun
-
-
-NODE_SEQUENCE: list[tuple[str, Callable[[dict], dict]]] = [
-    ("jd_parser", nodes.jd_parser),
-    ("resume_parser", nodes.resume_parser),
-    ("match_scorer", nodes.match_scorer),
-    ("gap_analyzer", nodes.gap_analyzer),
-    ("resume_optimizer", nodes.resume_optimizer),
-    ("interview_coach", nodes.interview_coach),
-    ("learning_planner", nodes.learning_planner),
-    ("next_best_action", nodes.next_best_action),
-]
-
-
-def redact_state(state: dict) -> dict:
-    redacted = dict(state)
-    if "raw_jd" in redacted:
-        redacted["raw_jd"] = "[redacted]"
-    if "raw_resume" in redacted:
-        redacted["raw_resume"] = "[redacted]"
-    return redacted
-
-
-def run_workflow(db: Session, task_id: int, initial_state: dict) -> dict:
-    state = initial_state
-    for node_name, node_func in NODE_SEQUENCE:
-        started = perf_counter()
-        input_snapshot = redact_state(state)
-        try:
-            state = node_func(state)
-            status = "success"
-            error_message = None
-        except Exception as exc:
-            status = "failed"
-            error_message = str(exc)
-            raise
-        finally:
-            elapsed_ms = int((perf_counter() - started) * 1000)
-            db.add(
-                AgentRun(
-                    task_id=task_id,
-                    node_name=node_name,
-                    input_snapshot=input_snapshot,
-                    output_snapshot=redact_state(state),
-                    latency_ms=elapsed_ms,
-                    token_usage={},
-                    status=status,
-                    error_message=error_message,
-                )
-            )
-            db.commit()
-    return state
-```
-
-- [ ] **Step 6: Add analysis service and routes**
-
-Create `backend/app/services/analysis_service.py`:
-
-```python
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
-from app.agents.graph import run_workflow
-from app.db.models import AnalysisReport, AnalysisStatus, AnalysisTask
-from app.schemas.analysis import AnalysisCreate
-from app.services.job_service import get_job
-from app.services.resume_service import get_resume
-
-
-def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
-    job = get_job(db, payload.job_id)
-    resume = get_resume(db, payload.resume_version_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    if resume is None:
-        raise HTTPException(status_code=404, detail="Resume not found")
-
-    task = AnalysisTask(
-        job_id=job.id,
-        resume_version_id=resume.id,
-        status=AnalysisStatus.running,
-    )
-    db.add(task)
-    db.commit()
-    db.refresh(task)
-
-    try:
-        state = run_workflow(
-            db,
-            task.id,
-            {"raw_jd": job.raw_text, "raw_resume": resume.raw_text},
-        )
-        match_result = state["match_result"]
-        report = AnalysisReport(
-            task_id=task.id,
-            final_score=match_result["final_score"],
-            score_breakdown=match_result["score_breakdown"],
-            strengths=[
-                {"skill": item["skill"], "reason": item["reason"]}
-                for item in match_result["score_items"]
-                if item["score"] > 0
-            ],
-            gaps=state["gaps"],
-            integrity_risks=state["integrity_risks"],
-            resume_suggestions=state["resume_suggestions"],
-            interview_questions=state["interview_questions"],
-            learning_plan=state["learning_plan"],
-            next_best_action=state["next_best_action"],
-        )
-        db.add(report)
-        task.status = AnalysisStatus.success
-        db.commit()
-        db.refresh(task)
-        return task
-    except Exception as exc:
-        task.status = AnalysisStatus.failed
-        task.error_message = str(exc)
-        db.commit()
-        db.refresh(task)
-        return task
-```
-
-Create `backend/app/api/routes/analysis.py`:
-
-```python
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-
-from app.db.session import get_db
-from app.schemas.analysis import AnalysisCreate, AnalysisTaskRead
-from app.services.analysis_service import create_analysis
-
-router = APIRouter(prefix="/api/analysis", tags=["analysis"])
-
-
-@router.post("", response_model=AnalysisTaskRead, status_code=status.HTTP_201_CREATED)
-def create_analysis_endpoint(payload: AnalysisCreate, db: Session = Depends(get_db)):
-    return create_analysis(db, payload)
-```
-
-Create `backend/app/api/routes/reports.py`:
-
-```python
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
-from app.db.models import AnalysisReport
-from app.db.session import get_db
-from app.schemas.reports import ReportRead
-
-router = APIRouter(prefix="/api/reports", tags=["reports"])
-
-
-@router.get("/{task_id}", response_model=ReportRead)
-def get_report_endpoint(task_id: int, db: Session = Depends(get_db)):
-    report = db.query(AnalysisReport).filter(AnalysisReport.task_id == task_id).first()
-    if report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
-    return report
-```
-
-Create `backend/app/api/routes/agent_runs.py`:
-
-```python
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from app.db.models import AgentRun
-from app.db.session import get_db
-from app.schemas.reports import AgentRunRead
-
-router = APIRouter(prefix="/api/agent-runs", tags=["agent-runs"])
-
-
-@router.get("/{task_id}", response_model=list[AgentRunRead])
-def list_agent_runs_endpoint(task_id: int, db: Session = Depends(get_db)):
-    return list(db.query(AgentRun).filter(AgentRun.task_id == task_id).order_by(AgentRun.id.asc()).all())
-```
-
-- [ ] **Step 7: Register routes**
-
-Modify `backend/app/main.py`:
-
-```python
-from fastapi import FastAPI
-
-from app.api.routes import agent_runs, analysis, jobs, reports, resumes
-from app.db.base import Base
-from app.db.session import engine
-
-
-def create_app() -> FastAPI:
-    app = FastAPI(title="CareerFit Agent")
-
-    @app.on_event("startup")
-    def create_tables() -> None:
-        Base.metadata.create_all(bind=engine)
-
-    @app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    app.include_router(jobs.router)
-    app.include_router(resumes.router)
-    app.include_router(analysis.router)
-    app.include_router(reports.router)
-    app.include_router(agent_runs.router)
-    return app
-
-
-app = create_app()
-```
-
-- [ ] **Step 8: Run analysis tests**
-
-Run:
+- [ ] **Step 8：运行分析流程测试**
 
 ```powershell
 cd backend
 pytest tests/test_analysis_flow.py -q
 ```
 
-Expected: test passes.
-
-- [ ] **Step 9: Run all backend tests**
-
-Run:
+- [ ] **Step 9：运行全部后端测试**
 
 ```powershell
 cd backend
 pytest -q
 ```
 
-Expected: all backend tests pass.
-
-- [ ] **Step 10: Commit**
+- [ ] **Step 10：提交**
 
 ```powershell
 git add backend/app backend/tests
 git commit -m "feat: add analysis workflow and reports"
 ```
 
-## Task 5: Frontend Workspace And Report View
+## Task 5：前端工作台和报告页
 
-**Files:**
+**文件：**
 
-- Create: `frontend/package.json`
-- Create: `frontend/index.html`
-- Create: `frontend/tsconfig.json`
-- Create: `frontend/vite.config.ts`
-- Create: `frontend/src/main.ts`
-- Create: `frontend/src/App.vue`
-- Create: `frontend/src/api/client.ts`
-- Create: `frontend/src/api/jobs.ts`
-- Create: `frontend/src/api/resumes.ts`
-- Create: `frontend/src/api/analysis.ts`
-- Create: `frontend/src/api/reports.ts`
-- Create: `frontend/src/components/StatusBadge.vue`
-- Create: `frontend/src/components/ScoreBreakdown.vue`
-- Create: `frontend/src/components/EvidenceTable.vue`
-- Create: `frontend/src/components/AgentTimeline.vue`
-- Create: `frontend/src/views/WorkspaceView.vue`
-- Create: `frontend/src/views/ReportView.vue`
-- Create: `frontend/tests/WorkspaceView.test.ts`
+- 创建 `frontend/package.json`
+- 创建 `frontend/index.html`
+- 创建 `frontend/tsconfig.json`
+- 创建 `frontend/vite.config.ts`
+- 创建 `frontend/src/main.ts`
+- 创建 `frontend/src/App.vue`
+- 创建 `frontend/src/api/client.ts`
+- 创建 `frontend/src/api/jobs.ts`
+- 创建 `frontend/src/api/resumes.ts`
+- 创建 `frontend/src/api/analysis.ts`
+- 创建 `frontend/src/api/reports.ts`
+- 创建 `frontend/src/components/StatusBadge.vue`
+- 创建 `frontend/src/components/ScoreBreakdown.vue`
+- 创建 `frontend/src/components/EvidenceTable.vue`
+- 创建 `frontend/src/components/AgentTimeline.vue`
+- 创建 `frontend/src/views/WorkspaceView.vue`
+- 创建 `frontend/src/views/ReportView.vue`
+- 创建 `frontend/tests/WorkspaceView.test.ts`
 
-- [ ] **Step 1: Create frontend package**
+- [ ] **Step 1：创建前端 package**
 
-Create `frontend/package.json`:
+`package.json` 包含 Vue3、Vite、TypeScript、Vitest、Vue Test Utils、jsdom。脚本包含：
 
-```json
-{
-  "name": "careerfit-agent-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "vue-tsc && vite build",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@vitejs/plugin-vue": "^5.1.0",
-    "vite": "^5.4.0",
-    "vue": "^3.4.0"
-  },
-  "devDependencies": {
-    "@vue/test-utils": "^2.4.6",
-    "jsdom": "^24.1.1",
-    "typescript": "^5.5.0",
-    "vitest": "^2.0.5",
-    "vue-tsc": "^2.0.29"
-  }
-}
+```text
+npm run dev
+npm run build
+npm test
 ```
 
-- [ ] **Step 2: Add TypeScript and Vite config**
+- [ ] **Step 2：创建 TypeScript 和 Vite 配置**
 
-Create `frontend/tsconfig.json`:
+`tsconfig.json` 开启严格模式，包含 `src/**/*.ts`、`src/**/*.vue`、`tests/**/*.ts`。
 
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "jsx": "preserve",
-    "sourceMap": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vitest/globals"]
-  },
-  "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"]
-}
-```
+`vite.config.ts` 使用 `@vitejs/plugin-vue`，Vitest 环境为 `jsdom`。
 
-Create `frontend/vite.config.ts`:
+- [ ] **Step 3：创建 app shell**
 
-```ts
-import vue from "@vitejs/plugin-vue";
-import { defineConfig } from "vite";
+`App.vue` 组合 `WorkspaceView` 和 `ReportView`。当分析完成后，把 `taskId` 传给报告页。
 
-export default defineConfig({
-  plugins: [vue()],
-  test: {
-    environment: "jsdom",
-  },
-});
-```
+- [ ] **Step 4：创建 API client**
 
-- [ ] **Step 3: Add app shell**
+`client.ts` 封装 `requestJson<T>()`，默认 `VITE_API_BASE` 为 `http://localhost:8000`。
 
-Create `frontend/index.html`:
+按资源拆分：
 
-```html
-<div id="app"></div>
-<script type="module" src="/src/main.ts"></script>
-```
+- `jobs.ts`
+- `resumes.ts`
+- `analysis.ts`
+- `reports.ts`
 
-Create `frontend/src/main.ts`:
+- [ ] **Step 5：创建组件**
 
-```ts
-import { createApp } from "vue";
-import App from "./App.vue";
+实现：
 
-createApp(App).mount("#app");
-```
+- `StatusBadge.vue`
+- `ScoreBreakdown.vue`
+- `AgentTimeline.vue`
+- `EvidenceTable.vue`
 
-Create `frontend/src/App.vue`:
+组件必须有基本可访问性标签，风险状态不能只靠颜色表达。
 
-```vue
-<script setup lang="ts">
-import { ref } from "vue";
-import WorkspaceView from "./views/WorkspaceView.vue";
-import ReportView from "./views/ReportView.vue";
+- [ ] **Step 6：创建页面**
 
-const latestTaskId = ref<number | null>(null);
-</script>
+`WorkspaceView.vue`：展示 JD textarea、简历 textarea、开始分析按钮、运行状态和错误状态。
 
-<template>
-  <main class="app-shell">
-    <WorkspaceView @analysis-complete="latestTaskId = $event" />
-    <ReportView v-if="latestTaskId" :task-id="latestTaskId" />
-  </main>
-</template>
+`ReportView.vue`：展示总分、Next Best Action、分项评分、优势、缺口和 Agent 时间线。
 
-<style>
-body {
-  margin: 0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #172033;
-  background: #f6f8fb;
-}
+- [ ] **Step 7：创建前端 smoke test**
 
-.app-shell {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 24px;
-}
-</style>
-```
+`WorkspaceView.test.ts` 断言页面包含“个人求职成长工作台”“目标岗位 JD”“当前简历版本”。
 
-- [ ] **Step 4: Add API clients**
-
-Create `frontend/src/api/client.ts`:
-
-```ts
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
-
-export async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers ?? {}) },
-    ...options,
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Request failed with ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-```
-
-Create `frontend/src/api/jobs.ts`:
-
-```ts
-import { requestJson } from "./client";
-
-export interface Job {
-  id: number;
-  title: string;
-  company: string | null;
-  raw_text: string;
-  parsed_profile: { required_skills: string[] };
-}
-
-export function createJob(payload: { title: string; company?: string; raw_text: string }) {
-  return requestJson<Job>("/api/jobs", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-```
-
-Create `frontend/src/api/resumes.ts`:
-
-```ts
-import { requestJson } from "./client";
-
-export interface ResumeVersion {
-  id: number;
-  name: string;
-  raw_text: string;
-  parsed_profile: { skills: string[] };
-}
-
-export function createResume(payload: { name: string; raw_text: string }) {
-  return requestJson<ResumeVersion>("/api/resumes", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-```
-
-Create `frontend/src/api/analysis.ts`:
-
-```ts
-import { requestJson } from "./client";
-
-export interface AnalysisTask {
-  id: number;
-  job_id: number;
-  resume_version_id: number;
-  status: string;
-  error_message: string | null;
-}
-
-export function createAnalysis(payload: { job_id: number; resume_version_id: number }) {
-  return requestJson<AnalysisTask>("/api/analysis", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-```
-
-Create `frontend/src/api/reports.ts`:
-
-```ts
-import { requestJson } from "./client";
-
-export interface Report {
-  id: number;
-  task_id: number;
-  final_score: number;
-  score_breakdown: Record<string, number>;
-  strengths: Array<Record<string, string>>;
-  gaps: Array<Record<string, string>>;
-  integrity_risks: Array<Record<string, unknown>>;
-  resume_suggestions: Array<Record<string, unknown>>;
-  interview_questions: Array<Record<string, string>>;
-  learning_plan: Array<Record<string, string>>;
-  next_best_action: { title: string; reason: string; action_type: string };
-}
-
-export interface AgentRun {
-  id: number;
-  node_name: string;
-  status: string;
-  latency_ms: number;
-}
-
-export function getReport(taskId: number) {
-  return requestJson<Report>(`/api/reports/${taskId}`);
-}
-
-export function getAgentRuns(taskId: number) {
-  return requestJson<AgentRun[]>(`/api/agent-runs/${taskId}`);
-}
-```
-
-- [ ] **Step 5: Add components**
-
-Create `frontend/src/components/StatusBadge.vue`:
-
-```vue
-<script setup lang="ts">
-defineProps<{ status: string }>();
-</script>
-
-<template>
-  <span class="badge" :data-status="status">{{ status }}</span>
-</template>
-
-<style scoped>
-.badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #eef2ff;
-  color: #3446a8;
-}
-
-.badge[data-status="failed"] {
-  background: #fff1f2;
-  color: #b42318;
-}
-</style>
-```
-
-Create `frontend/src/components/ScoreBreakdown.vue`:
-
-```vue
-<script setup lang="ts">
-defineProps<{ scores: Record<string, number> }>();
-</script>
-
-<template>
-  <section class="score-grid" aria-label="Score breakdown">
-    <article v-for="(value, key) in scores" :key="key" class="score-card">
-      <div class="score-key">{{ key }}</div>
-      <div class="score-value">{{ value }}</div>
-    </article>
-  </section>
-</template>
-
-<style scoped>
-.score-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-
-.score-card {
-  background: white;
-  border: 1px solid #d9e2ef;
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.score-key {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.score-value {
-  margin-top: 8px;
-  font-size: 24px;
-  font-weight: 700;
-}
-</style>
-```
-
-Create `frontend/src/components/AgentTimeline.vue`:
-
-```vue
-<script setup lang="ts">
-import StatusBadge from "./StatusBadge.vue";
-
-defineProps<{ runs: Array<{ id: number; node_name: string; status: string; latency_ms: number }> }>();
-</script>
-
-<template>
-  <ol class="timeline" aria-label="Agent run timeline">
-    <li v-for="run in runs" :key="run.id">
-      <span>{{ run.node_name }}</span>
-      <StatusBadge :status="run.status" />
-      <small>{{ run.latency_ms }}ms</small>
-    </li>
-  </ol>
-</template>
-
-<style scoped>
-.timeline {
-  display: grid;
-  gap: 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.timeline li {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 12px;
-  align-items: center;
-  background: white;
-  border: 1px solid #d9e2ef;
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-</style>
-```
-
-Create `frontend/src/components/EvidenceTable.vue`:
-
-```vue
-<script setup lang="ts">
-defineProps<{ rows: Array<Record<string, string>> }>();
-</script>
-
-<template>
-  <table class="evidence-table">
-    <thead>
-      <tr>
-        <th>技能</th>
-        <th>说明</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(row, index) in rows" :key="index">
-        <td>{{ row.skill }}</td>
-        <td>{{ row.reason || row.action || row.question }}</td>
-      </tr>
-    </tbody>
-  </table>
-</template>
-
-<style scoped>
-.evidence-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border: 1px solid #d9e2ef;
-}
-
-th,
-td {
-  padding: 10px;
-  border-bottom: 1px solid #edf2f7;
-  text-align: left;
-}
-</style>
-```
-
-- [ ] **Step 6: Add views**
-
-Create `frontend/src/views/WorkspaceView.vue`:
-
-```vue
-<script setup lang="ts">
-import { ref } from "vue";
-import { createAnalysis } from "../api/analysis";
-import { createJob } from "../api/jobs";
-import { createResume } from "../api/resumes";
-
-const emit = defineEmits<{ "analysis-complete": [taskId: number] }>();
-
-const jobText = ref("负责 RAG 应用开发，熟悉 FastAPI、LangGraph、PostgreSQL、pgvector。");
-const resumeText = ref("使用 FastAPI、LangGraph、PostgreSQL 构建 CareerFit Agent 求职分析系统。");
-const status = ref("ready");
-const error = ref("");
-
-async function runAnalysis() {
-  status.value = "running";
-  error.value = "";
-  try {
-    const job = await createJob({ title: "大模型应用开发工程师", raw_text: jobText.value });
-    const resume = await createResume({ name: "v1-original", raw_text: resumeText.value });
-    const task = await createAnalysis({ job_id: job.id, resume_version_id: resume.id });
-    status.value = task.status;
-    emit("analysis-complete", task.id);
-  } catch (err) {
-    status.value = "failed";
-    error.value = err instanceof Error ? err.message : "分析失败";
-  }
-}
-</script>
-
-<template>
-  <section class="workspace">
-    <header>
-      <p class="eyebrow">CareerFit Agent</p>
-      <h1>个人求职成长工作台</h1>
-    </header>
-
-    <div class="input-grid">
-      <label>
-        目标岗位 JD
-        <textarea v-model="jobText" />
-      </label>
-      <label>
-        当前简历版本
-        <textarea v-model="resumeText" />
-      </label>
-    </div>
-
-    <div class="actions">
-      <button :disabled="status === 'running'" @click="runAnalysis">
-        {{ status === "running" ? "分析中" : "开始分析" }}
-      </button>
-      <span>{{ status }}</span>
-    </div>
-
-    <p v-if="error" class="error">{{ error }}</p>
-  </section>
-</template>
-
-<style scoped>
-.workspace {
-  display: grid;
-  gap: 20px;
-}
-
-.eyebrow {
-  color: #2563eb;
-  font-weight: 700;
-}
-
-h1 {
-  margin: 0;
-  font-size: 32px;
-}
-
-.input-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-label {
-  display: grid;
-  gap: 8px;
-  font-weight: 700;
-}
-
-textarea {
-  min-height: 180px;
-  resize: vertical;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 12px;
-  font: inherit;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 8px;
-  padding: 0 16px;
-  background: #2563eb;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.error {
-  color: #b42318;
-}
-</style>
-```
-
-Create `frontend/src/views/ReportView.vue`:
-
-```vue
-<script setup lang="ts">
-import { onMounted, ref } from "vue";
-import AgentTimeline from "../components/AgentTimeline.vue";
-import EvidenceTable from "../components/EvidenceTable.vue";
-import ScoreBreakdown from "../components/ScoreBreakdown.vue";
-import { getAgentRuns, getReport, type AgentRun, type Report } from "../api/reports";
-
-const props = defineProps<{ taskId: number }>();
-
-const report = ref<Report | null>(null);
-const runs = ref<AgentRun[]>([]);
-const error = ref("");
-
-onMounted(async () => {
-  try {
-    report.value = await getReport(props.taskId);
-    runs.value = await getAgentRuns(props.taskId);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : "报告加载失败";
-  }
-});
-</script>
-
-<template>
-  <section class="report">
-    <p v-if="error" class="error">{{ error }}</p>
-    <template v-if="report">
-      <header class="report-header">
-        <div>
-          <p class="eyebrow">匹配报告</p>
-          <h2>{{ report.final_score }} / 100</h2>
-        </div>
-        <aside class="next-action">
-          <strong>{{ report.next_best_action.title }}</strong>
-          <span>{{ report.next_best_action.reason }}</span>
-        </aside>
-      </header>
-
-      <ScoreBreakdown :scores="report.score_breakdown" />
-      <h3>优势</h3>
-      <EvidenceTable :rows="report.strengths" />
-      <h3>缺口</h3>
-      <EvidenceTable :rows="report.gaps" />
-      <h3>Agent 运行轨迹</h3>
-      <AgentTimeline :runs="runs" />
-    </template>
-  </section>
-</template>
-
-<style scoped>
-.report {
-  margin-top: 28px;
-  display: grid;
-  gap: 16px;
-}
-
-.report-header {
-  display: grid;
-  grid-template-columns: 1fr minmax(260px, 420px);
-  gap: 16px;
-  align-items: stretch;
-}
-
-.eyebrow {
-  color: #2563eb;
-  font-weight: 700;
-}
-
-h2 {
-  margin: 0;
-  font-size: 42px;
-}
-
-.next-action {
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-}
-
-.error {
-  color: #b42318;
-}
-
-@media (max-width: 760px) {
-  .report-header {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
-```
-
-- [ ] **Step 7: Add frontend smoke test**
-
-Create `frontend/tests/WorkspaceView.test.ts`:
-
-```ts
-import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
-import WorkspaceView from "../src/views/WorkspaceView.vue";
-
-describe("WorkspaceView", () => {
-  it("shows the analysis workspace", () => {
-    const wrapper = mount(WorkspaceView);
-
-    expect(wrapper.text()).toContain("个人求职成长工作台");
-    expect(wrapper.text()).toContain("目标岗位 JD");
-    expect(wrapper.text()).toContain("当前简历版本");
-  });
-});
-```
-
-- [ ] **Step 8: Run frontend tests**
-
-Run:
+- [ ] **Step 8：运行前端测试**
 
 ```powershell
 cd frontend
@@ -2122,248 +551,133 @@ npm install
 npm test
 ```
 
-Expected: all frontend tests pass.
-
-- [ ] **Step 9: Commit**
+- [ ] **Step 9：提交**
 
 ```powershell
 git add frontend
 git commit -m "feat: add frontend workspace and report view"
 ```
 
-## Task 6: Docker Compose And Smoke Verification
+## Task 6：Docker Compose 和冒烟验证
 
-**Files:**
+**文件：**
 
-- Create: `backend/Dockerfile`
-- Create: `frontend/Dockerfile`
-- Create: `docker-compose.yml`
-- Create: `.env.example`
+- 创建 `backend/Dockerfile`
+- 创建 `frontend/Dockerfile`
+- 创建 `docker-compose.yml`
+- 创建 `.env.example`
 
-- [ ] **Step 1: Add backend Dockerfile**
+- [ ] **Step 1：添加后端 Dockerfile**
 
-Create `backend/Dockerfile`:
+后端镜像基于 `python:3.11-slim`，安装 `pyproject.toml` 依赖，启动命令为：
 
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e ".[dev]"
-
-COPY app ./app
-
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```text
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-- [ ] **Step 2: Add frontend Dockerfile**
+- [ ] **Step 2：添加前端 Dockerfile**
 
-Create `frontend/Dockerfile`:
+前端镜像基于 `node:20-alpine`，执行 `npm install`，启动 `npm run dev`。
 
-```dockerfile
-FROM node:20-alpine
+- [ ] **Step 3：添加 `.env.example`**
 
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN npm install
-
-COPY . .
-
-EXPOSE 5173
-CMD ["npm", "run", "dev"]
-```
-
-- [ ] **Step 3: Add environment example**
-
-Create `.env.example`:
+包含：
 
 ```text
 CAREERFIT_DATABASE_URL=postgresql+psycopg://careerfit:careerfit@postgres:5432/careerfit
 VITE_API_BASE=http://localhost:8000
 ```
 
-- [ ] **Step 4: Add Docker Compose**
+- [ ] **Step 4：添加 Docker Compose**
 
-Create `docker-compose.yml`:
+`docker-compose.yml` 包含：
 
-```yaml
-services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: careerfit
-      POSTGRES_PASSWORD: careerfit
-      POSTGRES_DB: careerfit
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U careerfit -d careerfit"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+- `postgres`：使用 `pgvector/pgvector:pg16`。
+- `backend`：依赖 postgres healthcheck。
+- `frontend`：依赖 backend。
 
-  backend:
-    build:
-      context: ./backend
-    environment:
-      CAREERFIT_DATABASE_URL: postgresql+psycopg://careerfit:careerfit@postgres:5432/careerfit
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+端口：
 
-  frontend:
-    build:
-      context: ./frontend
-    environment:
-      VITE_API_BASE: http://localhost:8000
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+```text
+postgres 5432
+backend 8000
+frontend 5173
 ```
 
-- [ ] **Step 5: Run Docker smoke test**
-
-Run:
+- [ ] **Step 5：运行 Docker 冒烟测试**
 
 ```powershell
 docker compose up --build
 ```
 
-Expected:
+验证：
 
-```text
-backend listening on 0.0.0.0:8000
-frontend listening on 0.0.0.0:5173
-postgres healthy
-```
+- backend 监听 `0.0.0.0:8000`。
+- frontend 监听 `0.0.0.0:5173`。
+- postgres healthy。
+- 打开 `http://localhost:5173`。
+- 点击“开始分析”能生成报告。
+- 报告展示总分、Next Best Action 和 Agent 时间线。
 
-Open:
-
-```text
-http://localhost:5173
-```
-
-Verify:
-
-- Workspace loads.
-- Clicking "开始分析" produces a report.
-- Report shows final score.
-- Report shows Next Best Action.
-- Agent timeline shows node names.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 6：提交**
 
 ```powershell
 git add backend/Dockerfile frontend/Dockerfile docker-compose.yml .env.example
 git commit -m "chore: add docker compose setup"
 ```
 
-## Task 7: Final Verification
+## Task 7：最终验证和 README
 
-**Files:**
+**文件：**
 
-- Modify: `README.md`
+- 创建 `README.md`
 
-- [ ] **Step 1: Add README**
+- [ ] **Step 1：添加 README**
 
-Create `README.md`:
+README 必须使用中文，包含：
 
-```markdown
-# CareerFit Agent
+- 项目简介。
+- 技术栈。
+- 本地运行命令。
+- 前端地址 `http://localhost:5173`。
+- 后端地址 `http://localhost:8000`。
+- Phase 1 功能列表。
 
-CareerFit Agent is a personal job-search growth workspace for computer science new graduates. It stores target jobs, resume versions, analysis reports, agent traces, and score trends.
-
-## Tech Stack
-
-- FastAPI
-- LangGraph-compatible workflow boundary
-- PostgreSQL + pgvector
-- Vue3 + TypeScript + Vite
-- Docker Compose
-
-## Run Locally
-
-```powershell
-docker compose up --build
-```
-
-Frontend:
-
-```text
-http://localhost:5173
-```
-
-Backend:
-
-```text
-http://localhost:8000
-```
-
-## Phase 1 Features
-
-- Create target job from JD text.
-- Create resume version from text.
-- Run deterministic JD-resume matching analysis.
-- Persist analysis report.
-- Show explainable score breakdown.
-- Show Next Best Action.
-- Show redacted agent trace timeline.
-- Block obvious fabricated resume claims through an integrity guard.
-```
-
-- [ ] **Step 2: Run all backend tests**
-
-Run:
+- [ ] **Step 2：运行全部后端测试**
 
 ```powershell
 cd backend
 pytest -q
 ```
 
-Expected: all backend tests pass.
-
-- [ ] **Step 3: Run all frontend tests**
-
-Run:
+- [ ] **Step 3：运行全部前端测试**
 
 ```powershell
 cd frontend
 npm test
 ```
 
-Expected: all frontend tests pass.
-
-- [ ] **Step 4: Build Docker stack**
-
-Run:
+- [ ] **Step 4：构建 Docker stack**
 
 ```powershell
 docker compose up --build
 ```
 
-Expected: backend, frontend, and postgres start successfully.
-
-- [ ] **Step 5: Commit README**
+- [ ] **Step 5：提交 README**
 
 ```powershell
 git add README.md
 git commit -m "docs: add project README"
 ```
 
-## Self-Review Checklist
+## 自检清单
 
-- [ ] The plan implements the Phase 1 trust loop from the spec.
-- [ ] Every persisted analysis has a report.
-- [ ] Every report has a score breakdown.
-- [ ] Every report has a Next Best Action.
-- [ ] Agent traces redact raw JD and resume text.
-- [ ] Scoring is deterministic and tested.
-- [ ] Integrity guard is tested.
-- [ ] Docker Compose starts all services.
-- [ ] README explains how to run the project.
+- [ ] Phase 1 信任闭环已实现。
+- [ ] 每次分析都会产生报告。
+- [ ] 每个报告都有分项评分。
+- [ ] 每个报告都有 Next Best Action。
+- [ ] Agent trace 对原始 JD 和简历文本脱敏。
+- [ ] 评分是确定性的，并有测试覆盖。
+- [ ] Integrity Guard 有测试覆盖。
+- [ ] Docker Compose 能启动所有服务。
+- [ ] README 说明如何运行项目。

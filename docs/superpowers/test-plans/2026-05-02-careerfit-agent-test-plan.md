@@ -1,133 +1,133 @@
-# CareerFit Agent Test Plan
+# CareerFit Agent 测试计划
 
-Date: 2026-05-02
+日期：2026-05-02
 
-## Affected Pages and Routes
+## 受影响页面和路由
 
-- Workspace
-- Target Job Library
-- Resume Version Library
-- Matching Analysis
-- Analysis Report
-- Evidence Explanation
-- Interview Training
-- Learning Path
-- Growth Trends
-- Agent Trace
+- 工作台
+- 目标岗位库
+- 简历版本库
+- 匹配分析页
+- 分析报告页
+- 证据解释页
+- 面试训练页
+- 学习路径页
+- 成长趋势页
+- Agent 运行轨迹页
 
-## Backend API Coverage
+## 后端 API 覆盖
 
-| API | Required Tests |
+| API | 必测场景 |
 |---|---|
-| `POST /api/jobs` | valid JD, empty JD, malformed JD, parser failure |
-| `GET /api/jobs` | empty list, populated list |
-| `GET /api/jobs/{id}` | found, not found |
-| `POST /api/resumes` | valid text resume, empty resume, low-confidence parse |
-| `GET /api/resumes/compare` | added section, removed section, changed section |
-| `POST /api/analysis` | valid job + resume, missing job, missing resume |
-| `GET /api/analysis/{task_id}` | pending, running, success, failed |
-| `GET /api/reports/{task_id}` | complete report, weak evidence report, not found |
-| `GET /api/agent-runs/{task_id}` | success nodes, failed node, redacted summaries |
-| `PATCH /api/learning/tasks/{id}` | `todo -> doing`, `doing -> done`, invalid transition |
-| `GET /api/knowledge/search` | expected hit, no hit, invalid query |
+| `POST /api/jobs` | 有效 JD、空 JD、格式不完整 JD、解析失败 |
+| `GET /api/jobs` | 空列表、有数据列表 |
+| `GET /api/jobs/{id}` | 存在、不存在 |
+| `POST /api/resumes` | 有效文本简历、空简历、低置信度解析 |
+| `GET /api/resumes/compare` | 新增段落、删除段落、修改段落 |
+| `POST /api/analysis` | 有效岗位 + 简历、岗位不存在、简历不存在 |
+| `GET /api/analysis/{task_id}` | pending、running、success、failed |
+| `GET /api/reports/{task_id}` | 完整报告、弱证据报告、不存在 |
+| `GET /api/agent-runs/{task_id}` | 成功节点、失败节点、脱敏摘要 |
+| `PATCH /api/learning/tasks/{id}` | `not_started -> doing`、`doing -> done`、非法状态流转 |
+| `GET /api/knowledge/search` | 命中预期文档、无命中、非法查询 |
 
-## Core Unit Tests
+## 核心单元测试
 
-- Score formula clamps all dimensions to 0-100.
-- Integrity risk penalty cannot make final score negative.
-- Skill level mapping returns expected numeric values.
-- Evidence chain validation rejects score items without JD evidence.
-- Evidence chain validation rejects score items without resume evidence.
-- Integrity guard blocks unsupported metrics.
-- Integrity guard blocks unsupported leadership claims.
-- Integrity guard allows safe wording improvements.
-- Resume version comparison detects added, removed, and changed bullets.
+- 评分公式把所有维度限制在 0-100。
+- 真实性风险扣分不能让最终分数变成负数。
+- 能力层级映射返回预期数值。
+- 证据链校验会拒绝没有 JD 证据的评分项。
+- 证据链校验会拒绝没有简历证据的评分项。
+- Integrity Guard 会阻止无证据指标。
+- Integrity Guard 会阻止无证据领导力描述。
+- Integrity Guard 允许安全改写。
+- 简历版本比较能识别新增、删除和修改的 bullet。
 
-## LangGraph and Agent Tests
+## LangGraph 与 Agent 测试
 
-- JD Parser Agent returns schema-valid output.
-- Resume Parser Agent returns schema-valid output.
-- RAG Retriever Agent returns typed document groups.
-- Match Scoring Agent does not call LLM for final numeric score.
-- Gap Analysis Agent emits `missing_skill`, `weak_evidence`, and `expression_gap`.
-- Integrity Guard Agent runs before Resume Optimizer output is finalized.
-- Report Composer Agent includes evidence references for every score item.
-- Workflow records `agent_runs` for every node.
-- Workflow marks task failed when a node fails after retry.
+- JD Parser Agent 返回符合 schema 的输出。
+- Resume Parser Agent 返回符合 schema 的输出。
+- RAG Retriever Agent 返回按类型分组的文档。
+- Match Scoring Agent 不使用 LLM 生成最终数字分数。
+- Gap Analysis Agent 输出 `missing_skill`、`weak_evidence`、`expression_gap`。
+- Integrity Guard Agent 在 Resume Optimizer 最终输出前运行。
+- Report Composer Agent 为每个评分项提供证据引用。
+- 工作流为每个节点记录 `agent_runs`。
+- 节点重试后仍失败时，工作流把任务标记为 failed。
 
-## RAG Evaluation
+## RAG 评估
 
-Use seed documents for:
+种子文档至少覆盖：
 
-- LLM application developer.
-- Backend developer.
-- Frontend/full-stack developer.
+- 大模型应用开发工程师。
+- 后端开发工程师。
+- 前端/全栈开发工程师。
 
-Required checks:
+必须检查：
 
-- Query `LangGraph Agent 编排` retrieves LangGraph skill standards.
-- Query `pgvector 索引` retrieves vector database standards.
-- Query `Vue3 项目经验` retrieves frontend/full-stack standards.
-- Query with no matching skill returns an empty or low-confidence result, not a fabricated source.
+- 查询 `LangGraph Agent 编排` 能召回 LangGraph 技能标准。
+- 查询 `pgvector 索引` 能召回向量数据库标准。
+- 查询 `Vue3 项目经验` 能召回前端/全栈标准。
+- 查询没有匹配技能时，返回空结果或低置信度结果，而不是编造来源。
 
-## LLM Evaluation
+## LLM 评估
 
-Use at least:
+至少使用：
 
-- 5 sample JDs.
-- 5 sample resumes.
-- 5 unsafe resume optimization examples.
+- 5 份样例 JD。
+- 5 份样例简历。
+- 5 条不安全简历优化样例。
 
-Eval criteria:
+评估标准：
 
-- Parser extracts required skills with acceptable recall.
-- Parser preserves evidence snippets.
-- Integrity guard blocks fabricated facts.
-- Report composer does not generate unsupported claims.
-- Interview questions reference actual resume projects when available.
+- Parser 能抽取必备技能，并达到可接受召回率。
+- Parser 保留证据片段。
+- Integrity Guard 阻止编造事实。
+- Report Composer 不生成无证据结论。
+- 面试题在可行时引用真实简历项目。
 
-## Frontend Tests
+## 前端测试
 
-- Workspace empty state.
-- Workspace with latest report and Next Best Action.
-- Job creation loading and error states.
-- Resume creation loading and error states.
-- Analysis timeline running state.
-- Analysis timeline failed node state.
-- Report success state.
-- Report weak evidence state.
-- Evidence detail expansion.
-- Learning task status update.
-- Agent trace redaction.
-- Mobile stacked report layout.
-- Keyboard navigation through primary actions.
+- 工作台空状态。
+- 工作台展示最新报告和 Next Best Action。
+- 创建岗位的加载和错误状态。
+- 创建简历的加载和错误状态。
+- 分析时间线运行中状态。
+- 分析时间线失败节点状态。
+- 报告成功状态。
+- 报告弱证据状态。
+- 证据详情展开。
+- 学习任务状态更新。
+- Agent trace 脱敏。
+- 移动端报告堆叠布局。
+- 主要操作支持键盘导航。
 
-## Docker Smoke Test
+## Docker 冒烟测试
 
-Run:
+运行：
 
 ```text
 docker compose up --build
 ```
 
-Verify:
+验证：
 
-- PostgreSQL starts with pgvector extension enabled.
-- Backend health check passes.
-- Frontend loads.
-- Backend can connect to database.
-- Initial migrations run.
-- Seed knowledge import succeeds.
+- PostgreSQL 启动，并启用 pgvector 扩展。
+- 后端健康检查通过。
+- 前端能打开。
+- 后端能连接数据库。
+- 初始迁移执行成功。
+- 种子知识库导入成功。
 
-## Critical Paths
+## 关键路径
 
-1. Create target job.
-2. Create resume version.
-3. Run analysis.
-4. View report.
-5. Confirm every score item has evidence.
-6. View integrity risks.
-7. Mark a learning task done.
-8. Create next resume version.
-9. Re-run analysis.
-10. View score trend.
+1. 创建目标岗位。
+2. 创建简历版本。
+3. 执行分析。
+4. 查看报告。
+5. 确认每个评分项都有证据。
+6. 查看真实性风险。
+7. 标记学习任务完成。
+8. 创建下一版简历。
+9. 再次分析。
+10. 查看分数趋势。
