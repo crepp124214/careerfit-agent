@@ -1,3 +1,4 @@
+<!-- /autoplan restore point: /c/Users/qwer/.gstack/projects/Newproject2/main-autoplan-restore-20260503-032137.md -->
 # CareerFit Agent Phase 1 实施计划
 
 > **给智能执行代理的要求：** 实施本计划时必须使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans`。执行时必须逐项更新 checklist，把完成的步骤从 `- [ ]` 改成 `- [x]`。
@@ -1223,3 +1224,533 @@ git commit -m "docs: add project README"
 - [ ] 前后端联调走通主路径；报告页所有数据来自真实后端。
 - [ ] 全栈 Docker Compose 可启动 frontend、backend、postgres。
 - [ ] README 说明两种运行方式与 Phase 1 双验收门。
+
+---
+
+# autoplan 审查报告（2026-05-03）
+
+> 本节由 `gstack:autoplan` 流水线写入，包含 Phase 1（CEO）/ Phase 2（Design）/ Phase 3（Eng）/ Phase 4（最终批准门）四个阶段的产出。CEO 模式为 **HOLD SCOPE**（CLAUDE.md 显式约束）。所有审查不修改代码，只产出决策与待确认项。
+
+## Phase 0 系统审计快照
+
+- 仓库基线：commit `2d87b46`，分支 `main`，工作树干净。
+- **代码状态：绿地。** 仅有 `CLAUDE.md`、`TODOS.md`、`docs/`，没有 `frontend/`、`backend/`、`docker-compose.yml`、`Dockerfile`。所有 T1–T13 都从 0 开始。
+- 已就位文档基线：`CLAUDE.md`、`TODOS.md`、`docs/DESIGN.md`、`docs/superpowers/specs/2026-05-02-careerfit-agent-design.md`、`docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md`、`docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md`、外部副本 `~/.gstack/projects/Newproject2/main-test-plan-2026-05-02-careerfit-agent.md`。
+- Restore point：`/c/Users/qwer/.gstack/projects/Newproject2/main-autoplan-restore-20260503-032137.md`。
+- Codex 双声可用（auth probe = AUTH_OK）。
+
+## Phase 1 — CEO 审查（HOLD SCOPE）
+
+### D1 前提门：已通过
+
+用户选择 A）锁定双门：前端完整功能网站 + 后端主路径 MVP。后续所有审查在此前提下展开，不再讨论"是否改回单门 MVP"。
+
+### 0B 既有代码地图
+
+- 既有：仅文档，无代码、无依赖、无构建产物。
+- 含义：本计划没有遗留兼容包袱，但也意味着 13 个任务全部是"从零搭建"，前端骨架（Vite + Vue Router + Pinia + Vitest）必须先到位，否则后续任何 TDD 都跑不起来。
+- 风险：T1（脚手架）一旦延迟，T2–T7 全部阻塞。HOLD SCOPE 不允许新增任务，但要求 T1 内部"先把骨架跑通"必须独立可验证（`npm run dev` + `npm test` 都通过）。
+
+### 0C 梦想态 vs 当前态（HOLD SCOPE 下的 delta）
+
+在 HOLD SCOPE 范围内，10 分版的 Phase 1 是：
+
+- 13 条路由都能渲染真实空状态，且每个页面对自己的"等待后端 X"原因有明确文案（不是统一占位）。
+- 报告页的证据展开是强对照视觉：JD 证据高亮 + 简历证据高亮，可以一眼看到匹配。
+- Agent Trace 时间线不仅有节点名，每个节点能展开到"输入摘要 / 输出摘要 / 失败原因"。
+- 后端 Integrity Guard 不仅做关键词阻断，还做"是否能从证据集合中回溯"的二次校验。
+- 评分原始因子（`raw_factors`）能在前端"调试模式"下被复现，便于自审。
+
+当前计划与 10 分版 delta：
+
+- ✅ 13 条路由 + 状态机 + `BackendNotReadyNotice`：T1+T3–T5 已覆盖。
+- ✅ 报告证据展开：T4 + DESIGN.md `EvidenceCard` 已覆盖。
+- ⚠️ 节点输入/输出摘要可能停留在"节点名 + 状态"，未显式要求展开摘要。**建议在 T11 (Agent Trace 脱敏) 内部 checklist 增加一项："对外响应包含 input_summary 与 output_summary 字段，长度受限"**。
+- ⚠️ Integrity Guard 二次校验未写明。**建议在 T9 内部增加"验证步骤 4：从证据集合中回溯 LLM 改写后的所有事实声明"**。
+- ⚠️ 调试模式复现 `raw_factors`：DESIGN.md 已留 hook，但 T8/T11 未写明。**Phase 2+ 延后即可，记录到 TODOS.md**。
+
+### 0D 模式分析（已锁 HOLD SCOPE）
+
+CLAUDE.md 明文：plan-ceo-review 必须以 HOLD SCOPE 调用。所有"扩大范围"提议本节不允许；"缩减范围"提议也不允许（双门已是用户已确认范围）。本节只做：bulletproof + 找雷 + 暴露 taste 决策。
+
+### 0E 时间深度（5–10 年视角下的 Phase 1 不可逆决策）
+
+- 数据模型（`analysis_tasks` / `analysis_reports` / `agent_runs` 的 JSON schema）：一旦写入生产数据，未来迁移成本高。**必须在 T8 落库前确认 schema_version 字段在所有 JSON 列上存在，且校验函数能拒绝缺字段的旧数据**。
+- 评分公式：一旦报告对外发布，用户对分数会建立心理基线，后续调整公式会让历史报告失去可比性。**必须把"评分公式版本号"和分数一起持久化（已在计划中），并把版本号显示在前端报告页**（T4 内部 checklist 应加一行）。
+- 隐私边界：localStorage 白名单一旦放宽（例如某个未来功能"想缓存简历摘要"），就很难收回。**T6 必须把白名单实现为 const，新增字段必须通过 PR review，不能运行时动态扩展**。
+
+### 0F HOLD SCOPE 模式确认
+
+模式 = HOLD SCOPE。后续审查不会提出"加上 PDF 解析"、"加上多用户"、"加上面试评分闭环"等扩展。这些已在 TODOS.md 的 Phase 2+ 延后区。
+
+### CEO 审查关键结论（Voice 1：Claude HOLD SCOPE）
+
+#### 五大潜在雷区
+
+1. **后端 LangGraph "兼容边界" 退化为永远不替换的本地 runner**
+   - 位置：T8/T9/T10 任务集合。
+   - 问题：`CLAUDE.md` 允许 LangGraph 先用兼容 boundary，但若不在每个 Agent 节点接口处显式声明 `def __call__(state) -> state` 的 LangGraph 节点签名，半年后会发现根本无法切换。
+   - 修复：T8 落地 Agent 接口时，每个节点必须实现 LangGraph 兼容签名；本地 runner 仅是调度器实现，节点本身就是 LangGraph node。在 T11 加一条 checklist："本地 runner 与 LangGraph 切换路径有 ADR 注释"。
+
+2. **`/api/capabilities` schema 被 hard-code，前端硬解析**
+   - 位置：T8 + T1 `availability` store。
+   - 问题：测试计划写明缺失字段 fallback `pending`，但若前端仅用 `response.capabilities.jobs.list === 'ready'` 这种点路径访问，schema 演化会破坏前端。
+   - 修复：前端 `availability` store 必须先用 `CapabilitySchema.parse(response)` 校验（zod 或自写），缺字段直接置 `pending`，未知字段允许保留但不影响。后端响应必须含 `schema_version`，前端不识别的版本一律降级为"全部 pending"。
+
+3. **SQLite ↔ PostgreSQL JSON 行为分歧未被显式护栏**
+   - 位置：T8 数据层。
+   - 问题：单测跑 SQLite，集成测试跑 PostgreSQL，但若 ORM 写入 JSON 时依赖 PostgreSQL `jsonb` 操作符，SQLite 静默通过，集成阶段才炸。
+   - 修复：T8 内部增加一条 checklist："JSON 字段访问全部走 ORM 字段层 API（不写原生 JSON 操作符）；任何 native SQL JSON 操作必须有显式 PostgreSQL-only 标记"。
+
+4. **Integrity Guard 误报阻塞合理改写**
+   - 位置：T9 服务层 + Agent 层。
+   - 问题：当前规则是"无证据指标"被阻断；但简历优化常见的合理改写（被动语态改主动语态，重新组织句子）若被规则误判为"新增事实"，会导致 LLM 输出被反复打回。
+   - 修复：Integrity Guard 必须有**白名单测试样例**："只动语序"、"专业术语对齐"、"被动改主动"等都必须通过；同时维护**黑名单测试样例**：编造数字、加入未声明项目、夸大领导规模等必须被阻断。测试计划里 T9 的"5 条不安全简历优化样例"应配套 5 条**安全改写样例**，对照测试。
+
+5. **前端 `BackendNotReadyNotice` 退化为通用占位词，失去信息价值**
+   - 位置：T2 共享组件 + T3/T5 视图调用。
+   - 问题：若所有后端缺口都用同一个 `feature="工作台" waitingFor="后端"` 的兜底文案，用户感知不到具体阻塞点，调研价值丢失。
+   - 修复：T2 在 `BackendNotReadyNotice` 上增加 `feature` 与 `waitingFor` 必填校验（运行时 props validator + 测试用例）；T3–T5 调用时必须填具体能力名（如 `feature="历史趋势" waitingFor="analyses.history 接口"`），不允许通用占位。
+
+#### 三条 taste 决策待确认（Phase 4 终批门统一摆出）
+
+- **T1 之前是否引入 UI 组件库**：候选 Reka UI / Radix Vue / 纯手写。当前 TODOS.md 标"待定"。
+- **HistoryView 图表库**：Chart.js vs ECharts。
+- **后端 SQLAlchemy 是否全异步**：影响 FastAPI 路由签名与依赖注入风格。
+
+#### 失败模式登记（Failure Modes Registry）
+
+- LLM 返回非法 JSON 连续两次：节点标记 failed，工作流标记任务 failed，前端报告页渲染 `failed` 状态而非半成品。
+- RAG 召回错域文档（如查询 LLM 工程师却返回 React 标准）：评分必须降级到"知识库证据不足"，而非沿用错文档生成结论。
+- 前端 localStorage 缓存了过期 capability 状态：`availability` store 启动时强制重新探测，不信任缓存。
+- capability 在用户操作中途从 `ready` 翻 `pending`（如后端重启）：当前视图必须立即切换到 `BackendNotReadyNotice`，已在途的请求必须可取消或忽略响应。
+- Integrity Guard 对合法改写误报：必须能用证据集合二次校验"是否所有事实都能从证据回溯"，否则阻断 + 提示用户而非自动放行。
+- Agent Trace 脱敏漏字段：原始 JD/简历文本若漏过滤，会通过 trace API 泄露。**必须有"脱敏输出 vs 原始输入"的 diff 测试**：原始内容片段不得在响应中出现。
+- 移动端键盘弹起遮挡输入框：T6/T7 必须有 480px 断点的真机或模拟器走查（不仅仅是 viewport 缩放）。
+- 浏览器禁用 localStorage：所有偏好读写走内存 fallback，不抛异常，下次刷新重置（已在测试计划中覆盖，需复核实现真的有 try/catch）。
+
+#### 错误与救援登记（Error & Rescue Registry）
+
+| 错误源 | 触发场景 | 用户感知 | 系统救援 |
+|---|---|---|---|
+| 网络 5xx / 超时 | 任意 fetch 失败 | 视图切换 `error` 态，含"重试"按钮 | 指数退避 1 次重试，仍失败 → 显式报错 |
+| 后端 4xx（参数错） | 表单提交校验通过但后端拒收 | 表单字段下方 inline error 文案 | 不重试；记录错误码以便排查 |
+| LLM 非法 JSON | Agent 节点 LLM 输出无法 parse | Agent Trace 节点 = `retry` 后 `failed` | 至多 1 次修复重试，超过则节点 failed，工作流 failed |
+| RAG 检索空 | 查询无相关文档 | 报告对应维度标"知识库证据不足" | 不编造来源；评分降级 |
+| Integrity Guard 阻断 | 简历改写有无证据事实 | 报告"简历建议"区域显示风险标签 + 文字 + 跳转证据 | 阻断 LLM 输出，要求重写或保留原文 |
+| capability 翻 pending | 后端节点重启 / 健康检查失败 | 视图立即切换 `BackendNotReadyNotice` | 无；用户感知后由用户手动刷新或自动重探 |
+| 浏览器 localStorage 不可用 | 隐身模式 / quota 满 / 拒绝访问 | 用户偏好仅本会话内有效 | 内存 fallback；console.warn；不抛未捕获异常 |
+| 浏览器 IndexedDB 失败 | 同上 | 同上 | 走 localStorage fallback |
+| 路由匹配失败 | 用户输入未知路径 | `NotFoundView` + 返回工作台按钮 | 无；纯前端处理 |
+| Docker 启动失败 | 端口冲突 / postgres 卷损坏 | README 给出排错命令 | 文档化诊断步骤；不静默降级 |
+
+### NOT in scope（确认延后到 Phase 2+）
+
+下列项已在 TODOS.md，CEO 审查再次确认 HOLD SCOPE 不动：
+
+- 真实账号、登录、注册、多租户、SSO。
+- HR 候选人筛选、导师/管理员看板。
+- PDF/DOCX 简历解析、Markdown 简历导入。
+- 后台 worker（Celery / RQ / Arq）、多模型路由、面试回答评分闭环、每周进展总结。
+- 简历/报告 PDF 导出、协作分享只读链接。
+- i18n、PWA、富文本编辑器、深度主题自定义。
+- 生产部署（K8s/灰度/蓝绿）、监控仪表盘、CI/CD 全链路、镜像签名/SBOM。
+
+### 已在文档中显式存在的支撑（avoid duplicate work）
+
+- Phase 1 验收门两套：`CLAUDE.md` 已写定（前端 Phase 1.A + 后端 Phase 1.B）。
+- 决策点清单：`TODOS.md` "决策点（不允许静默选）"。
+- 测试矩阵：`docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md` 与外部副本同步。
+- 视觉 token：`docs/DESIGN.md`。
+
+### CEO Voice 2（codex）
+
+codex 输出原文：`/c/Users/qwer/.gstack/projects/Newproject2/autoplan-runs/ceo-codex-output.txt`
+
+#### 前提验证
+
+双门前提成立的前提是：前端 Phase 1.A 必须把"后端缺失"当作一等运行时状态，而非视觉占位阶段。具体风险是：在主路径还没证明"确定性评分 + 证据链 + Integrity Guard + 可追踪"之前，前端"完整性"会漂移成 mock-product 假象。
+
+#### 五大潜在雷区
+
+1. **`Backend Phase 1.B / 确定性评分`**：若 LLM 抽取、归一化、Agent 重试影响评分输入，分数确定性会破。修复：把评分锁定为对持久化"标准化件"的版本化纯函数，LLM 输出仅作为证据输入，不能进入打分公式。
+2. **`evidence-chain 报告`**：若报告生成阶段信任早期 pipeline 创建的引用，证据链校验可被绕过。修复：每条对外展示的论断必须在**报告组装之后**对照存储的 source span 重新校验。
+3. **`Integrity Guard prompt`**：若 Guard 收到完整简历/JD 私有上下文，prompt 可能泄露或被改写禁项。修复：传入 Guard 的 payload 最小化（只传 claim/action），Guard 决策日志与 source evidence 分离。
+4. **`Frontend / capability readiness`**：若前端把路由行为硬编码到后端 readiness flag 上，schema 演化会破。修复：定义版本化 capability 契约，含 ready/pending/missing/stale 四态及其测试。
+5. **`持久化 fixture 测试`**：SQLite/Postgres 在 JSON 排序、null、数值强转、JSON path 查询上行为分歧。修复：要么 Phase 1 锁单库，要么 fixture 测试证明两者持久化的 analysis artifact 完全一致。
+
+#### 三条 taste 决策待确认（产品形态层）
+
+1. **产品调性：分析师工作台 vs 引导式向导**。当前默认是 13 条完整路由 + 多套状态机；替代是单一线性主路径流 + 二级检查视图。建议：保留 13 路由的前提是导航不掩盖 Job → Resume → Analysis → Report → Next Best Action 的主轴。
+2. **评分呈现：数字优先 vs 证据优先 vs 建议优先**。当前默认确定性数字 + 证据链；替代是先以"证据支撑的匹配区间"展示，精确数字次级显示。建议：证据优先，因为应届生会过度信任精确分数。
+3. **Agent Trace 展示密度**。当前默认 Trace 是 MVP 主路径的一部分；替代是默认显示精简 trace，原始步骤可展开。建议：默认精简，否则产品读起来像调试输出。
+
+#### codex 失败模式（合入主登记表）
+
+- LLM JSON parse 连失两次时后端没存任何 partial artifact，前端会无限 loading 而不是显式可恢复错误。
+- RAG 返回错域文档，报告引用看似合理但其实无关。
+- Resume parser 把项目误判为工作经验，膨胀资历匹配度。
+- JD 含 prompt 注入并到达 analysis / guard / next-best-action 任一阶段。
+- 确定性分数在 Agent 重试后变化，因技能别名归一化结果不一致。
+- 文本清洗后 evidence span 偏移漂移，导致引用指错句子。
+- Integrity Guard 误报 → 阻断合理改写。
+- Integrity Guard 漏报 → 放行无证据的"你已具备资格"语句。
+- 前端 localStorage 缓存了过期/损坏的 capability，遮蔽刚就绪的后端能力。
+- capability 在用户操作中途从 ready 翻 pending，丢失用户已输入内容。
+- BackendNotReadyNotice 在已完工前端路由上变成主导 UX，让 Phase 1.A 看起来像坏的。
+- Partial analysis 状态被渲染成"完整"，因为某个下游 artifact 存在了就被当作完成。
+- Agent Trace 日志写入了应当只在 evidence-bound 上下文中出现的简历敏感文本。
+- 错误态视觉测试通过但键盘恢复路径失败。
+- 响应式布局通过宽度快照但在长公司名/技能名/文件名下溢出。
+
+#### codex Dream state delta
+
+固定范围内，达到 10/10 不是加功能，而是各阶段之间更严格的"信任契约"：什么能被持久化、被打分、被引用、被守卫、被追踪、被缓存、在不完整时如何展示，都必须有更尖锐的不变式。10/10 版本必须让产品**无法被误认成 mock demo**：每条路由真实反映后端能力，每个分数可复现，每条论断有证据绑定，每个 Guard 决策可解释，每个 partial/failed 态都给出稳定的 next action。
+
+### CEO 共识表（Voice 1 vs Voice 2）
+
+| 维度 | Voice 1 (Claude HOLD SCOPE) | Voice 2 (codex HOLD SCOPE) | 合并结论 |
+|---|---|---|---|
+| 前提是否成立 | ✅ 双门合理 | ✅ 成立但有"mock 假象漂移"风险 | **合并：双门成立，但 BackendNotReadyNotice 不允许成为任何核心视图的主导 UX** |
+| 评分确定性 | 雷区 #1 间接：评分公式版本号上前端 | 雷区 #1：LLM 输出禁止进入打分公式，仅作为证据 | **合并：评分锁版本号 + LLM 严格隔离打分通道。T9 加约束："LLM 抽取产物归一化后才入打分；归一化函数版本号与分数一起持久化"** |
+| 证据链校验时机 | 未单独抓出 | 雷区 #2：组装后再校验 | **采纳 Voice 2：T10 在报告组装后插入"逐论断 vs source span"重校验步骤** |
+| Integrity Guard 输入边界 | 未单独抓出 | 雷区 #3：Guard 只接收 claim/action 最小 payload | **采纳 Voice 2：T9 Guard 接口签名限制为 minimal claim payload，禁止传完整简历/JD** |
+| LangGraph 兼容退化 | Voice 1 雷区 #1：节点必须实现 LangGraph 签名 | 未单独抓出 | **采纳 Voice 1：T8 每个 Agent 节点实现 LangGraph 兼容签名 + ADR 注释切换边界** |
+| capabilities schema 韧性 | Voice 1 雷区 #2：schema 校验 + schema_version | Voice 2 雷区 #4：版本化契约 + ready/pending/missing/stale 四态 | **合并：T1 `availability` store 用 schema 校验，含四态测试；后端 schema_version 不识别就降级全 pending** |
+| SQLite/Postgres JSON 分歧 | Voice 1 雷区 #3：禁原生 JSON 操作 | Voice 2 雷区 #5：fixture 对比测试或锁单库 | **合并：T8 禁用原生 JSON 操作符 + 集成测试用 PostgreSQL 跑 fixture 比对，SQLite 仅做单元测试**（与 TODOS.md 决策一致） |
+| Integrity Guard 误报/漏报 | Voice 1 雷区 #4：白+黑名单测试样例 | 失败模式 #7+#8：双向都要测 | **合并：T9 同时维护 5 条安全样例（必通过）+ 5 条不安全样例（必阻断）+ 5 条边界样例** |
+| BackendNotReadyNotice 退化 | Voice 1 雷区 #5：必填 props 校验 | 失败模式："变成主导 UX 让前端像坏的" | **合并：T2 强制 feature/waitingFor 必填 + T3-T5 调用必须填具体能力名；增设"主导 UX 警戒线"——若工作台或报告整页都是该组件，文案必须升级为"系统未上线"级引导切 frontend-only 模式** |
+| 失败模式：JD prompt 注入 | 未抓 | 抓到 | **采纳 Voice 2：T9 在 JD 解析、Guard 输入、Next Best Action 三处加 prompt 注入防护测试** |
+| 失败模式：技能别名归一化破坏分数稳定 | 未抓 | 抓到 | **采纳 Voice 2：T9 归一化函数版本化，重试不重新归一化，使用首轮归一化结果** |
+| 失败模式：evidence span 偏移漂移 | 未抓 | 抓到 | **采纳 Voice 2：T8 简历/JD 文本清洗后必须保留原文 + offset 映射；引用按"清洗后偏移"存储，展示时映射回原文** |
+| 失败模式：partial 被当完整 | 未抓 | 抓到 | **采纳 Voice 2：T8 任务状态机仅在所有下游 artifact 都就绪时才置 success；任一缺失即 partial 或 failed** |
+| 失败模式：Agent Trace 日志泄露 | Voice 1 提到 trace 脱敏 + diff 测试 | 重叠 | **合并：T11 trace 脱敏函数 + "原文 vs 响应"diff 单测必须覆盖** |
+| 失败模式：长字符串溢出 | 未抓 | 抓到 | **采纳 Voice 2：T7 响应式测试除 viewport 宽度外加极端字符串测试（80 字符公司名 / 30 字符技能名 / Unicode 表情）** |
+| 失败模式：错误态键盘恢复失败 | 暗示但未单列 | 抓到 | **采纳 Voice 2：T7 axe-core 之外加键盘从错误态恢复测试** |
+| 产品形态 taste：13 路由 vs 线性向导 | 未提（Voice 1 是技术 taste） | 提了 | **进入 Phase 4 终批门作为产品 taste 决策** |
+| 产品形态 taste：数字优先 vs 证据优先 | 未提 | 提了 | **进入 Phase 4 终批门** |
+| 产品形态 taste：trace 密度 | 未提 | 提了 | **进入 Phase 4 终批门** |
+| 技术 taste：UI 库 / 图表库 / SQLAlchemy 异步 | 提了 | 未提 | **进入 Phase 4 终批门** |
+
+### CEO 阶段产出汇总
+
+- 前提：✅ 双门，已 D1 确认。
+- 模式：✅ HOLD SCOPE，CLAUDE.md 强制。
+- 五大雷区：上方列出，将进入 Phase 4 终批门作为"用户挑战"项。
+- 三条 taste 决策：UI 库 / 图表库 / SQLAlchemy 异步 — 进入 Phase 4。
+- Failure Modes Registry + Error & Rescue Registry：上方表格。
+- 决策审计追加：见下方"决策审计 trail"。
+
+## Phase 2 — Design 审查
+
+> 设计审查仅做信息性输出（CLAUDE.md：plan-design-review 非强制门）。但本节有一个**必须修**项，已上升为阻塞。
+
+### Design Voice 1（Claude）
+
+#### 必须修：DESIGN.md 与 CLAUDE.md 移动端约束直接冲突
+
+- **冲突点**：
+  - `docs/DESIGN.md` 响应式表（line 540）："Mobile 480 px：报告页保证可读，Phase 1 不要求完整布局"。
+  - `docs/DESIGN.md` 已知缺口 #3（line 578）："移动端复杂布局：Phase 1 仅保证报告页 480 px 下可读，工作台高级响应留待 Phase 2"。
+  - `CLAUDE.md` 前端实现约束："完整响应式：桌面、平板、移动端三套断点都达标，移动端不再仅'保证报告可读'，工作台与所有核心页面都必须可用"。
+  - 测试计划 1440/1280/1024/768/480 五档全部要求工作台、报告、Jobs、Resumes、Settings、HistoryView 都可用。
+- **结论**：CLAUDE.md 优先（DESIGN.md 顶部已声明"当本文件与项目根目录 CLAUDE.md 冲突时，以 CLAUDE.md 为准"）。
+- **修复**：DESIGN.md 响应式表 480 px 行改为"工作台、报告、Jobs、Resumes、Settings 全部可用，单列布局，导航折叠为底部 tab"；已知缺口 #3 删除或改为"移动端键盘弹起遮挡尚未验证（T6/T7 落地时再决议）"。
+- **任务归属**：在实施前修 DESIGN.md，避免 T7 实现时按 DESIGN.md 旧值落地，验收门挂掉。
+
+#### 设计维度审查（HOLD SCOPE）
+
+| 维度 | 状态 | 备注 |
+|---|---|---|
+| 视觉系统 token 完备 | ✅ | 颜色/排印/布局/深度/形状均有，Linear 风格一致 |
+| 组件契约清晰 | ✅ | NextBestAction、ScoringOverview、EvidenceCard、SuggestionCard、IntegrityGuardBanner、AgentTrace 都已定义 |
+| 风险双通道（色 + 文字） | ✅ | DESIGN.md "Don't" 节明文禁单通道 |
+| Next Best Action 显眼位 | ✅ | 工作台首屏顶部 + 报告页头部，必有 |
+| Agent Trace 脱敏 | ✅ | "禁止在 UI 层渲染节点的原始输入/输出原文" |
+| 信息层级（hierarchy as service） | ⚠️ | 工作台首屏未明确"目标岗位 + 简历版本 + Next Best Action"三件套的视觉权重比例。建议 T3 落地时给出三件套的栅格分配（如 4:4:4 或 6:3:3） |
+| 空/加载/错误/部分数据状态 | ⚠️ | DESIGN.md 描述了 Next Best Action "无可执行行动" 状态，但其他卡片的四态视觉规范没有显式给出。建议 T2 共享组件实现时同时定义四态视觉变体（loading skeleton、empty illustration、error 文案 + 重试按钮、partial 标识） |
+| 响应式 | ❌ | 与 CLAUDE.md 冲突，见上方"必须修" |
+| 触摸目标 ≥ 44px | ✅ | 已写明 |
+| 折叠策略 | ✅ | 1024 / 768 断点的导航/Trace/证据折叠规则齐全 |
+| 颜色对比 WCAG AA | ✅（暗色主题 + 高对比 ink） | 实施时仍需 axe-core 复核 |
+| 动效 200–300ms | ✅（计划与测试明文） | DESIGN.md 未单独描述动效曲线，建议补一个 token 段（cubic-bezier(0.16, 1, 0.3, 1) 或类似） |
+| `prefers-reduced-motion` | ✅ | 测试计划要求遵守，DESIGN.md 未单独提及，建议 T6 落地时显式写入 |
+| 中文版式 | ✅ | "display 用负字距，body 用 0 字距以兼容中文" |
+
+#### 三条 Design taste 决策（与 CEO Voice 2 部分重合）
+
+1. **报告页主轴：分数优先 vs 证据优先**（与 CEO Voice 2 重合）。视觉建议：证据先呈现，分数次级；理由：应届生过度信任精确分数。
+2. **Agent Trace 默认密度**（与 CEO Voice 2 重合）。视觉建议：默认显示"节点名 + 状态 + 耗时"三列，其余字段（输入/输出摘要、错误）默认折叠；点击行展开。理由：避免"调试日志感"。
+3. **空状态插画 vs 纯文案**：当前 DESIGN.md 未指定。Phase 1 建议：纯文案 + 引导 CTA（无插画）；理由：插画需要美术资源，HOLD SCOPE 内不引入；文案设计成本低。
+
+#### Design 审查结论
+
+- 1 项必须修（DESIGN.md 移动端约束与 CLAUDE.md 冲突）。
+- 4 项建议补强（首屏栅格、四态视觉变体、动效曲线 token、prefers-reduced-motion 显式化）。
+- Design Voice 1（Claude）单声完成；本项目 Design 不强制双声（gstack 设计不要求 codex 复审），跳过 Voice 2。
+
+
+## Phase 3 — Eng 审查
+
+### Voice 1（Claude）— Eng 单声分析
+
+#### 架构风险（Top 5）
+
+1. **T1 脚手架阻塞关键路径**
+   - 问题：仓库 greenfield，只有文档；Vue3 + Vite + TS 脚手架（T1）一旦延迟或返工，T2 的共享组件 TDD、T3 的工作台、T4 的报告视图全部停滞，前端 Phase 1.A 整条链都被堵住。
+   - 修复：T1 必须在 1 个 work session 内完成并 commit，且 `npm test` 跑空跑通；T2 的第一个组件（建议 `AppButton`）作为脚手架冒烟用例，用来验证 vitest + jsdom + @vue/test-utils 链路。
+
+2. **LangGraph 节点签名漂移**
+   - 问题：CLAUDE.md 与 TODOS.md 决策点都允许"先用本地顺序 runner，后续替换 LangGraph"，但若节点签名不统一，"兼容边界"会成为永久债务，最终重写 7 个 Agent。
+   - 修复：在 T8 之前先固定 `AgentNode` 协议（`(state: GraphState) -> NodeOutput`），所有节点（Parser/RAG/Scoring/Gap/Optimizer/IntegrityGuard/ReportComposer）必须实现该协议；写一份 ADR（`docs/adr/0001-langgraph-boundary.md`）说明替换 LangGraph 的边界条件与回退路径。
+
+3. **Pydantic schema_version 与 JSON 列演进**
+   - 问题：`analysis_tasks`、`analysis_reports`、`agent_runs` 三表使用 JSON 列，schema 必将演进；但当前计划没有 schema 迁移策略，旧记录在演进后会无法反序列化。
+   - 修复：所有 JSON payload 顶层强制带 `schema_version: str`；定义读时迁移钩子 `migrate_payload(version, payload) -> latest_payload`；写测试覆盖 v1→v2 反序列化路径；DB 迁移测试在每次 schema_version 升版时跑一次。
+
+4. **Evidence span 偏移在文本清洗后失效**
+   - 问题：JD/简历输入会经过 normalize（去重换行、统一全半角、剔除控制字符），证据 span 若仅记录 normalized offset，UI 高亮会偏移；若仅记录 raw offset，二次解析会失败。
+   - 修复：`Evidence` schema 必须同时持久化 `raw_text_hash`、`normalized_text_hash`、`raw_offset(start,end)`、`normalized_offset(start,end)`、`quote_snapshot`（冷快照）；解析器输出双坐标，UI 用 raw offset，后端复算用 normalized offset。
+
+5. **`/api/capabilities` 四态契约缺失**
+   - 问题：当前 schema 只定义 `ready | pending` 两态，但实际运行时需要区分：`ready`（可用）、`pending`（任务进行中）、`missing`（后端未实现）、`stale`（schema_version 不匹配）。前端无法精细区分将退化为粗暴占位，损害 UX。
+   - 修复：capability 状态扩为四态枚举；前端 `availability` Pinia store 显式映射四态到 UI 行为（`ready` → 真实数据、`pending` → 加载占位、`missing` → BackendNotReadyNotice、`stale` → 强制刷新提示）；后端响应缺失字段必须 fallback 为 `missing`。
+
+#### 测试计划缺口（vs targets）
+
+对照 codex 列出的 10 个目标，本仓库测试计划当前覆盖：
+
+| 目标 | 当前覆盖 | 缺口 |
+|---|---|---|
+| 评分公式 property-based 测试 | 仅有 clamp/最低分 unit | 缺 monotonicity、weight 异常、维度排列扰动属性测试 |
+| 分析任务并发创建 | 无 | 全缺：同 user + 同 jobId + 同 resumeId 重复提交、并发提交去重 |
+| schema_version 迁移测试 | 无 | 全缺：v1→v2 反序列化、未知 version 回退 |
+| 前端 availability 缓存陈旧检测 | 无 | 全缺：浏览器后台 30min+ 后切回的 stale-cache 重探测试 |
+| 中途 capability 翻转 UX | 仅文字描述 | 缺组件级 + store 级测试：从 ready→pending 时 UI 立即收回功能 |
+| 长字符串视觉溢出 | 无 | 全缺：超长公司名/技能别名/JD 段落在 480/768/1024 三档的截断与省略 |
+| 错误态键盘恢复 | 仅 ARIA 描述 | 缺 e2e：Tab→Enter 重试、Esc 撤销错误 toast、focus 恢复 |
+| JD/简历 prompt injection | 无 | 全缺：JD 中嵌入"忽略以上指令"等指令性文本，验证 Parser/Guard 不被劫持 |
+| Evidence span 偏移在清洗后保留 | 无 | 全缺：raw 与 normalized 双坐标 round-trip |
+| 技能别名归一化确定性 | 无 | 全缺：大小写、标点、重复、排序扰动后输出稳定 |
+
+#### 测试层次图
+
+```text
+unit (vitest / pytest)
+├─ frontend
+│  ├─ AppButton/RiskPill/EvidenceCard 等组件契约
+│  ├─ useLocalStorageRef PII 白名单
+│  └─ availability Pinia store 四态机
+├─ backend
+│  ├─ 评分公式（property-based + 边界）
+│  ├─ Integrity Guard 黑/白名单矩阵
+│  ├─ Parser 输出 Pydantic schema 校验
+│  └─ schema_version 迁移钩子
+            ↓
+service (pytest + fakes)
+├─ AnalysisService.create_task（并发去重）
+├─ AnalysisService.run（节点编排 + retry 上限）
+├─ AgentRunner（LangGraph adapter 边界）
+└─ ReportComposer（证据链装配）
+            ↓
+integration (pytest + sqlite & postgres docker)
+├─ sqlite：单元测试 default backend
+├─ postgres：JSON 查询、UUID、时间戳行为差异覆盖
+└─ pgvector：知识库 embedding round-trip
+            ↓
+e2e (playwright + docker compose)
+├─ docker compose -f docker-compose.frontend-only.yml
+│  └─ 13 路由 + BackendNotReadyNotice + 移动端 480/768
+└─ docker compose up
+   └─ 主路径 10 步 + 模式切换 11/12 步 + 关键路径回归
+```
+
+#### T1–T13 依赖图与关键路径
+
+```text
+                                       ┌──────────────────────────┐
+                                       │        前端 Phase 1.A     │
+                                       └──────────────────────────┘
+T1 (前端脚手架 + 13 路由)
+  └─→ T2 (共享组件 TDD)
+       ├─→ T3 (工作台 + Jobs + Resumes)
+       │    └─→ T4 (分析提交 + 报告视图)
+       │         └─→ T5 (周边视图：HistoryView/VersionDiff/Learning/AgentTrace)
+       │              └─→ T6 (本地偏好 + PII 白名单)
+       │                   └─→ T7 (Frontend-only Docker + UX 抛光门)
+                                       ┌──────────────────────────┐
+                                       │        后端 Phase 1.B     │
+                                       └──────────────────────────┘
+T8 (FastAPI 骨架 + DB 模型 + capability 契约)
+  └─→ T9 (Parser + RAG + Scoring + Gap)
+       └─→ T10 (LangGraph adapter + Integrity Guard + ReportComposer)
+            └─→ T11 (Agent Trace 持久化与脱敏)
+                                       ┌──────────────────────────┐
+                                       │        全栈集成           │
+                                       └──────────────────────────┘
+T7 + T11 ──→ T12 (docker-compose.yml 全栈 + 种子知识库 + 主路径冒烟)
+              └─→ T13 (README 中文 + 关键路径回归 + 验收门 checklist)
+
+关键路径（前端串行）：T1 → T2 → T3 → T4 → T5 → T6 → T7 → T12 → T13
+关键路径（后端串行）：T8 → T9 → T10 → T11 → T12 → T13
+最长路径：max(前端, 后端) → T12 → T13
+T1 + T8 可在 work session 0 并行；T7 与 T11 必须都完成才能进入 T12。
+```
+
+#### 决策点（需在 Phase 4 由用户拍板）
+
+| # | 决策 | 默认（codex Voice 2 推荐） | 备选 | 理由 |
+|---|---|---|---|---|
+| Eng-1 | SQLAlchemy 异步 vs 同步 | 同步（Phase 1） | 全异步 | greenfield SQLite/Postgres 测试更简单；FastAPI 路由可用 sync def；T8 之前如无流式/高并发需求，避免 async 复杂度 |
+| Eng-2 | Agent trace 持久化策略 | 服务端原始快照 + 对外脱敏响应分离 | 直接嵌入 API 响应 | trace schema 演进比响应需求快，分离避免前端被迫升级；与 CLAUDE.md 隐私约束一致 |
+| Eng-3 | Evidence 偏移坐标 | 同时持久化 raw + normalized | 仅 normalized | normalized-only 会破坏审计；双坐标支持 UI 高亮 + 后端复算 |
+| Eng-4 | LangGraph 类型在 domain 层 | adapter-only（不外漏） | 服务层透传 graph state | 保留可替换性；与 CLAUDE.md "保留 LangGraph 切换边界"一致 |
+| Eng-5 | Capability 契约版本化 | 带 schema_version + 四态枚举 | 无版本化布尔 | 未来 capability 翻转和新 agent 能力都需要确定性 UX；前端必须能识别 stale 与 missing |
+| Eng-6 | 测试 DB 策略 | 双轨：单测用 SQLite，集成测试用 Postgres docker | 仅 Postgres | TODOS.md 已记录该决策；codex Voice 2 与本仓库一致；保留以便 Phase 4 最终确认 |
+
+#### 缺失的 telemetry / observability（greenfield 基线）
+
+- **后端结构化日志**：分析任务创建/执行/失败的 request_id、analysis_id、duration、retry_count、failure_node。
+- **后端 metrics**：分析任务 P50/P95 延迟、scoring clamp 触发次数、Integrity Guard 拦截次数、LLM 非法 JSON 修复重试次数。
+- **后端 trace span**（OpenTelemetry 兼容即可）：parser → RAG → scoring → agent run → persistence；每段独立 span，便于排查瓶颈。
+- **capability 契约审计日志**：每次响应的 schema_version、enabled capabilities、生成来源（直接配置 vs 任务推导）。
+- **capability 翻转计数**：会话期内从 ready 翻到 pending/missing 的次数（暗示后端不稳定）。
+- **Evidence 完整性 metric**：raw hash mismatch、normalized hash mismatch、offset validation failure 三种异常的累计计数。
+- **前端 telemetry（轻量）**：availability stale-cache 命中、错误态重试、disabled 按钮误点击；用 sendBeacon / fetch keepalive 异步上报，不阻塞渲染。
+- **Prompt-injection 检测计数**：JD/Resume 解析器与 Guard 节点检测到指令性文本时计数（不发完整原文，只发 fingerprint）。
+
+> Greenfield 阶段建议从最小集开始：结构化日志（已含 request_id）+ scoring/integrity guard metric counter + parser→agent→persistence 三段 trace span。其余在 Phase 2 引入 OpenTelemetry collector 后启用。
+
+### Voice 2（codex）— Eng 复审
+
+> 完整原文见 `~/.gstack/projects/Newproject2/autoplan-runs/eng-codex-output.txt`。下方是关键摘要。
+
+#### codex 的 5 项架构风险
+
+1. 层边界漂移（route → service → scoring → agent → RAG），契约定义滞后。
+2. Pydantic 宽松（无 `extra="forbid"`、无 strict types、无 discriminated union）。
+3. async/sync DB 混用阻塞分析任务创建。
+4. LangGraph 内部类型泄漏到 API 响应与持久化形态。
+5. Evidence span 在文本 cleanup 后失效（需 raw + normalized 双坐标 + cleanup map）。
+
+#### codex 测试缺口（10 项）
+
+property-based 评分、并发分析任务、schema_version 迁移、前端 stale cache、capability flip 中途、长字符串溢出、错误态键盘恢复、prompt injection、evidence span round-trip、skill alias 归一化。
+
+#### codex 决策点（5 项）
+
+- async 还是 sync DB → 同步
+- 持久化完整 trace 还是只存响应摘要 → 分离持久化
+- evidence offset 用 raw 还是 normalized → 都存
+- LangGraph 类型在 domain 层 → adapter-only
+- capability 契约版本化 → 是
+
+#### codex telemetry 缺失（10 项）
+
+涵盖：task creation 结构化日志、并发冲突 metric、parser→agent→persistence 三段 trace、scoring clamp/evidence 异常 metric、capability 契约审计、capability flip 计数、trace 持久化审计、evidence 完整性 metric、前端 stale-cache + 错误恢复 + disabled-click telemetry、prompt-injection counter。
+
+> codex 在 Windows sandbox 下 PowerShell `Get-Content` 多次失败（错误 1920），但 fallback 单文件读取后产出完整审查；输出可信。
+
+### Eng 共识表
+
+| # | 维度 | Voice 1（Claude） | Voice 2（codex） | 合并结论 |
+|---|---|---|---|---|
+| 1 | 架构风险 #1 | T1 脚手架阻塞关键路径 | 层边界漂移 | 两者保留：Voice 1 关注调度风险，Voice 2 关注接口契约风险，互补。先稳定 T1，并行起草 DTO/service command/agent tool 契约。 |
+| 2 | 架构风险 #2 | LangGraph 节点签名漂移 | Pydantic 宽松 | 两者保留：Voice 1 关注 Agent 抽象稳定性，Voice 2 关注 schema 严格性；T8 之前同时落地 ADR + `extra="forbid"` 全量启用。 |
+| 3 | 架构风险 #3 | schema_version 迁移钩子 | async/sync DB 混用 | 两者保留：迁移钩子归 T9；async/sync 选型归决策点（Eng-1）。 |
+| 4 | 架构风险 #4 | Evidence span 双坐标 | LangGraph 类型外漏 | 两者保留：双坐标归 T9 数据模型；类型隔离归 ADR。 |
+| 5 | 架构风险 #5 | capability 四态 | Evidence span 双坐标（与 Voice 1 #4 重叠） | 去重合并：Evidence 双坐标采纳；新增 capability 四态作为独立条目。 |
+| 6 | 测试缺口 | 10 项详表（含覆盖标注） | 10 项摘要 | 覆盖一致，Voice 1 表更细，作为权威；Voice 2 措辞作为 acceptance language。 |
+| 7 | 测试层次图 | 4 层 + 子条目 | 4 层简化 | 采用 Voice 1 详表，结构与 Voice 2 一致。 |
+| 8 | 依赖图 | 前后端双轨 + T1+T8 并行 | 单轨串行 T1→...→T13 | 采用 Voice 1 双轨：与 CLAUDE.md "前端不受后端主路径优先级束缚"一致；Voice 2 单轨忽略了双门约束。 |
+| 9 | 决策点 | 6 项（含测试 DB） | 5 项 | 6 项全采纳：codex 5 项 + 测试 DB 双轨。 |
+| 10 | telemetry 缺失 | 8 项 + greenfield 最小集建议 | 10 项 | 采用 Voice 1 列表（含最小集） + Voice 2 prompt-injection counter（已并入 Voice 1）。 |
+
+### Eng 审查结论
+
+- 5 项架构风险全部进入 TODOS.md 的"决策记录"或"Phase 1 in-scope"补丁。
+- 10 项测试缺口全部追加到 `docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md` 与 gstack 镜像测试计划。
+- 6 项决策点带入 Phase 4 最终审批门，由用户最终拍板。
+- 关键路径已识别：T1 单点失败 = 前端阻塞；T8 单点失败 = 后端阻塞；T7 + T11 双门是全栈集成入口。
+- telemetry 最小集建议：结构化日志 request_id + scoring/integrity counter + parser→agent→persistence 三段 trace span。
+
+
+## Phase 3.5 — DX 审查（跳过）
+
+判断结论：本项目是面向最终用户（应届生求职者）的应用，不是开发者工具或 SDK，不存在显著 developer-facing 表面。Phase 3.5 DX 审查跳过。
+
+跳过依据：
+- gstack `plan-devex-review` 主要校验开发者 onboarding 速度、API 文档质量、错误信息可调试性、SDK ergonomics。
+- 本项目 Phase 1 唯一开发者表面是 README 启动指南（T13 已覆盖），无 SDK / Plugin / Public API。
+- 跳过经 autoplan 4-phase 流程审查标准允许（"DX 信息性，可按工程判断跳过"）。
+- 后续若开放公共 API（Phase 2+），必须重启 DX 审查门。
+
+## Phase 4 — 最终审批门
+
+下列决策点已在 CEO/Design/Eng 三轮审查中识别，进入用户最终审批阶段。Auto-decide 仅适用于已被 codex Voice 2 与 Claude Voice 1 双声一致推荐、且不触碰用户已声明边界的决策。CLAUDE.md 硬边界（不做登录、不做 HR 端、不做多租户、不降级为 Demo）不进入审批，直接保留。
+
+### 待审批决策清单
+
+| 决策 | 默认推荐 | 类型 | 备注 |
+|---|---|---|---|
+| D1 产品形态 | 13 路由工作台 + 工作台首屏"下一步"卡片 | Taste | 与 CLAUDE.md 工作台优先一致 |
+| D2 评分展示 | 评分卡 + 证据并列 | Taste | Design 共识：避免"先看分再看证据" |
+| D3 Agent trace 密度 | 折叠摘要 + 展开看完整节点 | Taste | 平衡可信度与认知负载 |
+| D4 UI 库 | Reka UI（轻量 headless） | Taste | 仅引入需要的组件，避免设计系统冲突 |
+| D5 图表库 | ECharts | Taste | HistoryView 趋势图主力 |
+| D6 SQLAlchemy 异步/同步 | 同步 Phase 1 | Taste | codex + Claude 双声一致 |
+| D7 Agent trace 持久化 | 原始快照 + 对外脱敏分离 | Taste | 双声一致 + 与隐私约束一致 |
+| D8 Evidence 偏移坐标 | raw + normalized 双坐标 | Taste | 双声一致 |
+| D9 LangGraph 类型层级 | adapter-only | Taste | 双声一致 + 与 CLAUDE.md 切换边界一致 |
+| D10 Capability 版本化 | schema_version + 四态枚举 | Taste | 双声一致 |
+| D11 测试 DB 策略 | 双轨：SQLite 单测 + Postgres 集成 | Taste | TODOS.md 已记录 + codex 一致 |
+| D12 DESIGN.md 480px 修订 | 随 PR ship | User Challenge | DESIGN.md 与 CLAUDE.md 冲突，必须修；用户审批是否在 T7 子项中完成 |
+
+### 用户挑战（必须用户拍板，不可 auto-decide）
+
+下列项与 CLAUDE.md 硬边界、隐私约束或产品愿景直接相关，必须由用户最终决定：
+
+- **C1**：CEO Voice 1 第 5 项 — `BackendNotReadyNotice` 退化风险。是否同意把"必填 props + runtime 校验"作为 T2 强制门？
+- **C2**：CEO Voice 2 第 4 项 — Integrity Guard 误报"你已经被录用"类伪积极结论。是否同意把这类伪积极也纳入黑名单？
+- **C3**：Design 共识 — DESIGN.md 480px 与 CLAUDE.md 冲突修订时机。是否随 T1（脚手架）一起做、还是 T7（Frontend-only Docker + UX 抛光门）一起做？
+
+### 通过门后下一步
+
+用户审批后立即执行：
+
+1. 把决策写入 TODOS.md "决策点（不允许静默选）"节，每条带"选择 / 理由 / 影响 / 回滚"。
+2. 把决策落地到 `docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md` 对应 T1–T13 任务的"决策记录"区。
+3. 修复 DESIGN.md 480px（或按用户决定的时机修复）。
+4. 调用 `~/.claude/skills/gstack/bin/gstack-review-log` 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
+5. 建议用户接 `/ship`（commit 文档变更）然后启动实施 Task 1（Vue3 + Vite + TS 脚手架 + 13 路由）。
+6. 提示后续 PII 入口逻辑（T8–T11）必须跑 `gstack:cso` 安全审计。
+
+
+### Phase 4 决策审计（2026-05-03 用户审批通过）
+
+| 决策 | 选择 | 类型 | 理由 | 影响 | 回滚条件 |
+|---|---|---|---|---|---|
+| D1 产品形态 | 13 路由工作台 + 工作台首屏「下一步」卡片 | Auto-decide（用户批准） | 与 CLAUDE.md 工作台优先一致 | T1 路由表 + T3 工作台视图 | 用户研究表明工作台导航过载 |
+| D2 评分展示 | 评分卡 + 证据并列 | Auto-decide | Design 共识：先看分会损害可信度 | T4 报告视图 + DESIGN.md ScoringDimensionCard | 用户反馈"证据太多看不过来" |
+| D3 Agent trace 密度 | 折叠摘要 + 展开看完整节点 | Auto-decide | 平衡可信度与认知负载 | T5 AgentTraceView + DESIGN.md AgentTraceTimeline | 用户主动请求默认展开 |
+| D4 UI 库 | Reka UI（轻量 headless） | Auto-decide | 仅引入需要的组件，避免设计系统冲突 | T1 依赖清单 + T2 共享组件 | Reka UI 与 Vue 3 不兼容 |
+| D5 图表库 | ECharts | Auto-decide | HistoryView 趋势图主力 | T5 HistoryView | bundle 体积 > 200KB gzip |
+| D6 SQLAlchemy 异步/同步 | 同步 Phase 1 | Auto-decide | greenfield 测试更简单；T8 之前无流式/高并发需求 | T8 backend 骨架 + T9 service | Phase 1 出现需要异步流式响应的功能 |
+| D7 Agent trace 持久化 | 原始快照 + 对外脱敏分离 | Auto-decide | trace schema 演进比响应需求快 | T11 持久化 + T11 脱敏 | 隐私合规要求不持久化原始 trace |
+| D8 Evidence 偏移坐标 | raw + normalized 双坐标 | Auto-decide | 双坐标支持 UI 高亮 + 后端复算 | T9 Evidence schema | 性能基准显示双坐标存储成本 > 30% |
+| D9 LangGraph 类型层级 | adapter-only | Auto-decide | 保留可替换性 | T10 AgentRunner 边界 + ADR 0001 | LangGraph 真接入后不再需要边界 |
+| D10 Capability 版本化 | schema_version + 四态枚举 | Auto-decide | 未来 capability 翻转和新 agent 能力都需要 | T8 capability 契约 + T2 availability store | 改用纯客户端能力探测 |
+| D11 测试 DB 策略 | 双轨：SQLite 单测 + Postgres 集成 | Auto-decide | 与 TODOS.md 已记录决策一致 | 整个测试矩阵 | SQLite/Postgres 行为差异不可调和 |
+| D12 DESIGN.md 480px 修订时机 | 随 T1 脚手架同时修 | User Challenge（用户批准 A） | 早对齐五档断点避免 T3-T7 返工 | T1 commit 同时改 DESIGN.md 第 540 行 + 已知缺口 #3 | T1 阻塞超过 1 个 work session |
+| C1 BackendNotReadyNotice 必填 props | 是，作为 T2 强制门 | User Challenge（用户批准 A） | 防止退化为空白 div | T2 共享组件契约 + 测试用例 | runtime 校验在 SSR 场景下不兼容 |
+| C2 Integrity Guard 伪积极黑名单 | 是，纳入黑名单 | User Challenge（用户批准 A） | 伪积极对求职者更危险 | T10 Integrity Guard + 测试样例（5+5） | 用户反馈黑名单过严，正常乐观表达被拦截 |
+
+### autoplan 通过门后行动清单
+
+- [x] Phase 0/0.5/1/2/3/3.5/4 全部通过审查。
+- [ ] 修订 `docs/DESIGN.md` 第 540 行 + 已知缺口 #3（移到 D12 决议下，与 T1 同步执行）。
+- [ ] 把 14 项决策同步到 `TODOS.md` "决策点" 节。
+- [ ] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
+- [ ] 建议下一步：`/ship`（commit autoplan 文档批次） → 启动 T1 实施。
+- [ ] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计。
+

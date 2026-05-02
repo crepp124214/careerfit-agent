@@ -421,3 +421,31 @@ git diff --check
   - 重要变更已经过 `superpowers:requesting-code-review` 自审或 `gstack:review` 工程审查。
 - 不得回滚用户或其他工具已经产生的无关变更。
 - 一段开发分支收尾时，使用 `superpowers:finishing-a-development-branch` 决定合并、发 PR 还是丢弃，避免遗留半成品分支。
+
+## Skill routing
+
+当用户请求匹配下列关键词时，必须通过 `Skill` 工具调用对应 skill；不确定时优先调用而非自己手写流程。
+
+关键路由规则：
+
+- 产品想法 / brainstorm → `superpowers:brainstorming` 或 `gstack:office-hours`
+- 立项前六问重塑 / scope 模糊 → `gstack:office-hours`
+- 战略 / 范围审查 → `gstack:plan-ceo-review`（本项目默认 Hold Scope 模式）
+- 架构审查 → `gstack:plan-eng-review`
+- 设计系统 / 体验计划审查 → `gstack:design-consultation` 或 `gstack:plan-design-review`
+- 完整四阶段审查（CEO / Design / Eng / DX） → `gstack:autoplan`
+- bug / 错误调查 → `gstack:investigate` 或 `superpowers:systematic-debugging`
+- QA / 回归 → `gstack:qa` 或 `gstack:qa-only`
+- 代码审查 / diff 自审 → `gstack:review` 或 `superpowers:requesting-code-review`
+- 视觉打磨 → `gstack:design-review`
+- 提交 / 部署 / PR → `gstack:ship` 或 `gstack:land-and-deploy`
+- 保存进度 → `gstack:context-save`
+- 恢复上下文 → `gstack:context-restore`
+- 写计划 → `superpowers:writing-plans`
+- 执行计划 → `superpowers:subagent-driven-development` 或 `superpowers:executing-plans`
+- TDD → `superpowers:test-driven-development`
+- 完成验证 → `superpowers:verification-before-completion`
+- 分支收尾 → `superpowers:finishing-a-development-branch`
+- PII / 安全审计 → `gstack:cso`（本项目简历/JD 解析、Agent prompt、向量入库变更后必跑）
+- typecheck / lint / 死代码仪表盘 → `gstack:health`
+

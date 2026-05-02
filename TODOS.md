@@ -114,3 +114,32 @@
 - 本文件
 
 不同步即为违反 `CLAUDE.md` "实施文档实时更新" 节。
+
+### Phase 4 决策审计（2026-05-03 用户审批通过）
+
+| 决策 | 选择 | 类型 | 理由 | 影响 | 回滚条件 |
+|---|---|---|---|---|---|
+| D1 产品形态 | 13 路由工作台 + 工作台首屏「下一步」卡片 | Auto-decide（用户批准） | 与 CLAUDE.md 工作台优先一致 | T1 路由表 + T3 工作台视图 | 用户研究表明工作台导航过载 |
+| D2 评分展示 | 评分卡 + 证据并列 | Auto-decide | Design 共识：先看分会损害可信度 | T4 报告视图 + DESIGN.md ScoringDimensionCard | 用户反馈"证据太多看不过来" |
+| D3 Agent trace 密度 | 折叠摘要 + 展开看完整节点 | Auto-decide | 平衡可信度与认知负载 | T5 AgentTraceView + DESIGN.md AgentTraceTimeline | 用户主动请求默认展开 |
+| D4 UI 库 | Reka UI（轻量 headless） | Auto-decide | 仅引入需要的组件，避免设计系统冲突 | T1 依赖清单 + T2 共享组件 | Reka UI 与 Vue 3 不兼容 |
+| D5 图表库 | ECharts | Auto-decide | HistoryView 趋势图主力 | T5 HistoryView | bundle 体积 > 200KB gzip |
+| D6 SQLAlchemy 异步/同步 | 同步 Phase 1 | Auto-decide | greenfield 测试更简单；T8 之前无流式/高并发需求 | T8 backend 骨架 + T9 service | Phase 1 出现需要异步流式响应的功能 |
+| D7 Agent trace 持久化 | 原始快照 + 对外脱敏分离 | Auto-decide | trace schema 演进比响应需求快 | T11 持久化 + T11 脱敏 | 隐私合规要求不持久化原始 trace |
+| D8 Evidence 偏移坐标 | raw + normalized 双坐标 | Auto-decide | 双坐标支持 UI 高亮 + 后端复算 | T9 Evidence schema | 性能基准显示双坐标存储成本 > 30% |
+| D9 LangGraph 类型层级 | adapter-only | Auto-decide | 保留可替换性 | T10 AgentRunner 边界 + ADR 0001 | LangGraph 真接入后不再需要边界 |
+| D10 Capability 版本化 | schema_version + 四态枚举 | Auto-decide | 未来 capability 翻转和新 agent 能力都需要 | T8 capability 契约 + T2 availability store | 改用纯客户端能力探测 |
+| D11 测试 DB 策略 | 双轨：SQLite 单测 + Postgres 集成 | Auto-decide | 与 TODOS.md 已记录决策一致 | 整个测试矩阵 | SQLite/Postgres 行为差异不可调和 |
+| D12 DESIGN.md 480px 修订时机 | 随 T1 脚手架同时修 | User Challenge（用户批准 A） | 早对齐五档断点避免 T3-T7 返工 | T1 commit 同时改 DESIGN.md 第 540 行 + 已知缺口 #3 | T1 阻塞超过 1 个 work session |
+| C1 BackendNotReadyNotice 必填 props | 是，作为 T2 强制门 | User Challenge（用户批准 A） | 防止退化为空白 div | T2 共享组件契约 + 测试用例 | runtime 校验在 SSR 场景下不兼容 |
+| C2 Integrity Guard 伪积极黑名单 | 是，纳入黑名单 | User Challenge（用户批准 A） | 伪积极对求职者更危险 | T10 Integrity Guard + 测试样例（5+5） | 用户反馈黑名单过严，正常乐观表达被拦截 |
+
+### autoplan 通过门后行动清单
+
+- [x] Phase 0/0.5/1/2/3/3.5/4 全部通过审查。
+- [ ] 修订 `docs/DESIGN.md` 第 540 行 + 已知缺口 #3（移到 D12 决议下，与 T1 同步执行）。
+- [ ] 把 14 项决策同步到 `TODOS.md` "决策点" 节。
+- [ ] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
+- [ ] 建议下一步：`/ship`（commit autoplan 文档批次） → 启动 T1 实施。
+- [ ] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计。
+
