@@ -190,9 +190,15 @@ docker-compose.frontend-only.yml
 - 创建 `frontend/src/views/NotFoundView.vue`
 - 创建 `frontend/tests/routing.test.ts`
 
-- [ ] **Step 1：创建前端依赖配置**
+- [x] **Step 1：创建前端依赖配置**
 
-`package.json` 必须包含：Vue3、Vite、`@vitejs/plugin-vue`、TypeScript、Vue Router、Pinia、VueUse、Vitest、Vue Test Utils、jsdom、`@vue/test-utils`、`@types/node`、`vite-tsconfig-paths`。脚本至少包含：
+`package.json` 必须包含：
+
+- 运行时：Vue3、Vue Router、Pinia、VueUse、`reka-ui`（Phase 4 D4）、`echarts` + `vue-echarts`（Phase 4 D5，T5 趋势图主力）。
+- 构建：Vite、`@vitejs/plugin-vue`、TypeScript、`vite-tsconfig-paths`、`@types/node`。
+- 测试：Vitest、`@vue/test-utils`、jsdom、`@vitest/coverage-v8`。
+
+脚本至少包含：
 
 ```text
 npm run dev
@@ -202,14 +208,14 @@ npm test
 npm run typecheck
 ```
 
-不在本步骤选定 UI 组件库；后续按 `docs/DESIGN.md` 自行实现原子组件。
+UI 组件库已锁定为 Reka UI（headless），样式与变体走 `docs/DESIGN.md`；Reka 不提供的细分组件在 T2 自行实现。ECharts 在 T1 引入是为了固定核心依赖结构，T5 直接调用，无需后续重做 `package.json`。
 
-- [ ] **Step 2：创建 TypeScript 与 Vite 配置**
+- [x] **Step 2：创建 TypeScript 与 Vite 配置**
 
 `tsconfig.json` 开启严格模式（`strict: true`、`noUncheckedIndexedAccess: true`），路径别名 `@ -> src`。
 `vite.config.ts` 注册 `@vitejs/plugin-vue`，Vitest 环境为 `jsdom`，`coverage` 启用 v8 reporter。
 
-- [ ] **Step 3：创建路由表**
+- [x] **Step 3：创建路由表**
 
 `router/index.ts` 注册以下路由：
 
@@ -231,7 +237,7 @@ npm run typecheck
 
 每个 view 先用占位组件（写一行标题即可），保证路由可达；具体内容在后续 Task 填充。
 
-- [ ] **Step 4：先写失败的路由 smoke 测试**
+- [x] **Step 4：先写失败的路由 smoke 测试**
 
 `tests/routing.test.ts` 断言：
 
@@ -239,7 +245,7 @@ npm run typecheck
 - `/` 命中 `WorkspaceView`。
 - 未知路径命中 `NotFoundView`。
 
-- [ ] **Step 5：运行测试确认失败**
+- [x] **Step 5：运行测试确认失败**
 
 ```powershell
 cd frontend
@@ -247,11 +253,11 @@ npm install
 npm test
 ```
 
-- [ ] **Step 6：实现路由与 App shell**
+- [x] **Step 6：实现路由与 App shell**
 
 `App.vue` 使用 `<RouterView>`，外层包一个最小 `AppShell`（暂不含侧栏）。`main.ts` 装配 `createApp` + `createPinia` + `router`。
 
-- [ ] **Step 7：运行测试确认通过**
+- [x] **Step 7：运行测试确认通过**
 
 ```powershell
 cd frontend
@@ -259,11 +265,15 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 8：提交**
+- [x] **Step 8：修订 `docs/DESIGN.md`（Phase 4 D12）**
+
+把 480px 章节"Phase 1 不要求完整布局"改写为五档断点（480 / 768 / 1024 / 1280 / 1440）全覆盖，与 CLAUDE.md 前端实现约束一致。同步更新已知缺口 #3，使其不再声明 480px 仅做最小可读。修订必须与 T1 在同一个 commit 落地，避免后续 T3–T7 在错误断点假设下返工。
+
+- [x] **Step 9：提交**
 
 ```powershell
-git add frontend
-git commit -m "chore: scaffold frontend with router and skeleton views"
+git add frontend docs/DESIGN.md docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md
+git commit -m "feat: scaffold frontend with router, 13 routes and design breakpoint fix"
 ```
 
 ## Task 2：设计 token 与共享反馈 / 风险 / 行动组件
