@@ -120,6 +120,20 @@ superpowers:brainstorming
 - `Next Best Action` 是必要能力，不是可选装饰。
 - 可解释评分、证据链、Integrity Guard、Agent 运行轨迹是核心能力，不得当作后续优化。
 - 简历优化必须遵守：只允许增强表达，不允许新增事实。
+- Phase 1 的目标不是功能铺满，而是先证明一条可信主路径：
+
+```text
+创建目标岗位
+  -> 创建简历版本
+  -> 执行分析
+  -> 确定性评分
+  -> 生成证据链报告
+  -> 运行 Integrity Guard
+  -> 展示 Agent 运行轨迹
+  -> 给出 Next Best Action
+```
+
+- 如果某个功能不能增强这条主路径的可信度，默认延后到 `TODOS.md`。
 
 ## 实现约束
 
@@ -142,6 +156,111 @@ superpowers:brainstorming
   - 证据链完整性。
   - Agent Trace 脱敏。
   - Docker 启动路径。
+
+## Phase 1 验收门
+
+Phase 1 只有在以下能力全部可运行时才算完成：
+
+- 可以通过 API 创建目标岗位。
+- 可以通过 API 创建简历版本。
+- 可以选择一个岗位和一个简历版本执行分析。
+- 分析任务会持久化 `analysis_tasks`、`analysis_reports` 和 `agent_runs`。
+- 报告包含总分、分项评分、优势、缺口、简历建议、面试题、学习计划和 `Next Best Action`。
+- 每个评分项至少能追溯到 JD 证据和简历证据。
+- `Agent Trace` 对 UI 展示的原始 JD 和简历文本必须脱敏。
+- `Integrity Guard` 能阻止无证据指标和夸大职责。
+- 前端工作台可以从输入 JD/简历到展示报告跑通。
+- Docker Compose 可以启动 frontend、backend、postgres。
+
+不满足以上任意一项，不得声称 Phase 1 完成。
+
+## 隐私与安全约束
+
+- 简历、JD、Agent 输入输出都可能包含敏感信息，默认按敏感数据处理。
+- 不得在日志、控制台、前端 trace、异常详情中直接输出完整简历原文。
+- Agent trace 的 UI 展示必须使用脱敏摘要；服务端内部保存原始快照时，必须明确只用于调试和本地开发。
+- `.env`、API Key、模型 Key、数据库密码不得提交到仓库。
+- Docker 和前端构建不得暴露后端环境变量。
+- 文件上传功能未进入 Phase 1 时，不得临时加入未验证的 PDF/DOCX 解析依赖。
+
+## 评分、RAG 与 Agent 可信度约束
+
+- 最终数字分数必须由确定性评分规则计算，LLM 不得直接决定最终分数。
+- 所有评分维度必须 clamp 到 0-100。
+- 评分报告必须保存原始评分因子，便于复现和调试。
+- RAG 检索结果只能作为证据和标准来源；如果检索不到相关文档，必须标记“知识库证据不足”，不得编造来源。
+- Agent 节点输出必须通过 Pydantic schema 或等价结构校验。
+- LLM 返回非法 JSON 时，最多允许一次修复重试；仍失败则记录失败节点，不得吞掉错误。
+- Integrity Guard 必须在最终简历建议展示前运行。
+- 简历优化建议必须包含：
+  - 原始依据
+  - 优化表达
+  - 关联 JD 要求
+  - 使用的简历证据
+  - 风险等级
+
+## 后端实现约束
+
+- API route 不写业务逻辑，只做参数接收、依赖注入和响应返回。
+- Service 层负责编排用例，例如创建分析任务、运行工作流、写入报告。
+- Scoring 层只放确定性评分逻辑，不调用 LLM、不访问数据库。
+- Agent 层负责节点输入输出、prompt/fallback、trace，不直接处理 HTTP。
+- RAG 层负责种子知识、chunk、embedding、retrieval，不混入评分公式。
+- 数据库 JSON 字段必须包含 `schema_version`。
+- 测试环境优先使用 SQLite 或轻量替身；Docker 环境使用 PostgreSQL + pgvector。
+- 如果 SQLite 和 PostgreSQL 行为不一致，必须在计划中记录，并补充 PostgreSQL 集成测试或 Docker smoke test。
+
+## 前端实现约束
+
+- 第一屏必须是“个人求职工作台”，不得做营销首页。
+- 前端页面优先服务主路径：输入 JD、输入简历、开始分析、查看报告。
+- 报告必须结构化展示，避免大段 AI 生成文本堆叠。
+- `Next Best Action` 必须在报告头部或工作台显眼位置展示。
+- 风险提示不能只依赖红色，必须有文字标签。
+- 所有按钮、输入框和错误提示必须有清晰状态。
+- 移动端至少保证报告可读，不要求 Phase 1 做完整复杂移动布局。
+
+## 依赖与技术取舍
+
+- 不为小功能引入重依赖。
+- 新增依赖前必须确认：
+  - 是否是 Phase 1 主路径必需。
+  - 是否已有标准库或现有依赖可完成。
+  - 是否会增加 Docker 构建复杂度。
+- Phase 1 不引入 Celery、Redis、复杂权限库、PDF/DOCX 解析库，除非用户明确要求。
+- LangGraph 可以先通过兼容 workflow boundary 接入；如果实际实现先用本地顺序 runner，也必须保留后续替换为 LangGraph 的边界。
+
+## 验证命令基线
+
+根据本次变更范围运行对应命令：
+
+- 后端变更：
+
+```powershell
+cd backend
+pytest -q
+```
+
+- 前端变更：
+
+```powershell
+cd frontend
+npm test
+```
+
+- Docker 或环境变更：
+
+```powershell
+docker compose up --build
+```
+
+- 文档变更：
+
+```powershell
+git diff --check
+```
+
+如果命令无法运行，必须说明原因，不能把未验证内容说成已通过。
 
 ## Git 与交付
 
