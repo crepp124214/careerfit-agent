@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ name: 'EmptyState' })
+
 withDefaults(
   defineProps<{
     title?: string

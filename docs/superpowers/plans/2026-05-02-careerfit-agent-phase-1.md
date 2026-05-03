@@ -401,23 +401,23 @@ git commit -m "feat(frontend): add design tokens and shared components"
 - 实现 `frontend/src/views/ResumeDetailView.vue`
 - 创建 `frontend/tests/views/WorkspaceView.test.ts`
 
-- [ ] **Step 1：实现 API client 与 availability 探测**
+- [x] **Step 1：实现 API client 与 availability 探测**
 
 `client.ts` 实现 `requestJson<T>()`，对 404/501/网络错误统一返回 `unavailable` 标志而不是抛错，让 stores 决定渲染 `BackendNotReadyNotice` 还是 `ErrorBanner`。
 `availability.ts` 提供 `fetchBackendCapabilities()`，调用后端 `/api/capabilities`（后端未实现时返回 `unavailable`，前端按"全部能力未就绪"处理）。
 
-- [ ] **Step 2：实现 stores**
+- [x] **Step 2：实现 stores**
 
 `stores/availability.ts`：Pinia store，记录每个能力（jobs / resumes / analysis / reports / agentRuns / learning）的状态：`unknown | ready | unavailable`。
 `stores/jobs.ts` 与 `stores/resumes.ts`：对应的 CRUD 调用与缓存；后端 `unavailable` 时 store 不写入任何 mock 数据，组件层自行渲染 `BackendNotReadyNotice`。
 
-- [ ] **Step 3：实现 layout 组件**
+- [x] **Step 3：实现 layout 组件**
 
 `AppShell.vue`：左侧 `SideNav`、底部 `StatusBar`、主内容 `<RouterView>` 区。
 `SideNav.vue`：列出 工作台 / 岗位 / 简历 / 历史 / 对比 / 学习 / 设置 7 个入口，未就绪能力以 ink-subtle 文字 + 锁形图标显示，但**仍可点击进入**对应页面查看 `BackendNotReadyNotice`。
 `StatusBar.vue`：底部一行展示当前后端连通性（"已连接 / 部分未上线 / 后端未连接"）+ 当前会话脱敏注记。
 
-- [ ] **Step 4：先写失败的 WorkspaceView 测试**
+- [x] **Step 4：先写失败的 WorkspaceView 测试**
 
 `tests/views/WorkspaceView.test.ts` 断言：
 
@@ -426,24 +426,24 @@ git commit -m "feat(frontend): add design tokens and shared components"
 - 后端 `ready` 但列表为空时显示 `EmptyState` + "新建岗位 / 新建简历" 按钮。
 - 视图根元素带有 `role="main"` 与可见标题"个人求职成长工作台"。
 
-- [ ] **Step 5：运行测试确认失败**
+- [x] **Step 5：运行测试确认失败**
 
 ```powershell
 cd frontend
 npm test
 ```
 
-- [ ] **Step 6：实现工作台首屏**
+- [x] **Step 6：实现工作台首屏**
 
 `WorkspaceView.vue`：顶部 `NextBestActionCallout`，下方两栏分别为 `JobSelector` 与 `ResumeSelector`，再下方 `AnalysisLauncher`。每个组件按 store 状态渲染 `BackendNotReadyNotice` / `LoadingCard` / `EmptyState` / 真实数据 四态之一。
 
-- [ ] **Step 7：实现岗位与简历管理**
+- [x] **Step 7：实现岗位与简历管理**
 
 `JobsView.vue`：列表 + "新建岗位" 按钮 + 表单 Modal；后端未就绪时整个表单 disabled 并显示 `BackendNotReadyNotice`。
 `JobDetailView.vue`：详情 + 解析摘要 + 相关分析任务列表；后端未就绪时显示 notice。
 `ResumesView.vue` + `ResumeDetailView.vue`：同上结构。
 
-- [ ] **Step 8：运行测试确认通过**
+- [x] **Step 8：运行测试确认通过**
 
 ```powershell
 cd frontend
