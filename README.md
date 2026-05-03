@@ -1,6 +1,6 @@
 # CareerFit Agent
 
-计算机应届生个人求职成长工作台。通过目标岗位分析、简历匹配评分、证据链报告和能力缺口识别，帮助求职者诚实优化简历、制定学习计划。
+计算机应届生个人求职成长工作台。通过目标岗位分析、简历匹配评分、证据链报告、能力缺口识别、学习任务、历史趋势和简历版本对比，帮助求职者诚实优化简历并形成持续成长闭环。
 
 ## 项目边界
 
@@ -17,6 +17,18 @@
 | 后端 | FastAPI + Pydantic + SQLAlchemy + PostgreSQL + pgvector |
 | 测试 | Vitest（前端）、pytest（后端） |
 | 容器 | Docker Compose（multi-stage builds） |
+
+## 当前能力
+
+- **目标岗位与简历版本管理**：创建岗位 JD、创建简历版本，并保留结构化画像。
+- **匹配分析主流程**：选择岗位和简历后执行分析，生成确定性评分、证据链报告和 Agent trace。
+- **可信评分**：最终数字分数由后端规则计算，LLM 不直接决定分数。
+- **Integrity Guard**：简历建议展示前会检查无证据指标和夸大表达。
+- **Next Best Action**：工作台和报告页展示下一步行动建议。
+- **学习任务闭环**：从报告缺口、学习计划和下一步行动生成学习任务，并支持状态更新。
+- **历史趋势**：从真实分析报告派生历史分数、缺口数量和报告快照。
+- **版本对比**：对两个简历版本做确定性行级 diff，并展示可选分数上下文。
+- **多模型后端代理**：支持 OpenAI-compatible 大模型 API，用于增强生成型建议，默认关闭。
 
 ## 大模型后端代理
 
@@ -59,6 +71,19 @@ CAREERFIT_LLM_API_STYLE=chat_completions
 
 其他国内模型服务如果提供 OpenAI-compatible `/chat/completions`，通常只需要替换 `CAREERFIT_LLM_BASE_URL` 和 `CAREERFIT_LLM_MODEL`。不要把真实 `.env`、API Key 或模型 Key 提交到仓库。
 
+Docker 全栈模式会从本机环境读取这些变量并传给 backend：
+
+```powershell
+$env:CAREERFIT_LLM_ENABLED="true"
+$env:CAREERFIT_LLM_BASE_URL="https://api.deepseek.com/v1"
+$env:CAREERFIT_LLM_API_KEY="你的_key"
+$env:CAREERFIT_LLM_MODEL="deepseek-chat"
+$env:CAREERFIT_LLM_API_STYLE="chat_completions"
+docker compose up --build
+```
+
+如果大模型服务不可用、超时或返回非法 JSON，后端会自动回退到本地生成逻辑，分析任务仍应成功。
+
 ## 运行方式
 
 ### 方式一：仅前端（无需后端）
@@ -73,7 +98,7 @@ docker compose -f docker-compose.frontend-only.yml up --build
 
 ### 方式二：全栈（推荐）
 
-可信主路径端到端可用，包括岗位创建、简历匹配分析、确定性评分、证据链报告、Integrity Guard 和 Agent 运行轨迹。
+可信主路径端到端可用，包括岗位创建、简历匹配分析、确定性评分、证据链报告、Integrity Guard、Agent 运行轨迹、学习任务、历史趋势、版本对比和可选大模型代理。
 
 ```bash
 docker compose up --build
@@ -86,7 +111,24 @@ docker compose up --build
 | API 文档 | http://localhost:8000/docs |
 | PostgreSQL | localhost:5432 |
 
-## Phase 1 验收门
+## API 速览
+
+| 能力 | API |
+|---|---|
+| 健康检查 | `GET /health` |
+| 能力状态 | `GET /api/capabilities` |
+| 岗位 | `POST /api/jobs`、`GET /api/jobs`、`GET /api/jobs/{id}` |
+| 简历 | `POST /api/resumes`、`GET /api/resumes`、`GET /api/resumes/{id}` |
+| 版本对比 | `GET /api/resumes/compare?from_id=&to_id=` |
+| 分析任务 | `POST /api/analysis` |
+| 报告 | `GET /api/reports/{task_id}` |
+| 历史趋势 | `GET /api/reports/history` |
+| Agent trace | `GET /api/agent-runs/{task_id}` |
+| 学习任务 | `GET /api/learning/tasks`、`POST /api/learning/tasks/generate`、`PATCH /api/learning/tasks/{id}` |
+
+## 阶段状态
+
+### Phase 1：可信主路径与完整前端
 
 ### 前端 Phase 1.A
 
@@ -108,6 +150,28 @@ docker compose up --build
 - Agent Trace 脱敏：原始 JD/简历文本在 API 响应中为 `[redacted]`
 - `/api/capabilities` 返回当前已上线能力
 
+### Phase 2A：学习任务闭环
+
+- 新增 `learning_tasks` 持久化模型。
+- 从分析报告的 `learning_plan`、`gaps` 和 `next_best_action` 幂等生成任务。
+- 支持学习任务状态：`not_started`、`doing`、`done`、`paused`。
+- 工作台和报告页的 Next Best Action 可进入学习任务页。
+
+### Phase 2B：历史趋势与版本对比
+
+- `GET /api/reports/history` 从真实报告派生历史趋势。
+- `GET /api/resumes/compare` 对两个简历版本生成确定性行级 diff。
+- `/history` 和 `/diff` 页面从占位升级为真实数据状态机。
+- 前端不把 diff 文本、简历原文或 JD 原文写入 localStorage / IndexedDB。
+
+### Phase 2C：多模型后端代理
+
+- 新增后端 LLM adapter，支持 `chat_completions` 和 `responses`。
+- API Key 只通过后端环境变量读取，不下发前端。
+- LLM 只增强生成型节点，不改变确定性评分。
+- Provider 失败、超时或非法 JSON 时回退本地 fallback。
+- Agent trace 不保存 API Key、prompt 原文、完整 JD 或完整简历。
+
 ## 项目结构
 
 ```text
@@ -122,8 +186,11 @@ docker compose up --build
 │   └── Dockerfile
 ├── backend/           # FastAPI 后端
 │   ├── app/
+│   │   ├── agents/    # Agent workflow 和节点
 │   │   ├── api/routes/
-│   │   ├── models/
+│   │   ├── db/        # SQLAlchemy models/session
+│   │   ├── llm/       # 多模型后端代理
+│   │   ├── schemas/
 │   │   ├── services/
 │   │   └── main.py
 │   ├── tests/
