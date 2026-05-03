@@ -1135,6 +1135,16 @@ docker compose up --build
 - Agent Trace 脱敏确认：所有 input_snapshot 中 `raw_jd`/`raw_resume` 均为 `"[redacted]"`。
 - 前端 HTML 正常返回，title 为 "CareerFit Agent"。
 
+2026-05-03 继续执行记录（第三轮 — 真实报告页联调修复）：
+
+- 已补充 `frontend/.dockerignore` 与 `backend/.dockerignore`，避免 Docker build context 带入 `node_modules` / `dist` / 缓存文件。
+- 已修复 Agent Trace 对外快照中间态 evidence 泄漏原文的问题；API 冒烟确认 `traceContainsRawText = false`。
+- 已修复报告页前端适配真实后端 snake_case 报告与 agent-runs 响应；直达报告页时由 `AppShell` 触发 capabilities probe。
+- 已修复生产页无效 favicon 请求造成的 404 控制台错误。
+- 已修复 frontend 容器 healthcheck 使用 `localhost` 连接失败，改为 `127.0.0.1`。
+- 已验证：`docker compose ps` 显示 postgres、backend、frontend 均为 healthy；`/health`、`/api/capabilities`、创建岗位、创建简历、执行分析、读取报告、读取 Agent runs 全部成功。
+- 已用 Playwright 打开 `http://localhost:5173/reports/6`，报告页渲染总分、Next Best Action、评分明细、简历建议和 Agent 运行轨迹；控制台 0 error / 0 warning；Agent Trace 区域不包含原始 JD/简历文本。
+
 逐项验证：
 
 - [x] 工作台从打开 / 创建岗位 / 创建简历 / 启动分析 / 看报告 端到端可走通。
@@ -1147,7 +1157,7 @@ docker compose up --build
 
 可选：用 Playwright 做一条 happy-path 端到端 smoke。如果引入需在 `frontend/package.json` 增加 dev 依赖；不强制。
 
-2026-05-03：通过 curl 验证了完整的主路径 API（create job → create resume → create analysis → get report → get agent-runs），所有节点 success，脱敏正确。未引入 Playwright。
+2026-05-03：通过 curl 验证了完整的主路径 API（create job → create resume → create analysis → get report → get agent-runs），所有节点 success，脱敏正确。随后用 Playwright 做报告页 smoke，未引入 Playwright 依赖或测试文件。
 
 - [x] **Step 6：提交**
 

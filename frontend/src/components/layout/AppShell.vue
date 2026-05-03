@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { useAvailabilityStore } from '@/stores/availability'
 import SideNav from './SideNav.vue'
 import MobileNav from './MobileNav.vue'
 import StatusBar from './StatusBar.vue'
+
+const availability = useAvailabilityStore()
+
+onMounted(() => {
+  availability.probe()
+})
 </script>
 
 <template>
