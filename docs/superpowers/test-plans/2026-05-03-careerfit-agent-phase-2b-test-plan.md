@@ -149,4 +149,3 @@ docker compose up --build
 - 浏览器 console 不应输出 diff 文本或原始简历。
 - 后端异常响应不得包含简历原文。
 - 如果实现过程中触碰简历/JD 解析、Agent prompt 装配或向量入库，必须补跑 `gstack:cso` 或记录本地等价安全审计。
-

@@ -128,4 +128,3 @@ Store 不持久化响应数据到 localStorage / IndexedDB。
 - 后端历史趋势和版本对比 API 均有测试覆盖。
 - 前端两个页面均有状态机与交互测试覆盖。
 - 全量后端测试、前端测试、typecheck、build 通过。
-
