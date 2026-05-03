@@ -1,0 +1,110 @@
+/*
+ * CareerFit Agent — 基础样式重置与默认排版
+ *
+ * 依赖：./tokens.css 必须先于本文件加载。
+ *
+ * 范围：
+ *   - 现代浏览器 reset（盒模型、margin、字体继承）。
+ *   - 暗色 canvas 默认背景 + 主文字 ink。
+ *   - 默认字体栈（Inter + 中文降级 + JetBrains Mono）。
+ *   - 链接、表单、图片基础态。
+ *
+ * 不包含：组件级样式、a11y 强化（见 a11y.css）、组件 token。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  line-height: var(--font-body-line);
+  letter-spacing: var(--font-body-letter);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  min-width: 320px;
+}
+
+#app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled,
+[disabled] {
+  cursor: not-allowed;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-mono-size);
+  line-height: var(--font-mono-line);
+}
