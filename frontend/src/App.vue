@@ -14,53 +14,39 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
-:root {
-  color-scheme: dark;
-  font-family:
-    Inter,
-    'PingFang SC',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  background-color: #010102;
-  color: #f7f8f8;
-}
-
-body {
-  margin: 0;
-}
-
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
 }
 
 .app-shell__header {
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(247, 248, 248, 0.08);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-hairline);
 }
 
 .app-shell__brand {
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: var(--font-card-title-weight);
+  letter-spacing: var(--font-eyebrow-letter);
 }
 
 .app-shell__main {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-lg);
 }
 
 .view-placeholder h1 {
-  margin: 0 0 12px;
-  font-size: 24px;
-  font-weight: 600;
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-headline-size);
+  font-weight: var(--font-headline-weight);
+  line-height: var(--font-headline-line);
+  letter-spacing: var(--font-headline-letter);
 }
 
 .view-placeholder p {
-  margin: 4px 0;
-  color: rgba(247, 248, 248, 0.72);
+  margin: var(--space-xxs) 0;
+  color: var(--color-ink-muted);
 }
 </style>

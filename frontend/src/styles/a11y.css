@@ -1,0 +1,67 @@
+/*
+ * CareerFit Agent — 无障碍样式
+ *
+ * 依赖：./tokens.css。
+ *
+ * 范围：
+ *   - 键盘 focus-visible 描边（lavender focus ring，2px + 2px offset）。
+ *   - prefers-reduced-motion：关闭过渡与动画。
+ *   - forced-colors 模式：让颜色继承系统值，不依赖语义色。
+ *   - .sr-only：屏幕阅读器可见 / 视觉隐藏。
+ *
+ * 风险信息双通道（颜色 + 文字）由组件层强制，本文件不放语义。
+ */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --color-primary: CanvasText;
+    --color-primary-focus: Highlight;
+    --color-ink: CanvasText;
+    --color-ink-muted: CanvasText;
+    --color-ink-subtle: GrayText;
+    --color-canvas: Canvas;
+    --color-surface-1: Canvas;
+    --color-surface-2: Canvas;
+    --color-hairline: GrayText;
+    --color-risk-high: CanvasText;
+    --color-risk-medium: CanvasText;
+    --color-risk-low: CanvasText;
+  }
+
+  *:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -300,7 +300,7 @@ git commit -m "feat: scaffold frontend with router, 13 routes and design breakpo
 - 创建 `frontend/tests/components/BackendNotReadyNotice.test.ts`
 - 创建 `frontend/tests/components/NextBestActionCallout.test.ts`
 
-- [ ] **Step 1：把 docs/DESIGN.md 的 token 落到 tokens.css**
+- [x] **Step 1：把 docs/DESIGN.md 的 token 落到 tokens.css**
 
 把 `docs/DESIGN.md` frontmatter 的 colors / typography / rounded / spacing 节翻译成 CSS 自定义属性，例如：
 
@@ -319,7 +319,7 @@ git commit -m "feat: scaffold frontend with router, 13 routes and design breakpo
 
 `base.css` 重置 + 默认字体（Inter + 系统中文降级栈）。`a11y.css` 提供 focus-visible 描边、`prefers-reduced-motion` 适配、对比度强化样式。
 
-- [ ] **Step 2：先写失败的 RiskPill 测试**
+- [x] **Step 2：先写失败的 RiskPill 测试**
 
 `RiskPill.test.ts` 断言：
 
@@ -327,7 +327,7 @@ git commit -m "feat: scaffold frontend with router, 13 routes and design breakpo
 - 必须渲染 `aria-label` 与可见文字（"高风险" / "需关注" / "通过"）；**只有颜色没有文字会失败测试**。
 - 文字 fallback：未传入 `label` 时使用约定中文标签。
 
-- [ ] **Step 3：先写失败的 BackendNotReadyNotice 测试**
+- [x] **Step 3：先写失败的 BackendNotReadyNotice 测试**
 
 `BackendNotReadyNotice.test.ts` 断言：
 
@@ -336,7 +336,7 @@ git commit -m "feat: scaffold frontend with router, 13 routes and design breakpo
 - 不允许渲染任何 mock 数据样本（断言：组件 render 输出中不出现"示例""sample""demo"等字样，以及任何看似真实的数字/分数）。
 - 必须含 `role="status"` 或 `role="alert"` 之一。
 
-- [ ] **Step 4：先写失败的 NextBestActionCallout 测试**
+- [x] **Step 4：先写失败的 NextBestActionCallout 测试**
 
 `NextBestActionCallout.test.ts` 断言：
 
@@ -346,22 +346,22 @@ git commit -m "feat: scaffold frontend with router, 13 routes and design breakpo
 - `empty`：渲染 ink-subtle "当前没有推荐行动" 文案，无按钮。
 - headline 文案超过 24 字符必须被截断或换行处理，不得溢出。
 
-- [ ] **Step 5：运行测试确认失败**
+- [x] **Step 5：运行测试确认失败**
 
 ```powershell
 cd frontend
 npm test
 ```
 
-- [ ] **Step 6：实现共享原子组件**
+- [x] **Step 6：实现共享原子组件**
 
 按 `docs/DESIGN.md` 组件契约实现 `AppButton`/`AppInput`/`AppTextarea`/`StatusBadge`/`Modal`，全部状态齐全（默认/hover/focus/active/disabled/loading/error）。
 
-- [ ] **Step 7：实现反馈与风险组件**
+- [x] **Step 7：实现反馈与风险组件**
 
 按测试断言实现 `EmptyState`/`LoadingCard`/`ErrorBanner`/`BackendNotReadyNotice`/`SkeletonBlock`/`RiskPill`/`IntegrityGuardBanner`/`NextBestActionCallout`。
 
-- [ ] **Step 8：运行测试确认通过**
+- [x] **Step 8：运行测试确认通过**
 
 ```powershell
 cd frontend
