@@ -369,7 +369,7 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 9：提交**
+- [x] **Step 9：提交**
 
 ```powershell
 git add frontend/src/styles frontend/src/components frontend/tests/components
@@ -718,11 +718,11 @@ git commit -m "chore: add frontend dockerfile and frontend-only compose; complet
 - 创建 `backend/app/db/models.py`
 - 创建 `backend/tests/conftest.py`
 
-- [ ] **Step 1：创建后端依赖配置**
+- [x] **Step 1：创建后端依赖配置**
 
 `backend/pyproject.toml` 必须包含 FastAPI、uvicorn、Pydantic、SQLAlchemy、psycopg、pgvector、LangGraph，以及 dev 依赖 pytest、httpx、ruff。配置 `setuptools` build backend，并让 pytest 的 `pythonpath` 指向当前目录。
 
-- [ ] **Step 2：创建配置模块**
+- [x] **Step 2：创建配置模块**
 
 在 `backend/app/core/config.py` 中定义 `Settings`，至少包含：
 
@@ -734,15 +734,15 @@ environment = "development"
 
 使用 `pydantic-settings` 和 `CAREERFIT_` 环境变量前缀。
 
-- [ ] **Step 3：创建数据库 session**
+- [x] **Step 3：创建数据库 session**
 
 在 `backend/app/db/session.py` 中创建 SQLAlchemy engine、`SessionLocal` 和 `get_db()` 依赖。
 
-- [ ] **Step 4：创建 Declarative Base**
+- [x] **Step 4：创建 Declarative Base**
 
 在 `backend/app/db/base.py` 中定义 `Base(DeclarativeBase)`。
 
-- [ ] **Step 5：创建初始模型**
+- [x] **Step 5：创建初始模型**
 
 在 `backend/app/db/models.py` 中创建：
 
@@ -755,15 +755,15 @@ environment = "development"
 
 JSON 字段使用 SQLAlchemy 通用 `JSON` 类型，方便 SQLite 测试和 PostgreSQL 运行都能工作。
 
-- [ ] **Step 6：创建 FastAPI app**
+- [x] **Step 6：创建 FastAPI app**
 
 在 `backend/app/main.py` 中实现 `create_app()`，启动时调用 `Base.metadata.create_all(bind=engine)`，并提供 `/health` 与 `/api/capabilities`（后者返回当前已上线能力名单，供前端 availability store 消费）。
 
-- [ ] **Step 7：创建测试 fixture**
+- [x] **Step 7：创建测试 fixture**
 
 `backend/tests/conftest.py` 使用内存 SQLite，覆盖 `get_db`，返回 `TestClient`。
 
-- [ ] **Step 8：运行骨架测试**
+- [x] **Step 8：运行骨架测试**
 
 ```powershell
 cd backend
@@ -773,7 +773,7 @@ pytest -q
 
 预期：没有测试或测试通过。
 
-- [ ] **Step 9：提交**
+- [x] **Step 9：提交**
 
 ```powershell
 git add backend
@@ -1763,4 +1763,3 @@ property-based 评分、并发分析任务、schema_version 迁移、前端 stal
 - [ ] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
 - [ ] 建议下一步：`/ship`（commit autoplan 文档批次） → 启动 T1 实施。
 - [ ] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计。
-
