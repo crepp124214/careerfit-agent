@@ -884,7 +884,7 @@ git commit -m "feat: add job and resume APIs"
 - 创建 `backend/tests/test_scoring.py`
 - 创建 `backend/tests/test_integrity_guard.py`
 
-- [ ] **Step 1：先写失败的评分测试**
+- [x] **Step 1：先写失败的评分测试**
 
 测试 `score_match(jd_profile, resume_profile)`：
 
@@ -894,7 +894,7 @@ git commit -m "feat: add job and resume APIs"
 - 每个评分项包含 JD evidence。
 - 空输入时最终分数为 0。
 
-- [ ] **Step 2：先写失败的 Integrity Guard 测试**
+- [x] **Step 2：先写失败的 Integrity Guard 测试**
 
 测试 `assess_integrity_risk(suggestion, resume_text)`：
 
@@ -902,7 +902,7 @@ git commit -m "feat: add job and resume APIs"
 - 无证据"主导/生产级/架构设计"触发 `unsupported_leadership_claim`。
 - 安全改写返回 `risk_level = low`。
 
-- [ ] **Step 3：运行测试确认失败**
+- [x] **Step 3：运行测试确认失败**
 
 ```powershell
 cd backend
@@ -911,7 +911,7 @@ pytest tests/test_scoring.py tests/test_integrity_guard.py -q
 
 预期：模块不存在导致失败。
 
-- [ ] **Step 4：实现 rubric**
+- [x] **Step 4：实现 rubric**
 
 `rubric.py` 定义能力层级分数：
 
@@ -925,7 +925,7 @@ deep_experience -> 1.0
 
 并提供 `clamp_score(value)`，把分数限制在 0-100。
 
-- [ ] **Step 5：实现 evidence 和 Integrity Guard**
+- [x] **Step 5：实现 evidence 和 Integrity Guard**
 
 `evidence.py` 提供：
 
@@ -934,7 +934,7 @@ deep_experience -> 1.0
 
 需要识别百分比、倍数、ms 指标，以及"主导""负责架构""生产级"等领导力或生产化表述。
 
-- [ ] **Step 6：实现确定性评分**
+- [x] **Step 6：实现确定性评分**
 
 `rules.py` 提供 `score_match()`。最终分数使用固定权重：
 
@@ -949,14 +949,14 @@ integrity_risk_penalty * 0.05
 
 LLM 不参与数字计算。
 
-- [ ] **Step 7：运行测试确认通过**
+- [x] **Step 7：运行测试确认通过**
 
 ```powershell
 cd backend
 pytest tests/test_scoring.py tests/test_integrity_guard.py -q
 ```
 
-- [ ] **Step 8：提交**
+- [x] **Step 8：提交**
 
 ```powershell
 git add backend/app/scoring backend/tests/test_scoring.py backend/tests/test_integrity_guard.py
