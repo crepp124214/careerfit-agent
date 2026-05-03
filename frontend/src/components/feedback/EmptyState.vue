@@ -89,4 +89,22 @@ const emit = defineEmits<{
   background-color: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
+
+.empty-state__action:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .empty-state {
+    padding: var(--space-xl);
+    align-items: center;
+    text-align: center;
+  }
+
+  .empty-state__action {
+    padding: 12px 18px;
+    min-height: 44px;
+    width: 100%;
+  }
+}
 </style>

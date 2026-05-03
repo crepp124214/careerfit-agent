@@ -146,6 +146,11 @@ function formatDuration(ms: number) {
   display: flex;
   flex-direction: column;
   gap: var(--space-xxs);
+  transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.agent-trace__row:hover {
+  border-color: var(--color-hairline-strong);
 }
 
 .agent-trace__row-header {

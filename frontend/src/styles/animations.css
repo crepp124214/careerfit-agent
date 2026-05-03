@@ -8,7 +8,7 @@
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -16,8 +16,23 @@
   }
 }
 
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-in {
   animation: fade-in-up var(--motion-duration-slow) var(--motion-easing-emphasized) both;
+}
+
+.animate-in-scale {
+  animation: fade-in-scale var(--motion-duration-base) var(--motion-easing-emphasized) both;
 }
 
 .animate-in-stagger-1 {

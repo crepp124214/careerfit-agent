@@ -67,12 +67,11 @@ const emit = defineEmits<{
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   min-height: 200px;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+  transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .job-selector:hover {
-  box-shadow: var(--shadow-md);
+  border-color: var(--color-hairline-strong);
 }
 
 .job-selector__title {
@@ -105,6 +104,10 @@ const emit = defineEmits<{
 
 .job-selector__item:hover {
   background-color: var(--color-surface-2);
+}
+
+.job-selector__item:active {
+  transform: scale(0.99);
 }
 
 .job-selector__item--selected {

@@ -43,6 +43,11 @@ defineProps<{
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.dimension-card:hover {
+  border-color: var(--color-hairline-strong);
 }
 
 .dimension-card__header {

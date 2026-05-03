@@ -213,8 +213,27 @@ function onAction() {
   border-color: var(--color-primary-hover);
 }
 
+.next-best-action__cta:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .next-best-action__cta:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (max-width: 768px) {
+  .next-best-action {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .next-best-action__headline {
+    font-size: var(--font-card-title-size);
+  }
+
+  .next-best-action__cta {
+    padding: 12px 18px;
+    min-height: 44px;
+  }
 }
 </style>

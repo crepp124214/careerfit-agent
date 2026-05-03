@@ -10,6 +10,7 @@ import LearningTasksView from '@/views/LearningTasksView.vue'
 import AgentTraceView from '@/views/AgentTraceView.vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { fetchLearningTasks } from '@/api/learning'
+import { fetchReportHistory } from '@/api/reports'
 
 vi.mock('@/api/agentRuns', () => ({
   fetchAgentRun: vi.fn(),
@@ -17,6 +18,12 @@ vi.mock('@/api/agentRuns', () => ({
 
 vi.mock('@/api/reports', () => ({
   fetchReport: vi.fn(),
+  fetchReportHistory: vi.fn().mockResolvedValue({ ok: true, data: { schemaVersion: '1', items: [] } }),
+}))
+
+vi.mock('@/api/resumes', () => ({
+  fetchResumes: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+  compareResumes: vi.fn(),
 }))
 
 vi.mock('@/api/learning', () => ({
@@ -52,6 +59,10 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
+    vi.mocked(fetchReportHistory).mockResolvedValue({
+      ok: true,
+      data: { schemaVersion: '1', items: [] },
+    })
     vi.mocked(fetchLearningTasks).mockResolvedValue({ ok: true, data: [] })
   })
 
@@ -67,14 +78,14 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
       expect(notice.text()).toContain('reports 历史聚合接口')
     })
 
-    it('reports ready 时渲染图表占位', async () => {
+    it('reports ready 时渲染历史趋势视图', async () => {
       const { wrapper, pinia } = await mountAtPath('/history', HistoryView)
       const availability = useAvailabilityStore(pinia)
       availability.setCapability('reports', 'ready')
       await nextTick()
       await flushPromises()
       expect(wrapper.findComponent({ name: 'BackendNotReadyNotice' }).exists()).toBe(false)
-      expect(wrapper.text()).toContain('趋势图表功能尚未上线')
+      expect(wrapper.text()).toContain('历史趋势')
     })
   })
 
@@ -90,14 +101,14 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
       expect(notice.text()).toContain('简历版本 diff 接口')
     })
 
-    it('resumes ready 时渲染 diff 占位', async () => {
+    it('resumes ready 时渲染版本对比视图', async () => {
       const { wrapper, pinia } = await mountAtPath('/diff', VersionDiffView)
       const availability = useAvailabilityStore(pinia)
       availability.setCapability('resumes', 'ready')
       await nextTick()
       await flushPromises()
       expect(wrapper.findComponent({ name: 'BackendNotReadyNotice' }).exists()).toBe(false)
-      expect(wrapper.text()).toContain('版本 diff 功能尚未上线')
+      expect(wrapper.text()).toContain('版本对比')
     })
   })
 

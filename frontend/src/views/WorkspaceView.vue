@@ -104,4 +104,15 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 480px) {
+  .workspace-view {
+    gap: var(--space-md);
+  }
+
+  .workspace-view__title {
+    font-size: 28px;
+    letter-spacing: -0.5px;
+  }
+}
 </style>

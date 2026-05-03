@@ -146,3 +146,84 @@ export async function fetchReport(taskId: string) {
   if (!res.ok) return res
   return { ok: true as const, data: normalizeReport(res.data) }
 }
+
+export interface HistoryItem {
+  taskId: string
+  reportId: string
+  jobId: string
+  jobTitle: string
+  resumeId: string
+  resumeLabel: string
+  finalScore: number
+  scoreBreakdown: Record<string, number>
+  gapCount: number
+  highRiskSuggestionCount: number
+  createdAt: string
+}
+
+export interface HistoryResponse {
+  schemaVersion: string
+  items: HistoryItem[]
+}
+
+interface BackendHistoryItem {
+  task_id: number
+  report_id: number
+  job_id: number
+  job_title: string
+  resume_id: number
+  resume_label: string
+  final_score: number
+  score_breakdown: Record<string, number>
+  gap_count: number
+  high_risk_suggestion_count: number
+  created_at: string
+}
+
+interface BackendHistoryResponse {
+  schema_version: string
+  items: BackendHistoryItem[]
+}
+
+function normalizeHistoryItem(item: BackendHistoryItem): HistoryItem {
+  return {
+    taskId: String(item.task_id),
+    reportId: String(item.report_id),
+    jobId: String(item.job_id),
+    jobTitle: item.job_title,
+    resumeId: String(item.resume_id),
+    resumeLabel: item.resume_label,
+    finalScore: item.final_score,
+    scoreBreakdown: item.score_breakdown,
+    gapCount: item.gap_count,
+    highRiskSuggestionCount: item.high_risk_suggestion_count,
+    createdAt: item.created_at,
+  }
+}
+
+export interface HistoryParams {
+  jobId?: string
+  resumeId?: string
+  limit?: number
+}
+
+export async function fetchReportHistory(params?: HistoryParams) {
+  const query = new URLSearchParams()
+  if (params?.jobId) query.set('job_id', params.jobId)
+  if (params?.resumeId) query.set('resume_id', params.resumeId)
+  if (params?.limit) query.set('limit', String(params.limit))
+
+  const queryString = query.toString()
+  const path = queryString ? `/reports/history?${queryString}` : '/reports/history'
+
+  const res = await requestJson<BackendHistoryResponse>(path)
+  if (!res.ok) return res
+
+  return {
+    ok: true as const,
+    data: {
+      schemaVersion: res.data.schema_version,
+      items: res.data.items.map(normalizeHistoryItem),
+    },
+  }
+}

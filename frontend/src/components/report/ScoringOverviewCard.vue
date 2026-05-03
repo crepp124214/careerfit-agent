@@ -97,7 +97,6 @@ const worst = () =>
   display: flex;
   gap: var(--space-xl);
   align-items: center;
-  box-shadow: var(--shadow-sm);
 }
 
 .scoring-overview__score {

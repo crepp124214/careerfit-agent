@@ -139,7 +139,7 @@
 
 - [ ] 后端：`cd backend && pytest tests/test_report_history_api.py tests/test_resume_diff_api.py -q && pytest -q`。
 - [ ] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
-- [ ] Docker：`docker compose up --build`，确认 fullstack 模式 `/history` 与 `/diff` 可访问并使用真实 API。
+- [ ] Docker：`docker compose up --build`，确认 fullstack 模式 `/history` 与 `/diff` 可访问并使用真实 API。2026-05-04 尝试运行失败，原因是本机 Docker daemon 未运行，待启动 Docker Desktop 后补跑。
 - [ ] 文档：`git diff --check`。
 
 ## Phase 2+ 延后

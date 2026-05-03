@@ -177,6 +177,21 @@ watch(
   }
 }
 
+@media (max-width: 480px) {
+  .report-view {
+    gap: var(--space-md);
+  }
+
+  .report-view__title {
+    font-size: 28px;
+    letter-spacing: -0.5px;
+  }
+
+  .report-view__dimension-grid {
+    gap: var(--space-sm);
+  }
+}
+
 .report-view__suggestions {
   display: flex;
   flex-direction: column;

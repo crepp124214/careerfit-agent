@@ -112,11 +112,11 @@ TODOS.md
 - Modify: `backend/app/schemas/reports.py`
 - Test: `backend/tests/test_report_history_api.py`
 
-- [ ] **Step 1：写失败测试：历史趋势字段契约**
+- [x] **Step 1：写失败测试：历史趋势字段契约**
 
 新增测试：创建岗位、简历和两次分析，调用 `GET /api/reports/history`，断言响应包含 `schema_version`、`items`，每个 item 包含 `task_id`、`report_id`、`job_title`、`resume_label`、`final_score`、`score_breakdown`、`gap_count`、`created_at`。
 
-- [ ] **Step 2：运行测试确认失败**
+- [x] **Step 2：运行测试确认失败**
 
 Run:
 
@@ -127,23 +127,23 @@ pytest tests/test_report_history_api.py::test_report_history_contract -q
 
 Expected: FAIL，原因是 `/api/reports/history` 不存在或字段缺失。
 
-- [ ] **Step 3：新增 schema**
+- [x] **Step 3：新增 schema**
 
 在 `backend/app/schemas/reports.py` 新增 `ReportHistoryItem` 和 `ReportHistoryResponse`。`ReportHistoryResponse.schema_version` 固定为 `"1"`。
 
-- [ ] **Step 4：实现 service**
+- [x] **Step 4：实现 service**
 
 创建 `backend/app/services/report_history_service.py`，从 `AnalysisReport` join `AnalysisTask`、`JobDescription`、`ResumeVersion` 查询报告，按 `created_at desc` 排序。`limit` clamp 到 1–100。
 
-- [ ] **Step 5：实现 route**
+- [x] **Step 5：实现 route**
 
 在 `backend/app/api/routes/reports.py` 新增 `GET /history`，只做参数接收、依赖注入和响应返回。
 
-- [ ] **Step 6：补筛选测试**
+- [x] **Step 6：补筛选测试**
 
 测试 `job_id`、`resume_id` 和 `limit` 均生效。
 
-- [ ] **Step 7：运行后端历史测试**
+- [x] **Step 7：运行后端历史测试**
 
 Run:
 
@@ -165,11 +165,11 @@ Expected: PASS。
 - Modify: `backend/app/schemas/resumes.py`
 - Test: `backend/tests/test_resume_diff_api.py`
 
-- [ ] **Step 1：写失败测试：diff 字段契约**
+- [x] **Step 1：写失败测试：diff 字段契约**
 
 创建两个简历版本，调用 `GET /api/resumes/compare?from_id=<old>&to_id=<new>`，断言响应包含 `schema_version`、`from_resume`、`to_resume`、`summary`、`sections`、`score_context`。
 
-- [ ] **Step 2：运行测试确认失败**
+- [x] **Step 2：运行测试确认失败**
 
 Run:
 
@@ -180,27 +180,27 @@ pytest tests/test_resume_diff_api.py::test_resume_diff_contract -q
 
 Expected: FAIL，原因是 `/api/resumes/compare` 不存在。
 
-- [ ] **Step 3：新增 schema**
+- [x] **Step 3：新增 schema**
 
 在 `backend/app/schemas/resumes.py` 新增 `ResumeDiffResumeRef`、`ResumeDiffSummary`、`ResumeDiffSection`、`ResumeScoreContext`、`ResumeDiffResponse`。
 
-- [ ] **Step 4：实现 diff service**
+- [x] **Step 4：实现 diff service**
 
 创建 `backend/app/services/resume_diff_service.py`，使用 `difflib.SequenceMatcher` 或标准库等价算法按行生成 `added`、`removed`、`unchanged`。不要在 service 中写日志输出原文。
 
-- [ ] **Step 5：实现 score context**
+- [x] **Step 5：实现 score context**
 
 从两个简历版本各自最近一次成功分析报告中提取 `final_score` 和 `created_at`。没有报告时返回 `available: false` 和中文原因。
 
-- [ ] **Step 6：实现 route**
+- [x] **Step 6：实现 route**
 
 在 `backend/app/api/routes/resumes.py` 新增 `GET /compare`，缺失简历返回 404，相同版本返回 400。
 
-- [ ] **Step 7：补错误路径测试**
+- [x] **Step 7：补错误路径测试**
 
 覆盖不存在 ID、相同 ID、没有报告时的 `score_context.available: false`。
 
-- [ ] **Step 8：运行 diff 测试**
+- [x] **Step 8：运行 diff 测试**
 
 Run:
 
@@ -224,31 +224,31 @@ Expected: PASS。
 - Test: `frontend/tests/stores/history.test.ts`
 - Test: `frontend/tests/stores/resumeDiff.test.ts`
 
-- [ ] **Step 1：写失败测试：history store 加载成功**
+- [x] **Step 1：写失败测试：history store 加载成功**
 
 mock `fetchReportHistory` 返回两条 snapshot，断言 `items`、`status`、`latest`、`scoreDelta`。
 
-- [ ] **Step 2：写失败测试：history store 错误与空状态**
+- [x] **Step 2：写失败测试：history store 错误与空状态**
 
 mock API 错误和空列表，断言 `status` 分别为 `error`、`empty`，不得创建假数据。
 
-- [ ] **Step 3：写失败测试：resumeDiff store 加载 diff**
+- [x] **Step 3：写失败测试：resumeDiff store 加载 diff**
 
 mock `compareResumes` 返回 diff，断言 `summary`、`sections`、`status`。
 
-- [ ] **Step 4：写失败测试：resumeDiff store 错误与版本不足**
+- [x] **Step 4：写失败测试：resumeDiff store 错误与版本不足**
 
 覆盖 API 错误、缺少 `fromId` / `toId`、相同 ID，断言中文错误消息。
 
-- [ ] **Step 5：实现 API 函数**
+- [x] **Step 5：实现 API 函数**
 
 `frontend/src/api/reports.ts` 新增 `fetchReportHistory(params)`；`frontend/src/api/resumes.ts` 新增 `compareResumes(fromId, toId)`。保留对现有后端 snake_case 的 normalize。
 
-- [ ] **Step 6：实现两个 store**
+- [x] **Step 6：实现两个 store**
 
 `history` store 管理筛选、加载和派生指标；`resumeDiff` store 管理版本选择、diff 加载和错误。两个 store 均不使用 localStorage / IndexedDB。
 
-- [ ] **Step 7：运行 store 测试**
+- [x] **Step 7：运行 store 测试**
 
 Run:
 
@@ -268,23 +268,23 @@ Expected: PASS。
 - Modify: `frontend/src/views/HistoryView.vue`
 - Test: `frontend/tests/views/HistoryView.test.ts`
 
-- [ ] **Step 1：写失败测试：ready 状态**
+- [x] **Step 1：写失败测试：ready 状态**
 
 mock reports ready 和两条历史 snapshot，断言标题、最新分数、分数变化、缺口数量、趋势图容器存在。
 
-- [ ] **Step 2：写失败测试：状态机**
+- [x] **Step 2：写失败测试：状态机**
 
 覆盖 unavailable、loading、error、empty、partial。partial 至少覆盖缺少 `score_breakdown` 或只有 1 条报告。
 
-- [ ] **Step 3：写失败测试：筛选交互**
+- [x] **Step 3：写失败测试：筛选交互**
 
 切换时间区间或筛选控件时调用 store reload；如果后端只支持 `limit`，前端先把区间映射为 limit。
 
-- [ ] **Step 4：实现视图**
+- [x] **Step 4：实现视图**
 
 使用 `vue-echarts` 渲染趋势图；用文本同步表达分数变化，不能只靠颜色。加载和错误状态复用已有 feedback 组件。
 
-- [ ] **Step 5：运行 HistoryView 测试**
+- [x] **Step 5：运行 HistoryView 测试**
 
 Run:
 
@@ -304,23 +304,23 @@ Expected: PASS。
 - Modify: `frontend/src/views/VersionDiffView.vue`
 - Test: `frontend/tests/views/VersionDiffView.test.ts`
 
-- [ ] **Step 1：写失败测试：ready 状态**
+- [x] **Step 1：写失败测试：ready 状态**
 
 mock resumes ready、两个简历版本和 diff 响应，断言选择器、summary、score context、added/removed/unchanged 文本存在。
 
-- [ ] **Step 2：写失败测试：状态机**
+- [x] **Step 2：写失败测试：状态机**
 
 覆盖 unavailable、loading、error、empty、partial。empty 包括简历版本少于 2 个。
 
-- [ ] **Step 3：写失败测试：选择版本触发 compare**
+- [x] **Step 3：写失败测试：选择版本触发 compare**
 
 选择两个不同版本后调用 `compareResumes`；相同版本时显示中文错误并不调用 API。
 
-- [ ] **Step 4：实现视图**
+- [x] **Step 4：实现视图**
 
 显示两个版本选择器、diff summary、分数上下文和行级 diff。风险或删除信息必须颜色 + 文本双通道表达，并为按钮/选择器补充 ARIA。
 
-- [ ] **Step 5：运行 VersionDiffView 测试**
+- [x] **Step 5：运行 VersionDiffView 测试**
 
 Run:
 
@@ -340,7 +340,7 @@ Expected: PASS。
 - Modify: `TODOS.md`
 - Modify: `docs/superpowers/test-plans/2026-05-03-careerfit-agent-phase-2b-test-plan.md`
 
-- [ ] **Step 1：后端全量测试**
+- [x] **Step 1：后端全量测试**
 
 Run:
 
@@ -351,7 +351,7 @@ pytest -q
 
 Expected: PASS。
 
-- [ ] **Step 2：前端全量测试**
+- [x] **Step 2：前端全量测试**
 
 Run:
 
@@ -374,7 +374,9 @@ docker compose up --build
 
 Expected: backend health OK；frontend 可访问；`/history` 和 `/diff` 在 fullstack 模式展示真实状态机。
 
-- [ ] **Step 4：文档同步检查**
+验证记录：2026-05-04 运行 `docker compose up --build --wait` 失败，原因是本机 Docker daemon 未运行，错误为找不到 `dockerDesktopLinuxEngine`。代码层验证已通过，Docker smoke 待 Docker Desktop 启动后补跑。
+
+- [x] **Step 4：文档同步检查**
 
 Run:
 

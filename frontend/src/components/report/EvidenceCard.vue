@@ -71,7 +71,7 @@ function toggle() {
 
 <style scoped>
 .evidence-card {
-  background-color: var(--color-canvas);
+  background-color: var(--color-surface-2);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-md);
   padding: var(--space-sm) var(--space-md);
