@@ -597,7 +597,7 @@ git commit -m "feat(frontend): add history, diff, learning and trace views with 
 - 创建 `frontend/tests/composables/useLocalStorageRef.test.ts`
 - 创建 `frontend/tests/views/SettingsView.test.ts`
 
-- [ ] **Step 1：先写失败的 useLocalStorageRef 测试**
+- [x] **Step 1：先写失败的 useLocalStorageRef 测试**
 
 `useLocalStorageRef.test.ts` 断言：
 
@@ -606,7 +606,7 @@ git commit -m "feat(frontend): add history, diff, learning and trace views with 
 - **白名单校验**：尝试写入 `raw_jd` / `raw_resume` / 任何超过 1KB 的字符串会拒绝并写控制台警告。
 - 浏览器禁用 localStorage 时优雅降级到内存。
 
-- [ ] **Step 2：先写失败的 SettingsView 测试**
+- [x] **Step 2：先写失败的 SettingsView 测试**
 
 `SettingsView.test.ts` 断言：
 
@@ -614,19 +614,19 @@ git commit -m "feat(frontend): add history, diff, learning and trace views with 
 - 修改设置后立即写入 `careerfit:pref:*`；刷新后保持。
 - 不渲染任何账号、登录、邮箱、用户名相关 UI。
 
-- [ ] **Step 3：实现 composables 与 stores/preferences**
+- [x] **Step 3：实现 composables 与 stores/preferences**
 
 `useLocalStorageRef.ts`：基于 VueUse `useStorage` 包一层命名空间 + 白名单校验。
 `useResponsive.ts`：暴露 `isDesktop / isTablet / isMobile` 响应式断点（1280 / 1024 / 768 / 480）。
 `useA11y.ts`：暴露 `prefersReducedMotion`、当前 focus trap 工具函数。
 `stores/preferences.ts`：从 `useLocalStorageRef` 读出各项偏好并暴露给全局。
 
-- [ ] **Step 4：实现 SettingsView 与 MobileNav**
+- [x] **Step 4：实现 SettingsView 与 MobileNav**
 
 `SettingsView.vue`：仅本地偏好；不与后端交互；显眼提示 "本设置仅保存在你的浏览器，未来如果清空浏览器数据将恢复默认。"
 `MobileNav.vue`：768 px 以下替代 `SideNav` 的顶部 hamburger 菜单。
 
-- [ ] **Step 5：UX 抛光走查**
+- [x] **Step 5：UX 抛光走查**
 
 逐页检查并补齐：
 
@@ -636,7 +636,7 @@ git commit -m "feat(frontend): add history, diff, learning and trace views with 
 
 每完成一页打勾，未通过的页面回到对应 Task 修复。
 
-- [ ] **Step 6：运行测试与类型检查**
+- [x] **Step 6：运行测试与类型检查**
 
 ```powershell
 cd frontend
@@ -644,7 +644,7 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 7：提交**
+- [x] **Step 7：提交**
 
 ```powershell
 git add frontend
