@@ -55,4 +55,3 @@ def parse_llm_enhancement(text: str) -> LLMReportEnhancement:
         return LLMReportEnhancement.model_validate(data)
     except (json.JSONDecodeError, ValidationError) as exc:
         raise LLMOutputParseError("LLM output is not valid report enhancement JSON") from exc
-

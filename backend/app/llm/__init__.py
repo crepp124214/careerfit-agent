@@ -1,2 +1,1 @@
 """LLM provider adapter boundary."""
-

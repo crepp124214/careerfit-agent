@@ -79,4 +79,3 @@ class LLMClient:
     def close(self) -> None:
         if self._owns_client:
             self.http_client.close()
-

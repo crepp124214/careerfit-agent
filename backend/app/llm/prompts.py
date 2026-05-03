@@ -26,4 +26,3 @@ def build_report_enhancement_prompt(state: CareerFitState, *, repair_text: str |
         "next_best_action 包含 title、description、target_skill。\n"
         f"结构化输入：{json.dumps(payload, ensure_ascii=False)}"
     )
-
