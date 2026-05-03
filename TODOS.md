@@ -13,6 +13,12 @@
 
 以下事项原本可能因主路径优先级被列为延后，但在双门重写后已明确归入 Phase 1，必须随计划完成。
 
+### 当前进度
+
+- [x] **前端 Phase 1.A（T1–T7）**：全部完成。77 测试通过，typecheck clean，Docker 化就绪，10/10 验收门 PASS。
+- [x] **后端 Phase 1.B（T8–T11）**：由 Codex 完成。15 测试通过，可信主路径端到端闭环。
+- [ ] **全栈集成（T12–T13）**：待执行。全栈 Docker Compose + README + 双验收门最终自检。
+
 ### 前端 Phase 1.A（T1–T7）
 
 - 13 条 Vue Router 路由全部铺出，缺一不可。
@@ -106,6 +112,7 @@
 每次变更范围或决策时，必须同时检查并更新：
 
 - `CLAUDE.md`（如影响约束或边界）
+- `AGENTS.md`（如影响约束或边界）
 - `docs/superpowers/specs/2026-05-02-careerfit-agent-design.md`
 - `docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md`
 - `docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md`
