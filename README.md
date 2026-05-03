@@ -18,6 +18,47 @@
 | 测试 | Vitest（前端）、pytest（后端） |
 | 容器 | Docker Compose（multi-stage builds） |
 
+## 大模型后端代理
+
+默认不启用大模型。启用后，API Key 只放在后端环境变量里，前端不会读取、保存或展示 Key。LLM 只用于简历建议、面试题、学习计划和 Next Best Action，最终数字评分仍由后端确定性规则计算。
+
+通用配置：
+
+```env
+CAREERFIT_LLM_ENABLED=true
+CAREERFIT_LLM_PROVIDER=openai_compatible
+CAREERFIT_LLM_BASE_URL=https://api.example.com/v1
+CAREERFIT_LLM_API_KEY=你的_key
+CAREERFIT_LLM_MODEL=你的模型名
+CAREERFIT_LLM_API_STYLE=chat_completions
+```
+
+常见 OpenAI-compatible 示例：
+
+```env
+# OpenAI Chat Completions
+CAREERFIT_LLM_BASE_URL=https://api.openai.com/v1
+CAREERFIT_LLM_MODEL=gpt-5.2
+CAREERFIT_LLM_API_STYLE=chat_completions
+
+# OpenAI Responses API
+CAREERFIT_LLM_BASE_URL=https://api.openai.com/v1
+CAREERFIT_LLM_MODEL=gpt-5.2
+CAREERFIT_LLM_API_STYLE=responses
+
+# DeepSeek
+CAREERFIT_LLM_BASE_URL=https://api.deepseek.com/v1
+CAREERFIT_LLM_MODEL=deepseek-chat
+CAREERFIT_LLM_API_STYLE=chat_completions
+
+# Kimi / Moonshot
+CAREERFIT_LLM_BASE_URL=https://api.moonshot.cn/v1
+CAREERFIT_LLM_MODEL=moonshot-v1-8k
+CAREERFIT_LLM_API_STYLE=chat_completions
+```
+
+其他国内模型服务如果提供 OpenAI-compatible `/chat/completions`，通常只需要替换 `CAREERFIT_LLM_BASE_URL` 和 `CAREERFIT_LLM_MODEL`。不要把真实 `.env`、API Key 或模型 Key 提交到仓库。
+
 ## 运行方式
 
 ### 方式一：仅前端（无需后端）

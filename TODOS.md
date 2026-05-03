@@ -152,24 +152,24 @@
 - [x] 创建 Phase 2C 设计文档：`docs/superpowers/specs/2026-05-04-careerfit-agent-phase-2c-llm-proxy-design.md`。
 - [x] 创建 Phase 2C 实施计划：`docs/superpowers/plans/2026-05-04-careerfit-agent-phase-2c-llm-proxy.md`。
 - [x] 创建 Phase 2C 测试计划：`docs/superpowers/test-plans/2026-05-04-careerfit-agent-phase-2c-test-plan.md`。
-- [ ] 同步 Phase 2C 测试计划外部副本：`C:\Users\qwer\.gstack\projects\Newproject\phase-2c-test-plan-2026-05-04-careerfit-agent.md`。
+- [x] 同步 Phase 2C 测试计划外部副本：`C:\Users\qwer\.gstack\projects\Newproject\phase-2c-test-plan-2026-05-04-careerfit-agent.md`。
 
 ### 后端 Phase 2C
 
-- [ ] 新增 LLM 环境变量配置，默认关闭。
-- [ ] 支持 `chat_completions` 与 `responses` 两种 API 风格。
-- [ ] 新增 LLM client、schema、prompt 和 service。
-- [ ] 只在生成型节点接入 LLM：简历建议、面试题、学习计划、Next Best Action。
-- [ ] provider 失败或非法 JSON 时回退本地 fallback。
-- [ ] `/api/capabilities` 增加 `llm` 状态。
-- [ ] Agent trace 不保存 API Key、prompt 原文、完整 JD 或完整简历。
+- [x] 新增 LLM 环境变量配置，默认关闭。
+- [x] 支持 `chat_completions` 与 `responses` 两种 API 风格。
+- [x] 新增 LLM client、schema、prompt 和 service。
+- [x] 只在生成型节点接入 LLM：简历建议、面试题、学习计划、Next Best Action。
+- [x] provider 失败或非法 JSON 时回退本地 fallback。
+- [x] `/api/capabilities` 增加 `llm` 状态。
+- [x] Agent trace 不保存 API Key、prompt 原文、完整 JD 或完整简历。
 
 ### Phase 2C 验证门
 
-- [ ] 后端：`cd backend && pytest tests/test_llm_client.py tests/test_llm_agent_flow.py -q && pytest -q`。
-- [ ] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
-- [ ] PII：运行 `gstack:cso` 或记录本地等价 OWASP + STRIDE 审计。
-- [ ] 文档：`git diff --check`。
+- [x] 后端：`cd backend && pytest tests/test_llm_client.py tests/test_llm_agent_flow.py -q && pytest -q`。
+- [x] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
+- [x] PII：运行 `gstack:cso` 或记录本地等价 OWASP + STRIDE 审计。当前环境无 CLI 入口，已写入 `docs/superpowers/review-logs/2026-05-04-phase-2c-llm-proxy-security-review.md`。
+- [x] 文档：`git diff --check`。
 
 ## Phase 2+ 延后
 

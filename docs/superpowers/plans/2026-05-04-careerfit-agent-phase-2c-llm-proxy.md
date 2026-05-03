@@ -91,7 +91,7 @@ TODOS.md
 
 覆盖关闭 LLM、mock 成功、失败回退、trace 脱敏和配置说明。
 
-- [ ] **Step 4：同步外部测试计划副本**
+- [x] **Step 4：同步外部测试计划副本**
 
 Run:
 
@@ -112,23 +112,23 @@ Expected: 外部副本存在。
 - Modify: `backend/pyproject.toml`
 - Test: `backend/tests/test_llm_client.py`
 
-- [ ] **Step 1：写失败测试：默认 LLM disabled**
+- [x] **Step 1：写失败测试：默认 LLM disabled**
 
 断言默认 settings 中 `llm_enabled` 为 `False`，`/api/capabilities` 返回 `llm: unavailable`。
 
-- [ ] **Step 2：写失败测试：环境变量开启 LLM**
+- [x] **Step 2：写失败测试：环境变量开启 LLM**
 
 用 monkeypatch 设置 `CAREERFIT_LLM_ENABLED=true`、`CAREERFIT_LLM_API_KEY`、`CAREERFIT_LLM_MODEL`，断言 capability 为 `ready`。
 
-- [ ] **Step 3：实现配置字段**
+- [x] **Step 3：实现配置字段**
 
 新增 `llm_enabled`、`llm_provider`、`llm_base_url`、`llm_api_key`、`llm_model`、`llm_api_style`、`llm_timeout_seconds`。
 
-- [ ] **Step 4：新增 httpx 生产依赖**
+- [x] **Step 4：新增 httpx 生产依赖**
 
 把 `httpx>=0.27` 从 dev 依赖提升到生产依赖，供后端代理 HTTP 调用使用。
 
-- [ ] **Step 5：运行配置测试**
+- [x] **Step 5：运行配置测试**
 
 Run:
 
@@ -150,31 +150,31 @@ Expected: PASS。
 - Create: `backend/app/llm/schemas.py`
 - Test: `backend/tests/test_llm_client.py`
 
-- [ ] **Step 1：写失败测试：chat_completions 请求形状**
+- [x] **Step 1：写失败测试：chat_completions 请求形状**
 
 用 fake transport 捕获请求，断言 URL 为 `{base_url}/chat/completions`，header 含 Bearer token，body 含 `model` 和 `messages`。
 
-- [ ] **Step 2：写失败测试：responses 请求形状**
+- [x] **Step 2：写失败测试：responses 请求形状**
 
 断言 `api_style=responses` 时调用 `{base_url}/responses`，body 含 `model` 和 `input`。
 
-- [ ] **Step 3：写失败测试：解析合法 JSON**
+- [x] **Step 3：写失败测试：解析合法 JSON**
 
 mock provider 返回 JSON 文本，断言转换为 Pydantic schema。
 
-- [ ] **Step 4：写失败测试：非法 JSON 一次修复重试**
+- [x] **Step 4：写失败测试：非法 JSON 一次修复重试**
 
 第一次返回非法 JSON，第二次返回合法 JSON，断言调用两次。
 
-- [ ] **Step 5：实现 client**
+- [x] **Step 5：实现 client**
 
 使用 `httpx.Client`，设置超时，统一返回文本；不要记录请求正文或 key。
 
-- [ ] **Step 6：实现 schemas**
+- [x] **Step 6：实现 schemas**
 
 新增 `LLMReportEnhancement`，包含 `resume_suggestions`、`interview_questions`、`learning_plan`、`next_best_action`。
 
-- [ ] **Step 7：运行 client 测试**
+- [x] **Step 7：运行 client 测试**
 
 Run:
 
@@ -197,35 +197,35 @@ Expected: PASS。
 - Modify: `backend/app/agents/graph.py`
 - Test: `backend/tests/test_llm_agent_flow.py`
 
-- [ ] **Step 1：写失败测试：LLM disabled 使用 fallback**
+- [x] **Step 1：写失败测试：LLM disabled 使用 fallback**
 
 运行分析主流程，断言报告仍包含本地 fallback 建议。
 
-- [ ] **Step 2：写失败测试：LLM enabled 使用 mock 输出**
+- [x] **Step 2：写失败测试：LLM enabled 使用 mock 输出**
 
 monkeypatch LLM service 返回合法增强结果，断言报告中的建议、面试题、学习计划和 Next Best Action 来自 mock。
 
-- [ ] **Step 3：写失败测试：LLM 失败回退**
+- [x] **Step 3：写失败测试：LLM 失败回退**
 
 monkeypatch LLM service 抛异常，断言分析任务仍 `success`，并使用 fallback。
 
-- [ ] **Step 4：写失败测试：trace 不含 prompt 或 key**
+- [x] **Step 4：写失败测试：trace 不含 prompt 或 key**
 
 断言 `agent_runs` 响应不包含 API Key、完整 JD、完整简历、`messages` 或 `prompt` 原文。
 
-- [ ] **Step 5：实现 prompt builder**
+- [x] **Step 5：实现 prompt builder**
 
 只传结构化 `strengths`、`gaps`、`score_items` 摘要；不传完整原文。
 
-- [ ] **Step 6：实现 service**
+- [x] **Step 6：实现 service**
 
 `generate_report_enhancement(state)` 负责读取配置、调用 client、校验 schema、返回结果或 `None`。
 
-- [ ] **Step 7：改造节点**
+- [x] **Step 7：改造节点**
 
 在生成型节点中使用同一份 enhancement；若为空则走现有 fallback。`match_scorer` 不接 LLM。
 
-- [ ] **Step 8：运行 Agent 流程测试**
+- [x] **Step 8：运行 Agent 流程测试**
 
 Run:
 
@@ -246,15 +246,15 @@ Expected: PASS。
 - Modify: `TODOS.md`
 - Modify: `docs/superpowers/plans/2026-05-04-careerfit-agent-phase-2c-llm-proxy.md`
 
-- [ ] **Step 1：补 README 配置说明**
+- [x] **Step 1：补 README 配置说明**
 
 写明 OpenAI、DeepSeek、Kimi、Qwen 等 OpenAI-compatible 示例配置；禁止提交真实 key。
 
-- [ ] **Step 2：更新 TODO**
+- [x] **Step 2：更新 TODO**
 
 标记 Phase 2C 已完成项和 PII 审计要求。
 
-- [ ] **Step 3：运行后端测试**
+- [x] **Step 3：运行后端测试**
 
 Run:
 
@@ -265,7 +265,7 @@ pytest -q
 
 Expected: PASS。
 
-- [ ] **Step 4：运行前端回归**
+- [x] **Step 4：运行前端回归**
 
 Run:
 
@@ -278,7 +278,7 @@ npm run build
 
 Expected: PASS。
 
-- [ ] **Step 5：PII 安全审计**
+- [x] **Step 5：PII 安全审计**
 
 Run:
 
@@ -288,7 +288,9 @@ gstack:cso
 
 Expected: 记录 OWASP + STRIDE 结论；若 CLI 不可用，按本地 skill 文档做等价审计并写入 review log。
 
-- [ ] **Step 6：文档检查**
+验证记录：当前 PowerShell 环境没有 `gstack:cso` 可执行入口；已读取本地 `gstack:cso` skill 文档，并将等价 OWASP + STRIDE + LLM Security 审计写入 `docs/superpowers/review-logs/2026-05-04-phase-2c-llm-proxy-security-review.md`。
+
+- [x] **Step 6：文档检查**
 
 Run:
 

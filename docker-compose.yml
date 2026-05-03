@@ -22,6 +22,12 @@ services:
     environment:
       CAREERFIT_DATABASE_URL: postgresql+psycopg://careerfit:careerfit@postgres:5432/careerfit
       CAREERFIT_ENVIRONMENT: docker
+      CAREERFIT_LLM_ENABLED: ${CAREERFIT_LLM_ENABLED:-false}
+      CAREERFIT_LLM_PROVIDER: ${CAREERFIT_LLM_PROVIDER:-openai_compatible}
+      CAREERFIT_LLM_BASE_URL: ${CAREERFIT_LLM_BASE_URL:-https://api.openai.com/v1}
+      CAREERFIT_LLM_API_KEY: ${CAREERFIT_LLM_API_KEY:-}
+      CAREERFIT_LLM_MODEL: ${CAREERFIT_LLM_MODEL:-}
+      CAREERFIT_LLM_API_STYLE: ${CAREERFIT_LLM_API_STYLE:-chat_completions}
     ports:
       - "8000:8000"
     depends_on:

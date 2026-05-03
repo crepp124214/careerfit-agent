@@ -17,6 +17,13 @@ CAPABILITIES = {
 }
 
 
+def llm_capability() -> str:
+    settings = get_settings()
+    if settings.llm_enabled and settings.llm_api_key and settings.llm_model:
+        return "ready"
+    return "unavailable"
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     Base.metadata.create_all(bind=engine)
@@ -37,7 +44,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/capabilities")
     def capabilities() -> dict[str, dict[str, str]]:
-        return {"capabilities": CAPABILITIES}
+        return {"capabilities": {**CAPABILITIES, "llm": llm_capability()}}
 
     app.include_router(jobs.router)
     app.include_router(resumes.router)

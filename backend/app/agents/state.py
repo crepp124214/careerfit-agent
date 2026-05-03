@@ -13,3 +13,4 @@ class CareerFitState(TypedDict, total=False):
     interview_questions: list[dict[str, Any]]
     learning_plan: list[dict[str, Any]]
     next_best_action: dict[str, Any]
+    llm_enhancement: dict[str, Any]

@@ -1,4 +1,6 @@
 from app.agents.state import CareerFitState
+from app.llm.schemas import LLMReportEnhancement
+from app.llm.service import generate_report_enhancement
 from app.scoring.evidence import assess_integrity_risk
 from app.scoring.rules import score_match
 from app.services.job_service import parse_job_profile
@@ -32,7 +34,7 @@ def gap_analyzer(state: CareerFitState) -> CareerFitState:
     return {"gaps": gaps, "strengths": strengths}
 
 
-def resume_optimizer(state: CareerFitState) -> CareerFitState:
+def _local_resume_suggestions(state: CareerFitState) -> list[dict]:
     suggestions = []
     for strength in state.get("strengths", []):
         suggestion = f"突出 {strength['skill']} 的项目实践，并保留原始简历中的证据边界。"
@@ -51,40 +53,108 @@ def resume_optimizer(state: CareerFitState) -> CareerFitState:
                 "integrity": {"risk_level": "low", "risk_codes": []},
             }
         )
-    return {"resume_suggestions": suggestions}
+    return suggestions
 
 
-def interview_coach(state: CareerFitState) -> CareerFitState:
-    questions = [
+def _local_interview_questions(state: CareerFitState) -> list[dict]:
+    return [
         {"skill": item["skill"], "question": f"请说明你在 {item['skill']} 上最具体的一次实践。"}
         for item in state["match_result"]["score_items"]
     ]
-    return {"interview_questions": questions}
 
 
-def learning_planner(state: CareerFitState) -> CareerFitState:
-    learning_plan = [
+def _local_learning_plan(state: CareerFitState) -> list[dict]:
+    return [
         {
             "skill": gap["skill"],
             "task": f"完成一个使用 {gap['skill']} 的小型可运行项目，并记录证据。",
         }
         for gap in state.get("gaps", [])
     ]
-    return {"learning_plan": learning_plan}
 
 
-def next_best_action(state: CareerFitState) -> CareerFitState:
+def _local_next_best_action(state: CareerFitState) -> dict:
     gaps = state.get("gaps", [])
     if gaps:
         first_gap = gaps[0]["skill"]
-        action = {
+        return {
             "title": f"优先补齐 {first_gap} 的可验证证据",
             "description": "先补最影响匹配分的缺口，再创建下一版简历重新分析。",
             "target_skill": first_gap,
         }
-    else:
-        action = {
-            "title": "创建下一版简历并重新分析",
-            "description": "当前主能力已有证据，下一步优化表达和结构。",
+    return {
+        "title": "创建下一版简历并重新分析",
+        "description": "当前主能力已有证据，下一步优化表达和结构。",
+    }
+
+
+def _enhancement_from_state(state: CareerFitState) -> LLMReportEnhancement | None:
+    data = state.get("llm_enhancement")
+    if not data:
+        return None
+    return LLMReportEnhancement.model_validate(data)
+
+
+def resume_optimizer(state: CareerFitState) -> CareerFitState:
+    try:
+        enhancement = generate_report_enhancement(state)
+    except Exception:
+        enhancement = None
+
+    if enhancement is None:
+        return {"resume_suggestions": _local_resume_suggestions(state)}
+
+    suggestions = [
+        {
+            "title": item.title,
+            "suggestion": item.suggestion,
+            "jd_requirement": item.jd_requirement,
+            "resume_evidence": item.resume_evidence,
+            "integrity": assess_integrity_risk(item.suggestion, state["raw_resume"]),
         }
-    return {"next_best_action": action}
+        for item in enhancement.resume_suggestions
+    ]
+    if not suggestions:
+        suggestions = _local_resume_suggestions(state)
+    return {
+        "llm_enhancement": enhancement.model_dump(),
+        "resume_suggestions": suggestions,
+    }
+
+
+def interview_coach(state: CareerFitState) -> CareerFitState:
+    enhancement = _enhancement_from_state(state)
+    if enhancement and enhancement.interview_questions:
+        return {
+            "interview_questions": [
+                {"skill": item.skill, "question": item.question}
+                for item in enhancement.interview_questions
+            ]
+        }
+    return {"interview_questions": _local_interview_questions(state)}
+
+
+def learning_planner(state: CareerFitState) -> CareerFitState:
+    enhancement = _enhancement_from_state(state)
+    if enhancement and enhancement.learning_plan:
+        return {
+            "learning_plan": [
+                {"skill": item.skill, "task": item.task}
+                for item in enhancement.learning_plan
+            ]
+        }
+    return {"learning_plan": _local_learning_plan(state)}
+
+
+def next_best_action(state: CareerFitState) -> CareerFitState:
+    enhancement = _enhancement_from_state(state)
+    if enhancement:
+        action = enhancement.next_best_action
+        return {
+            "next_best_action": {
+                "title": action.title,
+                "description": action.description,
+                "target_skill": action.target_skill,
+            }
+        }
+    return {"next_best_action": _local_next_best_action(state)}

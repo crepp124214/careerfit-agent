@@ -23,6 +23,9 @@ REDACTED_EVIDENCE_KEYS = {
     "jd_evidence",
     "resume_evidence",
     "projects",
+    "messages",
+    "prompt",
+    "api_key",
 }
 
 
