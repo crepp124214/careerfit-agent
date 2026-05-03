@@ -659,15 +659,15 @@ git commit -m "feat(frontend): add local preferences, settings view and ux polis
 - 创建 `docker-compose.frontend-only.yml`
 - 创建 `.env.example`
 
-- [ ] **Step 1：创建前端 Dockerfile**
+- [x] **Step 1：创建前端 Dockerfile**
 
 基于 `node:20-alpine`，多阶段构建：build 阶段 `npm ci && npm run build`，runtime 阶段使用 `nginx:alpine` 提供静态文件，端口 80。
 
-- [ ] **Step 2：创建独立前端 compose**
+- [x] **Step 2：创建独立前端 compose**
 
 `docker-compose.frontend-only.yml`：仅启动 frontend 容器，**不依赖 backend**。前端在该模式下应全部走 `BackendNotReadyNotice` 占位。
 
-- [ ] **Step 3：添加 .env.example（前端部分）**
+- [x] **Step 3：添加 .env.example（前端部分）**
 
 ```text
 VITE_API_BASE=http://localhost:8000
@@ -676,7 +676,7 @@ VITE_APP_VARIANT=frontend-only
 
 `VITE_APP_VARIANT=frontend-only` 时，前端跳过 `availability.fetchBackendCapabilities` 请求，直接把全部能力标记为 `unavailable`。
 
-- [ ] **Step 4：前端独立冒烟**
+- [x] **Step 4：前端独立冒烟**
 
 ```powershell
 docker compose -f docker-compose.frontend-only.yml up --build
@@ -691,11 +691,11 @@ docker compose -f docker-compose.frontend-only.yml up --build
 - 报告页 / 历史 / 对比 / 学习 / Trace 全部走占位。
 - 设置页可读写本地偏好；刷新后保持；浏览器隐私模式下也不报错。
 
-- [ ] **Step 5：前端 Phase 1.A 验收门自检**
+- [x] **Step 5：前端 Phase 1.A 验收门自检**
 
 逐条对照 `CLAUDE.md` "前端 Phase 1 验收门" 10 条；任何一条不满足，回到对应 Task 修复，不得跳过。
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```powershell
 git add frontend/Dockerfile docker-compose.frontend-only.yml .env.example

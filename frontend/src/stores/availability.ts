@@ -46,6 +46,13 @@ export const useAvailabilityStore = defineStore('availability', () => {
   }
 
   async function probe() {
+    if (import.meta.env.VITE_APP_VARIANT === 'frontend-only') {
+      for (const cap of ALL_CAPABILITIES) {
+        states.value[cap] = 'unavailable'
+      }
+      return
+    }
+
     isLoading.value = true
     const res = await fetchBackendCapabilities()
     if (!res.ok) {
