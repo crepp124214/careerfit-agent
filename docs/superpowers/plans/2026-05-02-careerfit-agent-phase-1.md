@@ -1080,7 +1080,7 @@ git commit -m "feat: add analysis workflow and reports"
 
 - 创建 `backend/Dockerfile`
 - 创建 `docker-compose.yml`
-- 修改 `frontend/.env.example`
+- 修改 `.env.example`
 
 - [x] **Step 1：添加后端 Dockerfile**
 
@@ -1121,6 +1121,14 @@ frontend 5173
 ```powershell
 docker compose up --build
 ```
+
+2026-05-03 执行记录：
+
+- 已运行：`docker compose config`、`docker compose -f docker-compose.frontend-only.yml config`，配置解析通过。
+- 已尝试：`docker compose up --build -d`。
+- 失败原因：Docker CLI 可用，但 Docker Desktop Linux daemon 未运行，报错 `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`。
+- 已补充本地替代验证：`backend` 下 `python -m pytest -q` 通过，`python -m ruff check .` 通过；`frontend` 下 `npm test`、`npm run typecheck`、`npm run build` 通过。
+- 下一步修正方向：启动 Docker Desktop / Linux engine 后重跑 `docker compose up --build -d`，再继续本步骤和 Step 5。
 
 逐项验证：
 
