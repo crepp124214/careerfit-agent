@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 
+from app.api.routes import jobs, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
 
 
 CAPABILITIES = {
-    "jobs": "unavailable",
-    "resumes": "unavailable",
+    "jobs": "ready",
+    "resumes": "ready",
     "analysis": "unavailable",
     "reports": "unavailable",
     "agentRuns": "unavailable",
@@ -27,6 +28,9 @@ def create_app() -> FastAPI:
     @app.get("/api/capabilities")
     def capabilities() -> dict[str, dict[str, str]]:
         return {"capabilities": CAPABILITIES}
+
+    app.include_router(jobs.router)
+    app.include_router(resumes.router)
 
     return app
 

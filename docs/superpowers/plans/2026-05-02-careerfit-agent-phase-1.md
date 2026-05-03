@@ -794,15 +794,15 @@ git commit -m "chore: scaffold backend application"
 - 测试 `backend/tests/test_jobs_api.py`
 - 测试 `backend/tests/test_resumes_api.py`
 
-- [ ] **Step 1：先写失败的岗位 API 测试**
+- [x] **Step 1：先写失败的岗位 API 测试**
 
 测试 `POST /api/jobs` 能创建岗位，并从 JD 文本中抽取 `FastAPI` 等技能；空 JD 返回 422。
 
-- [ ] **Step 2：先写失败的简历 API 测试**
+- [x] **Step 2：先写失败的简历 API 测试**
 
 测试 `POST /api/resumes` 能创建简历版本，并从简历文本中抽取 `FastAPI` 等技能；空简历返回 422。
 
-- [ ] **Step 3：运行测试确认失败**
+- [x] **Step 3：运行测试确认失败**
 
 ```powershell
 cd backend
@@ -811,13 +811,13 @@ pytest tests/test_jobs_api.py tests/test_resumes_api.py -q
 
 预期：因为路由不存在而失败。
 
-- [ ] **Step 4：创建 Pydantic schemas**
+- [x] **Step 4：创建 Pydantic schemas**
 
 `jobs.py` 定义 `JobCreate` 和 `JobRead`。
 `resumes.py` 定义 `ResumeCreate` 和 `ResumeRead`。
 输入文本最小长度为 20，标题和名称不能为空。
 
-- [ ] **Step 5：实现 service**
+- [x] **Step 5：实现 service**
 
 `job_service.py` 提供：
 
@@ -836,7 +836,7 @@ pytest tests/test_jobs_api.py tests/test_resumes_api.py -q
 
 解析结果必须包含 `schema_version` 和证据字段。
 
-- [ ] **Step 6：实现路由**
+- [x] **Step 6：实现路由**
 
 `jobs.py` 暴露：
 
@@ -856,18 +856,18 @@ GET /api/resumes/{resume_id}
 
 不存在时返回 404。
 
-- [ ] **Step 7：注册路由并更新 capabilities**
+- [x] **Step 7：注册路由并更新 capabilities**
 
 在 `backend/app/main.py` 中 include `jobs.router` 和 `resumes.router`，并更新 `/api/capabilities` 输出，把 `jobs` 与 `resumes` 标记为 `ready`。前端 availability store 会自动从占位切换到真实数据。
 
-- [ ] **Step 8：运行测试确认通过**
+- [x] **Step 8：运行测试确认通过**
 
 ```powershell
 cd backend
 pytest tests/test_jobs_api.py tests/test_resumes_api.py -q
 ```
 
-- [ ] **Step 9：提交**
+- [x] **Step 9：提交**
 
 ```powershell
 git add backend/app backend/tests
