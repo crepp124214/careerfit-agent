@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import agent_runs, analysis, jobs, reports, resumes
 from app.core.config import get_settings
@@ -20,6 +21,15 @@ def create_app() -> FastAPI:
     settings = get_settings()
     Base.metadata.create_all(bind=engine)
     app = FastAPI(title=settings.app_name)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:

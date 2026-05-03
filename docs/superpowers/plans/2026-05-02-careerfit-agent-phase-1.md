@@ -1082,25 +1082,25 @@ git commit -m "feat: add analysis workflow and reports"
 - 创建 `docker-compose.yml`
 - 修改 `frontend/.env.example`
 
-- [ ] **Step 1：添加后端 Dockerfile**
+- [x] **Step 1：添加后端 Dockerfile**
 
-后端镜像基于 `python:3.11-slim`，安装 `pyproject.toml` 依赖，启动命令为：
+后端镜像基于 `python:3.12-slim`，安装 `pyproject.toml` 依赖，启动命令为：
 
 ```text
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-- [ ] **Step 2：完善 .env.example（全栈）**
+- [x] **Step 2：完善 .env.example（全栈）**
 
 ```text
 CAREERFIT_DATABASE_URL=postgresql+psycopg://careerfit:careerfit@postgres:5432/careerfit
-VITE_API_BASE=http://localhost:8000
+VITE_API_BASE_URL=http://localhost:8000/api
 VITE_APP_VARIANT=fullstack
 ```
 
 `fullstack` 模式下前端正常调用 `/api/capabilities` 与各业务接口。
 
-- [ ] **Step 3：添加全栈 Docker Compose**
+- [x] **Step 3：添加全栈 Docker Compose**
 
 `docker-compose.yml` 包含：
 
