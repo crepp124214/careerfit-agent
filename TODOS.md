@@ -1,7 +1,7 @@
 # CareerFit Agent TODOS
 
-日期：2026-05-03
-版本：v4（Phase 2A 完成；启动 Phase 2B 历史趋势 + 版本对比）
+日期：2026-05-04
+版本：v5（Phase 2B 已提交；启动 Phase 2C 多模型后端代理）
 
 ## 适用范围与文件优先级
 
@@ -120,26 +120,55 @@
 
 ### 后端 Phase 2B
 
-- [ ] 新增 `GET /api/reports/history`，从已有 `analysis_reports` 派生历史趋势 snapshot。
-- [ ] 历史趋势支持 `job_id`、`resume_id`、`limit`，不新增派生表。
-- [ ] 新增 `GET /api/resumes/compare?from_id=&to_id=`，使用确定性行级 diff。
-- [ ] diff 响应包含 summary、sections 和可选 score context。
-- [ ] 不在日志、异常详情或 Agent trace 中输出简历原文或 diff 文本。
+- [x] 新增 `GET /api/reports/history`，从已有 `analysis_reports` 派生历史趋势 snapshot。
+- [x] 历史趋势支持 `job_id`、`resume_id`、`limit`，不新增派生表。
+- [x] 新增 `GET /api/resumes/compare?from_id=&to_id=`，使用确定性行级 diff。
+- [x] diff 响应包含 summary、sections 和可选 score context。
+- [x] 不在日志、异常详情或 Agent trace 中输出简历原文或 diff 文本。
 
 ### 前端 Phase 2B
 
-- [ ] 新增 history API/store，把 `/history` 从占位升级为真实趋势视图。
-- [ ] 新增 resume diff API/store，把 `/diff` 从占位升级为真实版本对比视图。
-- [ ] `/history` 支持 unavailable、loading、error、empty、partial、ready。
-- [ ] `/diff` 支持 unavailable、loading、error、empty、partial、ready。
-- [ ] 图表使用已有 `echarts` / `vue-echarts`，不引入新图表依赖。
-- [ ] 前端不得把 diff 文本、简历原文、JD 原文写入 localStorage / IndexedDB。
+- [x] 新增 history API/store，把 `/history` 从占位升级为真实趋势视图。
+- [x] 新增 resume diff API/store，把 `/diff` 从占位升级为真实版本对比视图。
+- [x] `/history` 支持 unavailable、loading、error、empty、partial、ready。
+- [x] `/diff` 支持 unavailable、loading、error、empty、partial、ready。
+- [x] 图表使用已有 `echarts` / `vue-echarts`，不引入新图表依赖。
+- [x] 前端不得把 diff 文本、简历原文、JD 原文写入 localStorage / IndexedDB。
 
 ### Phase 2B 验证门
 
-- [ ] 后端：`cd backend && pytest tests/test_report_history_api.py tests/test_resume_diff_api.py -q && pytest -q`。
-- [ ] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
+- [x] 后端：`cd backend && pytest tests/test_report_history_api.py tests/test_resume_diff_api.py -q && pytest -q`。
+- [x] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
 - [ ] Docker：`docker compose up --build`，确认 fullstack 模式 `/history` 与 `/diff` 可访问并使用真实 API。2026-05-04 尝试运行失败，原因是本机 Docker daemon 未运行，待启动 Docker Desktop 后补跑。
+- [x] 文档：`git diff --check`。
+
+## Phase 2C 当前范围：多模型后端代理
+
+目标：通过后端代理接入国内外常用 OpenAI-compatible 大模型 API，同时不泄露 API Key、不让 LLM 改写确定性评分。
+
+### Phase 2C 文档与计划
+
+- [x] 用户确认方案 A：OpenAI-compatible 优先。
+- [x] 创建 Phase 2C 设计文档：`docs/superpowers/specs/2026-05-04-careerfit-agent-phase-2c-llm-proxy-design.md`。
+- [x] 创建 Phase 2C 实施计划：`docs/superpowers/plans/2026-05-04-careerfit-agent-phase-2c-llm-proxy.md`。
+- [x] 创建 Phase 2C 测试计划：`docs/superpowers/test-plans/2026-05-04-careerfit-agent-phase-2c-test-plan.md`。
+- [ ] 同步 Phase 2C 测试计划外部副本：`C:\Users\qwer\.gstack\projects\Newproject\phase-2c-test-plan-2026-05-04-careerfit-agent.md`。
+
+### 后端 Phase 2C
+
+- [ ] 新增 LLM 环境变量配置，默认关闭。
+- [ ] 支持 `chat_completions` 与 `responses` 两种 API 风格。
+- [ ] 新增 LLM client、schema、prompt 和 service。
+- [ ] 只在生成型节点接入 LLM：简历建议、面试题、学习计划、Next Best Action。
+- [ ] provider 失败或非法 JSON 时回退本地 fallback。
+- [ ] `/api/capabilities` 增加 `llm` 状态。
+- [ ] Agent trace 不保存 API Key、prompt 原文、完整 JD 或完整简历。
+
+### Phase 2C 验证门
+
+- [ ] 后端：`cd backend && pytest tests/test_llm_client.py tests/test_llm_agent_flow.py -q && pytest -q`。
+- [ ] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
+- [ ] PII：运行 `gstack:cso` 或记录本地等价 OWASP + STRIDE 审计。
 - [ ] 文档：`git diff --check`。
 
 ## Phase 2+ 延后
