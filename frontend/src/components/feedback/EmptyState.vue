@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
+
 defineOptions({ name: 'EmptyState' })
 
 withDefaults(
@@ -6,11 +8,13 @@ withDefaults(
     title?: string
     description?: string
     actionLabel?: string
+    icon?: Component
   }>(),
   {
     title: '当前还没有内容',
     description: '',
     actionLabel: '',
+    icon: undefined,
   },
 )
 
@@ -21,6 +25,7 @@ const emit = defineEmits<{
 
 <template>
   <section class="empty-state" role="status">
+    <component :is="icon" v-if="icon" :size="32" class="empty-state__icon" aria-hidden="true" />
     <h3 class="empty-state__title">{{ title }}</h3>
     <p v-if="description" class="empty-state__description">{{ description }}</p>
     <button
@@ -45,6 +50,10 @@ const emit = defineEmits<{
   align-items: flex-start;
   gap: var(--space-xs);
   color: var(--color-ink-muted);
+}
+
+.empty-state__icon {
+  color: var(--color-ink-tertiary);
 }
 
 .empty-state__title {

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useJobsStore } from '@/stores/jobs'
+import { Briefcase } from 'lucide-vue-next'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 
     <EmptyState
       v-else-if="isEmpty"
+      :icon="Briefcase"
       title="还没有目标岗位"
       description="添加一个目标岗位，系统才能进行匹配分析。"
       action-label="新建岗位"
@@ -65,6 +67,12 @@ const emit = defineEmits<{
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   min-height: 200px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.job-selector:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .job-selector__title {

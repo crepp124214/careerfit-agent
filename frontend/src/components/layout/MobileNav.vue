@@ -1,6 +1,29 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAvailabilityStore } from '@/stores/availability'
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Briefcase,
+  FileText,
+  Clock,
+  GitCompare,
+  BookOpen,
+  Settings,
+  Lock,
+} from 'lucide-vue-next'
+
+const ICON_MAP: Record<string, typeof LayoutDashboard> = {
+  workspace: LayoutDashboard,
+  jobs: Briefcase,
+  resumes: FileText,
+  history: Clock,
+  'version-diff': GitCompare,
+  learning: BookOpen,
+  settings: Settings,
+}
+
 const availability = useAvailabilityStore()
 const open = ref(false)
 
@@ -45,11 +68,7 @@ function close() {
       aria-label="打开导航菜单"
       @click="toggle"
     >
-      <span class="mobile-nav__hamburger" aria-hidden="true">
-        <span class="mobile-nav__bar" />
-        <span class="mobile-nav__bar" />
-        <span class="mobile-nav__bar" />
-      </span>
+      <Menu :size="20" aria-hidden="true" />
     </button>
 
     <div
@@ -58,25 +77,34 @@ function close() {
       class="mobile-nav__overlay"
       @click.self="close"
     >
-      <ul class="mobile-nav__list" role="menu">
-        <li
-          v-for="item in ITEMS"
-          :key="item.name"
-          class="mobile-nav__item"
-          role="none"
-        >
-          <router-link
-            :to="item.route"
-            class="mobile-nav__link"
-            :class="{ 'mobile-nav__link--muted': !isReady(item.cap) }"
-            role="menuitem"
-            @click="close"
+      <div class="mobile-nav__panel">
+        <div class="mobile-nav__panel-header">
+          <span class="mobile-nav__panel-title">CareerFit</span>
+          <button class="mobile-nav__close" type="button" aria-label="关闭导航" @click="close">
+            <X :size="18" aria-hidden="true" />
+          </button>
+        </div>
+        <ul class="mobile-nav__list" role="menu">
+          <li
+            v-for="item in ITEMS"
+            :key="item.name"
+            class="mobile-nav__item"
+            role="none"
           >
-            <span>{{ item.label }}</span>
-            <span v-if="!isReady(item.cap)" aria-hidden="true">🔒</span>
-          </router-link>
-        </li>
-      </ul>
+            <router-link
+              :to="item.route"
+              class="mobile-nav__link"
+              :class="{ 'mobile-nav__link--muted': !isReady(item.cap) }"
+              role="menuitem"
+              @click="close"
+            >
+              <component :is="ICON_MAP[item.name]" :size="16" class="mobile-nav__icon" aria-hidden="true" />
+              <span>{{ item.label }}</span>
+              <Lock v-if="!isReady(item.cap)" :size="12" class="mobile-nav__lock" aria-hidden="true" />
+            </router-link>
+          </li>
+        </ul>
+      </div>
     </div>
   </nav>
 </template>
@@ -92,24 +120,15 @@ function close() {
   }
 
   .mobile-nav__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: 1px solid var(--color-hairline);
     border-radius: var(--rounded-md);
     padding: var(--space-xs);
     cursor: pointer;
-  }
-
-  .mobile-nav__hamburger {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .mobile-nav__bar {
-    display: block;
-    width: 18px;
-    height: 2px;
-    background-color: var(--color-ink);
+    color: var(--color-ink);
   }
 
   .mobile-nav__overlay {
@@ -119,13 +138,42 @@ function close() {
     z-index: 100;
   }
 
-  .mobile-nav__list {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--color-canvas);
+  .mobile-nav__panel {
+    background-color: var(--color-surface-3);
     border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .mobile-nav__panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .mobile-nav__panel-title {
+    font-size: var(--font-card-title-size);
+    font-weight: var(--font-card-title-weight);
+    color: var(--color-ink);
+  }
+
+  .mobile-nav__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    padding: var(--space-xxs);
+    border-radius: var(--rounded-sm);
+  }
+
+  .mobile-nav__close:hover {
+    background-color: var(--color-surface-2);
+  }
+
+  .mobile-nav__list {
     list-style: none;
     margin: 0;
     padding: var(--space-md);
@@ -137,7 +185,7 @@ function close() {
   .mobile-nav__link {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
     text-decoration: none;
     color: var(--color-ink);
@@ -151,6 +199,17 @@ function close() {
 
   .mobile-nav__link--muted {
     color: var(--color-ink-subtle);
+  }
+
+  .mobile-nav__icon {
+    flex-shrink: 0;
+    color: var(--color-ink-tertiary);
+  }
+
+  .mobile-nav__lock {
+    margin-left: auto;
+    color: var(--color-ink-tertiary);
+    opacity: 0.6;
   }
 }
 </style>

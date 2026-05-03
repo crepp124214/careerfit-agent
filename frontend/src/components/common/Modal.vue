@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { X } from 'lucide-vue-next'
 
 const props = withDefaults(
   defineProps<{
@@ -77,7 +78,7 @@ watch(
               aria-label="关闭"
               @click="emit('close')"
             >
-              ×
+              <X :size="18" aria-hidden="true" />
             </button>
           </header>
           <div class="modal__body">
@@ -105,11 +106,12 @@ watch(
 }
 
 .modal {
-  background-color: var(--color-surface-1);
+  background-color: var(--color-surface-4);
   color: var(--color-ink);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   padding: var(--space-lg);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);

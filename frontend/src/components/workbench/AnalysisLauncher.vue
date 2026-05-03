@@ -62,6 +62,12 @@ const emit = defineEmits<{
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.analysis-launcher:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .analysis-launcher__title {

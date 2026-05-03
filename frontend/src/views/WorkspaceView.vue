@@ -1,12 +1,44 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAvailabilityStore } from '@/stores/availability'
+import { useJobsStore } from '@/stores/jobs'
+import { useResumesStore } from '@/stores/resumes'
+import { useAnalysesStore } from '@/stores/analyses'
 import NextBestActionCallout from '@/components/workbench/NextBestActionCallout.vue'
 import JobSelector from '@/components/workbench/JobSelector.vue'
 import ResumeSelector from '@/components/workbench/ResumeSelector.vue'
 import AnalysisLauncher from '@/components/workbench/AnalysisLauncher.vue'
 
+const router = useRouter()
 const availability = useAvailabilityStore()
+const jobs = useJobsStore()
+const resumes = useResumesStore()
+const analyses = useAnalysesStore()
+
+const calloutState = computed(() => {
+  if (analyses.report) return 'ready' as const
+  if (jobs.selectedId && resumes.selectedId) return 'ready' as const
+  return 'empty' as const
+})
+
+const calloutHeadline = computed(() => {
+  if (analyses.report) return '查看最新报告'
+  if (jobs.selectedId && resumes.selectedId) return '开始匹配分析'
+  return ''
+})
+
+const calloutActionLabel = computed(() => {
+  if (analyses.report) return '查看报告'
+  if (jobs.selectedId && resumes.selectedId) return '开始分析'
+  return ''
+})
+
+function onCalloutAction() {
+  if (analyses.report) {
+    router.push(`/reports/${analyses.report.taskId}`)
+  }
+}
 
 onMounted(() => {
   availability.probe()
@@ -21,20 +53,22 @@ onMounted(() => {
 
 <template>
   <section role="main" aria-label="个人求职成长工作台" class="workspace-view">
-    <h1 class="workspace-view__title">个人求职成长工作台</h1>
+    <h1 class="workspace-view__title animate-in">个人求职成长工作台</h1>
 
     <NextBestActionCallout
-      state="empty"
-      headline=""
-      action-label=""
+      class="animate-in animate-in-stagger-1"
+      :state="calloutState"
+      :headline="calloutHeadline"
+      :action-label="calloutActionLabel"
+      @action="onCalloutAction"
     />
 
-    <div class="workspace-view__grid">
+    <div class="workspace-view__grid animate-in animate-in-stagger-2">
       <JobSelector />
       <ResumeSelector />
     </div>
 
-    <AnalysisLauncher />
+    <AnalysisLauncher class="animate-in animate-in-stagger-3" />
   </section>
 </template>
 

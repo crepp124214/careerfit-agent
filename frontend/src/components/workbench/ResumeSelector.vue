@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useResumesStore } from '@/stores/resumes'
+import { FileText } from 'lucide-vue-next'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 
     <EmptyState
       v-else-if="isEmpty"
+      :icon="FileText"
       title="还没有简历版本"
       description="添加一个简历版本，系统才能进行匹配分析。"
       action-label="新建简历"
@@ -65,6 +67,12 @@ const emit = defineEmits<{
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   min-height: 200px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.resume-selector:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .resume-selector__title {

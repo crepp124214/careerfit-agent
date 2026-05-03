@@ -46,7 +46,7 @@ watch(
 
 <template>
   <section class="report-view" role="main" aria-label="分析报告">
-    <h1 class="report-view__title">分析报告</h1>
+    <h1 class="report-view__title animate-in">分析报告</h1>
 
     <ErrorBanner
       v-if="!isValidTaskId"
@@ -82,11 +82,12 @@ watch(
       />
 
       <ScoringOverviewCard
+        class="animate-in animate-in-stagger-1"
         :total-score="analyses.report!.totalScore"
         :dimensions="analyses.report!.dimensions"
       />
 
-      <section class="report-view__dimensions" aria-label="评分明细">
+      <section class="report-view__dimensions animate-in animate-in-stagger-2" aria-label="评分明细">
         <h2 class="report-view__section-title">评分明细</h2>
         <div class="report-view__dimension-grid">
           <ScoringDimensionCard
@@ -97,7 +98,7 @@ watch(
         </div>
       </section>
 
-      <section class="report-view__suggestions" aria-label="简历建议">
+      <section class="report-view__suggestions animate-in animate-in-stagger-3" aria-label="简历建议">
         <h2 class="report-view__section-title">简历建议</h2>
 
         <IntegrityGuardBanner
@@ -117,6 +118,7 @@ watch(
 
       <AgentTraceTimeline
         v-if="analyses.nodes.length > 0"
+        class="animate-in animate-in-stagger-4"
         :nodes="analyses.nodes"
       />
     </template>
@@ -134,7 +136,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  max-width: 960px;
+  max-width: 880px;
 }
 
 .report-view__title {
@@ -157,9 +159,21 @@ watch(
 }
 
 .report-view__dimension-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .report-view__dimension-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .report-view__dimension-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .report-view__suggestions {

@@ -7,6 +7,7 @@ import router from '@/router/index'
 import '@/styles/tokens.css'
 import '@/styles/base.css'
 import '@/styles/a11y.css'
+import '@/styles/animations.css'
 
 const app = createApp(App)
 

@@ -19,7 +19,11 @@ onMounted(() => {
     <SideNav class="app-shell__nav" />
     <div class="app-shell__content">
       <main class="app-shell__main">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <Transition name="page-fade" mode="out-in">
+            <component :is="Component" />
+          </Transition>
+        </RouterView>
       </main>
       <StatusBar />
     </div>
@@ -49,6 +53,16 @@ onMounted(() => {
   flex: 1;
   padding: var(--space-lg);
   overflow: auto;
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 768px) {

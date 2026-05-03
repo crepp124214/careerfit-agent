@@ -17,13 +17,13 @@ const densityOptions: { value: Density; label: string }[] = [
 
 <template>
   <section class="settings-view" role="main" aria-label="设置">
-    <h1 class="settings-view__title">设置</h1>
+    <h1 class="settings-view__title animate-in">设置</h1>
 
-    <p class="settings-view__notice">
+    <p class="settings-view__notice animate-in animate-in-stagger-1">
       本设置仅保存在你的浏览器，未来如果清空浏览器数据将恢复默认。
     </p>
 
-    <div class="settings-view__section">
+    <div class="settings-view__section animate-in animate-in-stagger-2">
       <h2 class="settings-view__section-title">主题</h2>
       <div class="settings-view__options">
         <label
@@ -47,7 +47,7 @@ const densityOptions: { value: Density; label: string }[] = [
       </div>
     </div>
 
-    <div class="settings-view__section">
+    <div class="settings-view__section animate-in animate-in-stagger-3">
       <h2 class="settings-view__section-title">布局密度</h2>
       <div class="settings-view__options">
         <label
@@ -67,7 +67,7 @@ const densityOptions: { value: Density; label: string }[] = [
       </div>
     </div>
 
-    <div class="settings-view__section">
+    <div class="settings-view__section animate-in animate-in-stagger-4">
       <h2 class="settings-view__section-title">最近打开历史长度</h2>
       <label class="settings-view__field">
         <span class="settings-view__field-label">保留条数</span>
@@ -113,6 +113,11 @@ const densityOptions: { value: Density; label: string }[] = [
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  padding: var(--space-lg);
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .settings-view__section-title {
@@ -133,6 +138,13 @@ const densityOptions: { value: Density; label: string }[] = [
   align-items: center;
   gap: var(--space-sm);
   cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--rounded-md);
+  transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.settings-view__option:hover {
+  background-color: var(--color-surface-2);
 }
 
 .settings-view__option--disabled {
@@ -140,9 +152,54 @@ const densityOptions: { value: Density; label: string }[] = [
   cursor: not-allowed;
 }
 
+.settings-view__option--disabled:hover {
+  background-color: transparent;
+}
+
+/* 视觉隐藏原生 radio，保留 data-testid 供测试 */
+.settings-view__option input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 自定义 radio 指示器 */
 .settings-view__option-label {
   font-size: var(--font-body-size);
   color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.settings-view__option-label::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--rounded-full);
+  border: 2px solid var(--color-hairline-tertiary);
+  flex-shrink: 0;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.settings-view__option input[type="radio"]:checked + .settings-view__option-label::before {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  box-shadow: inset 0 0 0 3px var(--color-surface-1);
+}
+
+.settings-view__option input[type="radio"]:focus-visible + .settings-view__option-label::before {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .settings-view__phase-tag {
@@ -170,8 +227,17 @@ const densityOptions: { value: Density; label: string }[] = [
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-md);
-  background-color: var(--color-surface-1);
+  background-color: var(--color-surface-2);
   color: var(--color-ink);
   width: 80px;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.settings-view__number-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-2);
 }
 </style>

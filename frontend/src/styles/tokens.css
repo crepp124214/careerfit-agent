@@ -169,6 +169,11 @@
   --motion-duration-base: 200ms;
   --motion-duration-slow: 250ms;
 
+  /* —— 阴影 —— */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+
   /* —— focus ring（无障碍） —— */
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
