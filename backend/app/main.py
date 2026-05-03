@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.routes import jobs, resumes
+from app.api.routes import agent_runs, analysis, jobs, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -9,9 +9,9 @@ from app.db.session import engine
 CAPABILITIES = {
     "jobs": "ready",
     "resumes": "ready",
-    "analysis": "unavailable",
-    "reports": "unavailable",
-    "agentRuns": "unavailable",
+    "analysis": "ready",
+    "reports": "ready",
+    "agentRuns": "ready",
     "learning": "unavailable",
 }
 
@@ -31,6 +31,9 @@ def create_app() -> FastAPI:
 
     app.include_router(jobs.router)
     app.include_router(resumes.router)
+    app.include_router(analysis.router)
+    app.include_router(reports.router)
+    app.include_router(agent_runs.router)
 
     return app
 

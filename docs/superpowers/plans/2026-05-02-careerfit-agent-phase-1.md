@@ -979,7 +979,7 @@ git commit -m "feat: add deterministic scoring and integrity guard"
 - 修改 `backend/app/main.py`
 - 测试 `backend/tests/test_analysis_flow.py`
 
-- [ ] **Step 1：先写失败的分析流程测试**
+- [x] **Step 1：先写失败的分析流程测试**
 
 测试完整路径：创建 JD、创建简历、`POST /api/analysis`、读取报告、读取 Agent runs。
 
@@ -991,7 +991,7 @@ git commit -m "feat: add deterministic scoring and integrity guard"
 - 报告包含分项评分。
 - Agent runs 至少包含多个节点，首个节点是 `jd_parser`。
 
-- [ ] **Step 2：运行测试确认失败**
+- [x] **Step 2：运行测试确认失败**
 
 ```powershell
 cd backend
@@ -1000,12 +1000,12 @@ pytest tests/test_analysis_flow.py -q
 
 预期：路由不存在。
 
-- [ ] **Step 3：创建 schemas**
+- [x] **Step 3：创建 schemas**
 
 `analysis.py` 定义 `AnalysisCreate` 和 `AnalysisTaskRead`。
 `reports.py` 定义 `ReportRead` 和 `AgentRunRead`。
 
-- [ ] **Step 4：创建 workflow state 和节点**
+- [x] **Step 4：创建 workflow state 和节点**
 
 `state.py` 定义 `CareerFitState`。
 `nodes.py` 实现：
@@ -1021,12 +1021,12 @@ pytest tests/test_analysis_flow.py -q
 
 `next_best_action` 必须在有缺口时返回优先补齐技能；没有缺口时建议创建下一版简历并重新分析。
 
-- [ ] **Step 5：实现 graph runner 和 trace logging**
+- [x] **Step 5：实现 graph runner 和 trace logging**
 
 `graph.py` 定义节点序列、`redact_state()` 和 `run_workflow()`。
 UI trace 中必须把 `raw_jd` 和 `raw_resume` 替换成 `[redacted]`。
 
-- [ ] **Step 6：实现分析 service 和路由**
+- [x] **Step 6：实现分析 service 和路由**
 
 `analysis_service.py` 负责：
 
@@ -1045,25 +1045,25 @@ GET /api/reports/{task_id}
 GET /api/agent-runs/{task_id}
 ```
 
-- [ ] **Step 7：注册路由并更新 capabilities**
+- [x] **Step 7：注册路由并更新 capabilities**
 
 在 `main.py` 中 include `analysis`、`reports`、`agent_runs`，并把 `analysis` / `reports` / `agentRuns` 在 `/api/capabilities` 中切到 `ready`。
 
-- [ ] **Step 8：运行分析流程测试**
+- [x] **Step 8：运行分析流程测试**
 
 ```powershell
 cd backend
 pytest tests/test_analysis_flow.py -q
 ```
 
-- [ ] **Step 9：运行全部后端测试**
+- [x] **Step 9：运行全部后端测试**
 
 ```powershell
 cd backend
 pytest -q
 ```
 
-- [ ] **Step 10：提交**
+- [x] **Step 10：提交**
 
 ```powershell
 git add backend/app backend/tests
