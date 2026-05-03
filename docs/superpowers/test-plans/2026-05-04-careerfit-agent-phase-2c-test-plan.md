@@ -105,4 +105,3 @@ gstack:cso
 ```
 
 如果当前环境没有可执行入口，必须按本地 `gstack:cso` skill 文档做等价 OWASP + STRIDE 审计，并把失败命令、替代审计结论和残余风险写入 review log。
-

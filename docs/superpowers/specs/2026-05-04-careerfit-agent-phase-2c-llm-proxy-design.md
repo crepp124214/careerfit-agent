@@ -119,4 +119,3 @@ next_best_action:
 - Agent trace 不包含 API Key、完整 prompt、完整简历或完整 JD。
 - 前端不接触 API Key。
 - 后端、前端、typecheck、build 和文档检查通过；Docker smoke 取决于本机 Docker daemon 状态。
-
