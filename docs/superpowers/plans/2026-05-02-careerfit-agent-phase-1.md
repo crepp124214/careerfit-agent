@@ -451,7 +451,7 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 9：提交**
+- [x] **Step 9：提交**
 
 ```powershell
 git add frontend
@@ -477,7 +477,7 @@ git commit -m "feat(frontend): add workspace, jobs and resumes management views"
 - 创建 `frontend/tests/views/ReportView.test.ts`
 - 创建 `frontend/tests/components/AgentTraceTimeline.test.ts`
 
-- [ ] **Step 1：先写失败的 AgentTraceTimeline 测试**
+- [x] **Step 1：先写失败的 AgentTraceTimeline 测试**
 
 `AgentTraceTimeline.test.ts` 断言：
 
@@ -485,7 +485,7 @@ git commit -m "feat(frontend): add workspace, jobs and resumes management views"
 - 节点状态 `running / success / failed` 分别对应 info-trace / risk-low / risk-high 配色 + 文字标签。
 - 长列表支持折叠（768 px 以下默认折叠）。
 
-- [ ] **Step 2：先写失败的 ReportView 测试**
+- [x] **Step 2：先写失败的 ReportView 测试**
 
 `ReportView.test.ts` 断言：
 
@@ -495,23 +495,23 @@ git commit -m "feat(frontend): add workspace, jobs and resumes management views"
 - 后端 ready 且数据返回时，顶部固定 `NextBestActionCallout`、其下 `ScoringOverviewCard`、再下方维度卡列表、再下方简历建议卡列表、底部 `AgentTraceTimeline`。
 - 简历建议被 Integrity Guard 拦截时，列表上方插入 `IntegrityGuardBanner`，被拦截卡片置灰并带 `RiskPill level="high" label="高风险"`。
 
-- [ ] **Step 3：运行测试确认失败**
+- [x] **Step 3：运行测试确认失败**
 
 ```powershell
 cd frontend
 npm test
 ```
 
-- [ ] **Step 4：实现报告组件**
+- [x] **Step 4：实现报告组件**
 
 按 `docs/DESIGN.md` 组件契约实现 `ScoringOverviewCard`/`ScoringDimensionCard`/`EvidenceCard`/`SuggestionCard`/`AgentTraceRow`/`AgentTraceTimeline`。证据卡的 JD 与简历原文展示长度上限 200 字符，超出折叠。
 
-- [ ] **Step 5：实现分析执行视图与报告视图**
+- [x] **Step 5：实现分析执行视图与报告视图**
 
 `AnalysisRunView.vue`：选岗位 + 选简历 + 启动分析；后端未就绪时按钮 disabled + notice。
 `ReportView.vue`：组合上述组件，按 store 状态渲染 4 态。
 
-- [ ] **Step 6：运行测试确认通过**
+- [x] **Step 6：运行测试确认通过**
 
 ```powershell
 cd frontend
@@ -519,7 +519,7 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 7：提交**
+- [x] **Step 7：提交**
 
 ```powershell
 git add frontend
