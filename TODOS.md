@@ -1,7 +1,7 @@
 # CareerFit Agent TODOS
 
 日期：2026-05-03
-版本：v3（Phase 1 完成；启动 Phase 1.5 收口 + Phase 2A 学习闭环）
+版本：v4（Phase 2A 完成；启动 Phase 2B 历史趋势 + 版本对比）
 
 ## 适用范围与文件优先级
 
@@ -105,6 +105,42 @@
 - [x] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
 - [x] Docker：`docker compose up --build`，确认 fullstack 模式 `/api/capabilities` 返回 `learning: "ready"`。
 - [x] 文档：`git diff --check`。
+
+## Phase 2B 当前范围：历史趋势与版本对比
+
+目标：把学习任务后的复盘闭环补起来，让用户能看到“有没有变好”和“两个简历版本到底改了什么”。
+
+### Phase 2B 文档与计划
+
+- [x] 用户选择方案 A：历史趋势 + 版本对比。
+- [x] 创建 Phase 2B 设计文档：`docs/superpowers/specs/2026-05-03-careerfit-agent-phase-2b-history-diff-design.md`。
+- [x] 创建 Phase 2B 实施计划：`docs/superpowers/plans/2026-05-03-careerfit-agent-phase-2b-history-diff.md`。
+- [x] 创建 Phase 2B 测试计划：`docs/superpowers/test-plans/2026-05-03-careerfit-agent-phase-2b-test-plan.md`。
+- [x] 同步 Phase 2B 测试计划外部副本：`C:\Users\qwer\.gstack\projects\Newproject\phase-2b-test-plan-2026-05-03-careerfit-agent.md`。
+
+### 后端 Phase 2B
+
+- [ ] 新增 `GET /api/reports/history`，从已有 `analysis_reports` 派生历史趋势 snapshot。
+- [ ] 历史趋势支持 `job_id`、`resume_id`、`limit`，不新增派生表。
+- [ ] 新增 `GET /api/resumes/compare?from_id=&to_id=`，使用确定性行级 diff。
+- [ ] diff 响应包含 summary、sections 和可选 score context。
+- [ ] 不在日志、异常详情或 Agent trace 中输出简历原文或 diff 文本。
+
+### 前端 Phase 2B
+
+- [ ] 新增 history API/store，把 `/history` 从占位升级为真实趋势视图。
+- [ ] 新增 resume diff API/store，把 `/diff` 从占位升级为真实版本对比视图。
+- [ ] `/history` 支持 unavailable、loading、error、empty、partial、ready。
+- [ ] `/diff` 支持 unavailable、loading、error、empty、partial、ready。
+- [ ] 图表使用已有 `echarts` / `vue-echarts`，不引入新图表依赖。
+- [ ] 前端不得把 diff 文本、简历原文、JD 原文写入 localStorage / IndexedDB。
+
+### Phase 2B 验证门
+
+- [ ] 后端：`cd backend && pytest tests/test_report_history_api.py tests/test_resume_diff_api.py -q && pytest -q`。
+- [ ] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
+- [ ] Docker：`docker compose up --build`，确认 fullstack 模式 `/history` 与 `/diff` 可访问并使用真实 API。
+- [ ] 文档：`git diff --check`。
 
 ## Phase 2+ 延后
 
