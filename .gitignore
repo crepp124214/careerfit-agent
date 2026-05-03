@@ -2,6 +2,9 @@
 .gstack/
 .superpowers/
 node_modules/
+.env
+.env.*
+!.env.example
 
 # Playwright
 test-results/
