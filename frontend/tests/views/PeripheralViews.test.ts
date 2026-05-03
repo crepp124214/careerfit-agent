@@ -9,6 +9,7 @@ import VersionDiffView from '@/views/VersionDiffView.vue'
 import LearningTasksView from '@/views/LearningTasksView.vue'
 import AgentTraceView from '@/views/AgentTraceView.vue'
 import { useAvailabilityStore } from '@/stores/availability'
+import { fetchLearningTasks } from '@/api/learning'
 
 vi.mock('@/api/agentRuns', () => ({
   fetchAgentRun: vi.fn(),
@@ -16,6 +17,12 @@ vi.mock('@/api/agentRuns', () => ({
 
 vi.mock('@/api/reports', () => ({
   fetchReport: vi.fn(),
+}))
+
+vi.mock('@/api/learning', () => ({
+  fetchLearningTasks: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+  generateLearningTasks: vi.fn(),
+  updateLearningTaskStatus: vi.fn(),
 }))
 
 describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
@@ -45,6 +52,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
+    vi.mocked(fetchLearningTasks).mockResolvedValue({ ok: true, data: [] })
   })
 
   describe('HistoryView', () => {

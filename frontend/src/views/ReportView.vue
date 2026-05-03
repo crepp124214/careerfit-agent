@@ -78,6 +78,7 @@ watch(
         :state="analyses.report!.nextBestAction.state"
         :headline="analyses.report!.nextBestAction.headline"
         :action-label="analyses.report!.nextBestAction.actionLabel"
+        :cta-to="analyses.report!.nextBestAction.ctaTo ?? '/learning'"
         :waiting-reason="analyses.report!.nextBestAction.waitingReason"
       />
 

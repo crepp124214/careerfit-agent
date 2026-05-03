@@ -20,6 +20,13 @@ class AnalysisStatus(str, enum.Enum):
     failed = "failed"
 
 
+class LearningTaskStatus(str, enum.Enum):
+    not_started = "not_started"
+    doing = "doing"
+    done = "done"
+    paused = "paused"
+
+
 class JobDescription(Base):
     __tablename__ = "job_descriptions"
 
@@ -62,6 +69,7 @@ class AnalysisTask(Base):
     resume: Mapped[ResumeVersion] = relationship(back_populates="analyses")
     report: Mapped[AnalysisReport | None] = relationship(back_populates="task", uselist=False)
     agent_runs: Mapped[list[AgentRun]] = relationship(back_populates="task")
+    learning_tasks: Mapped[list[LearningTask]] = relationship(back_populates="source_task")
 
 
 class AnalysisReport(Base):
@@ -82,6 +90,34 @@ class AnalysisReport(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     task: Mapped[AnalysisTask] = relationship(back_populates="report")
+    learning_tasks: Mapped[list[LearningTask]] = relationship(back_populates="source_report")
+
+
+class LearningTask(Base):
+    __tablename__ = "learning_tasks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    source_task_id: Mapped[int] = mapped_column(ForeignKey("analysis_tasks.id"), nullable=False)
+    source_report_id: Mapped[int] = mapped_column(ForeignKey("analysis_reports.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    dimension: Mapped[str] = mapped_column(String(100), nullable=False)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[LearningTaskStatus] = mapped_column(
+        Enum(LearningTaskStatus), nullable=False, default=LearningTaskStatus.not_started
+    )
+    evidence_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    task_metadata: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=lambda: {"schema_version": "1"}
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    source_task: Mapped[AnalysisTask] = relationship(back_populates="learning_tasks")
+    source_report: Mapped[AnalysisReport] = relationship(back_populates="learning_tasks")
+
+    @property
+    def schema_version(self) -> str:
+        return str(self.task_metadata.get("schema_version", "1"))
 
 
 class AgentRun(Base):

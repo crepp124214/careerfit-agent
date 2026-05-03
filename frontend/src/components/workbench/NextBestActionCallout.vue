@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 type State = 'ready' | 'blocked' | 'empty'
 
@@ -10,11 +11,13 @@ const props = withDefaults(
     state: State
     headline?: string
     actionLabel?: string
+    ctaTo?: string
     waitingReason?: string
   }>(),
   {
     headline: '',
     actionLabel: '',
+    ctaTo: '',
     waitingReason: '',
   },
 )
@@ -32,6 +35,14 @@ const headlineText = computed(() => props.headline)
 const headlineNeedsClamp = computed(
   () => headlineText.value.length > HEADLINE_CHAR_LIMIT,
 )
+
+const shouldRenderLink = computed(() => isReady.value && props.ctaTo.length > 0)
+
+const ctaAriaLabel = computed(() => {
+  const label = props.actionLabel || '继续'
+  if (!headlineText.value) return label
+  return `${label}：${headlineText.value}`
+})
 
 const headlineClasses = computed(() => {
   return [
@@ -81,11 +92,21 @@ function onAction() {
         {{ waitingReason }}
       </p>
 
+      <RouterLink
+        v-if="shouldRenderLink"
+        class="next-best-action__cta"
+        :to="ctaTo"
+        :aria-label="ctaAriaLabel"
+      >
+        {{ actionLabel }}
+      </RouterLink>
+
       <button
-        v-if="!isEmpty"
+        v-else-if="!isEmpty"
         type="button"
         class="next-best-action__cta"
         :disabled="isBlocked"
+        :aria-label="ctaAriaLabel"
         @click="onAction"
       >
         {{ actionLabel }}
@@ -182,6 +203,7 @@ function onAction() {
   font-family: var(--font-family-sans);
   font-size: var(--font-button-size);
   font-weight: var(--font-button-weight);
+  text-decoration: none;
   cursor: pointer;
   transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }

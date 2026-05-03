@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agent_runs, analysis, jobs, reports, resumes
+from app.api.routes import agent_runs, analysis, jobs, learning, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -13,7 +13,7 @@ CAPABILITIES = {
     "analysis": "ready",
     "reports": "ready",
     "agentRuns": "ready",
-    "learning": "unavailable",
+    "learning": "ready",
 }
 
 
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(analysis.router)
     app.include_router(reports.router)
     app.include_router(agent_runs.router)
+    app.include_router(learning.router)
 
     return app
 

@@ -8,6 +8,8 @@ import WorkspaceView from '@/views/WorkspaceView.vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useJobsStore } from '@/stores/jobs'
 import { useResumesStore } from '@/stores/resumes'
+import { useAnalysesStore } from '@/stores/analyses'
+import type { Report } from '@/api/reports'
 
 describe('WorkspaceView', () => {
   function createRouterInstance() {
@@ -53,6 +55,27 @@ describe('WorkspaceView', () => {
       const callout = wrapper.findComponent({ name: 'NextBestActionCallout' })
       expect(callout.exists()).toBe(true)
       expect(wrapper.text()).toContain('当前没有推荐行动')
+    })
+
+    it('有最新报告时 Next Best Action CTA 指向学习任务', async () => {
+      const { wrapper } = await mountView()
+      const analyses = useAnalysesStore()
+      analyses.report = {
+        id: 'report-001',
+        taskId: 'task-001',
+        totalScore: 70,
+        dimensions: [],
+        suggestions: [],
+        nextBestAction: {
+          headline: '优先补齐 Docker 的可验证证据',
+          actionLabel: '查看学习任务',
+          state: 'ready',
+        },
+      } as Report
+      await nextTick()
+      await flushPromises()
+
+      expect(wrapper.find('a[href="/learning"]').exists()).toBe(true)
     })
   })
 

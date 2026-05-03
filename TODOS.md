@@ -1,7 +1,7 @@
 # CareerFit Agent TODOS
 
-日期：2026-05-02
-版本：v2（双门重写：前端 Phase 1.A + 后端 Phase 1.B 同步）
+日期：2026-05-03
+版本：v3（Phase 1 完成；启动 Phase 1.5 收口 + Phase 2A 学习闭环）
 
 ## 适用范围与文件优先级
 
@@ -63,6 +63,48 @@
 | 后端 SQLAlchemy 异步 vs 同步 | 全异步 | 同步 + worker 边界 | 选 B：同步 Phase 1（Phase 4 D6 审批通过） |
 
 每次决策须写明：选择哪个、理由、影响范围、回滚条件。
+
+## Phase 1.5 收口（Phase 2A 前置门）
+
+以下事项必须在 Phase 2A 功能实现前完成或记录阻塞原因。
+
+- [x] 补写 3 条 review-log：`plan-ceo-review` / `plan-design-review` / `plan-eng-review`，含 Hold Scope、设计验收和工程质量门结论。
+- [x] 对 T8–T11 的 PII 入口逻辑运行 `gstack:cso` OWASP + STRIDE 安全审计；当前环境没有 `gstack:cso` 可执行入口，已在 review-log 记录失败命令，并按本地 skill 文档完成等价 PII 基线审计。
+- [x] 创建 Phase 2A 实施计划：`docs/superpowers/plans/2026-05-03-careerfit-agent-phase-2a-learning-loop.md`。
+- [x] 创建 Phase 2A 测试计划：`docs/superpowers/test-plans/2026-05-03-careerfit-agent-phase-2a-test-plan.md`。
+- [x] 同步 Phase 2A 测试计划外部副本：`C:\Users\qwer\.gstack\projects\Newproject\phase-2a-test-plan-2026-05-03-careerfit-agent.md`。
+
+## Phase 2A 当前范围：学习任务与成长闭环
+
+目标：把 Phase 1 的报告结论转化为真实可推进的学习任务，让 `Next Best Action` 不止是建议，而是能落到任务、状态和下一步行动。
+
+### 后端 Phase 2A
+
+- [x] 新增 `learning_tasks` 持久化模型，关联 `analysis_tasks` / `analysis_reports`。
+- [x] 新增 `backend/app/schemas/learning.py`，响应字段包含 `schema_version`。
+- [x] 新增 `backend/app/services/learning_service.py`，从 `learning_plan`、`gaps`、`next_best_action` 幂等生成任务。
+- [x] 新增 `backend/app/api/routes/learning.py`：
+  - `GET /api/learning/tasks`
+  - `POST /api/learning/tasks/generate`
+- [x] 补齐 `PATCH /api/learning/tasks/{id}` 状态更新接口。
+- [x] `CAPABILITIES.learning` 从 `unavailable` 翻为 `ready`。
+- [x] 学习任务响应不得包含原始简历/JD 文本。
+- [x] 状态流转覆盖 `not_started`、`doing`、`done`、`paused`，拒绝非法状态。
+
+### 前端 Phase 2A
+
+- [x] 更新 `frontend/src/api/learning.ts`，匹配真实后端契约。
+- [x] 新增 `frontend/src/stores/learning.ts`，支持加载、生成、状态更新。
+- [x] `LearningTasksView` 从占位升级为真实状态机：空、加载、错误、部分数据、有数据、后端不可用。
+- [x] 工作台和报告页的 `Next Best Action` CTA 指向 `/learning` 或只携带 ID 的 `/learning?taskId=<id>`。
+- [x] 前端不得把学习任务详情、简历原文、JD 原文或 Agent trace 原文写入 localStorage / IndexedDB。
+
+### Phase 2A 验证门
+
+- [x] 后端：`cd backend && pytest tests/test_learning_api.py -q && pytest -q`。
+- [x] 前端：`cd frontend && npm test && npm run typecheck && npm run build`。
+- [x] Docker：`docker compose up --build`，确认 fullstack 模式 `/api/capabilities` 返回 `learning: "ready"`。
+- [x] 文档：`git diff --check`。
 
 ## Phase 2+ 延后
 
@@ -146,7 +188,6 @@
 - [x] Phase 0/0.5/1/2/3/3.5/4 全部通过审查。
 - [x] 修订 `docs/DESIGN.md` 第 540 行 + 已知缺口 #3（D12 决议：480px 断点已写入，与 T1 同步完成）。
 - [x] 把 14 项决策同步到 `TODOS.md` "决策点" 节（"决策点"节 + "Phase 4 决策审计"节双重记录）。
-- [ ] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
+- [x] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
 - [x] 建议下一步：T1–T13 全部完成，Phase 1 已交付。
-- [ ] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计。
-
+- [x] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计；当前 CLI 入口不可用，已记录并完成本地等价审计。

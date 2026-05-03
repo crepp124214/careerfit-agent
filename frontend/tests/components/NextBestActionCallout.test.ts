@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import NextBestActionCallout from '@/components/workbench/NextBestActionCallout.vue'
 
 describe('NextBestActionCallout', () => {
@@ -52,6 +53,27 @@ describe('NextBestActionCallout', () => {
       })
       await wrapper.find('button').trigger('click')
       expect(wrapper.emitted('action')).toBeTruthy()
+    })
+
+    it('传入 ctaTo 时渲染指向学习任务的可访问链接', async () => {
+      const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{ path: '/learning', name: 'learning', component: { template: '<div />' } }],
+      })
+      const wrapper = mount(NextBestActionCallout, {
+        props: {
+          state: 'ready',
+          headline: '优先补齐 Docker 的可验证证据',
+          actionLabel: '查看学习任务',
+          ctaTo: '/learning',
+        },
+        global: { plugins: [router] },
+      })
+      await router.isReady()
+
+      const link = wrapper.find('a[href="/learning"]')
+      expect(link.exists()).toBe(true)
+      expect(link.attributes('aria-label')).toBe('查看学习任务：优先补齐 Docker 的可验证证据')
     })
   })
 

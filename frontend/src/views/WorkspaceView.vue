@@ -23,14 +23,19 @@ const calloutState = computed(() => {
 })
 
 const calloutHeadline = computed(() => {
-  if (analyses.report) return '查看最新报告'
+  if (analyses.report) return analyses.report.nextBestAction?.headline ?? '查看最新报告'
   if (jobs.selectedId && resumes.selectedId) return '开始匹配分析'
   return ''
 })
 
 const calloutActionLabel = computed(() => {
-  if (analyses.report) return '查看报告'
+  if (analyses.report) return analyses.report.nextBestAction?.actionLabel ?? '查看学习任务'
   if (jobs.selectedId && resumes.selectedId) return '开始分析'
+  return ''
+})
+
+const calloutCtaTo = computed(() => {
+  if (analyses.report) return analyses.report.nextBestAction?.ctaTo ?? '/learning'
   return ''
 })
 
@@ -60,6 +65,7 @@ onMounted(() => {
       :state="calloutState"
       :headline="calloutHeadline"
       :action-label="calloutActionLabel"
+      :cta-to="calloutCtaTo"
       @action="onCalloutAction"
     />
 

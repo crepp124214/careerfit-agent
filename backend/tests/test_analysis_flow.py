@@ -41,3 +41,7 @@ def test_analysis_flow_creates_report_and_agent_runs(client):
     assert RESUME_TEXT not in str(runs)
     assert "Need FastAPI" not in str(runs)
     assert "Built FastAPI" not in str(runs)
+
+    learning_response = client.post("/api/learning/tasks/generate", json={"task_id": task["id"]})
+    assert learning_response.status_code == 201
+    assert learning_response.json()
