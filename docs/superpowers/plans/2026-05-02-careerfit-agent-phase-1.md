@@ -536,7 +536,7 @@ git commit -m "feat(frontend): add analysis run view and report view"
 - 实现 `frontend/src/views/LearningTasksView.vue`
 - 实现 `frontend/src/views/AgentTraceView.vue`
 
-- [ ] **Step 1：HistoryView**
+- [x] **Step 1：HistoryView**
 
 页面结构：
 
@@ -544,7 +544,7 @@ git commit -m "feat(frontend): add analysis run view and report view"
 - 主区域：折线图占位（不引入图表库，先用占位 `<div>` + 文本"功能尚未上线"），下方表格展示历史报告列表（empty 时 `EmptyState`、后端未就绪时 `BackendNotReadyNotice`）。
 - 即使图表占位，文字提示必须明确"等待后端 reports 历史聚合接口"。
 
-- [ ] **Step 2：VersionDiffView**
+- [x] **Step 2：VersionDiffView**
 
 页面结构：
 
@@ -552,14 +552,14 @@ git commit -m "feat(frontend): add analysis run view and report view"
 - 主区域：左右两栏 diff 占位；后端未就绪时整页 `BackendNotReadyNotice`，等待"简历版本 diff 接口"。
 - 后端 ready 时，左右栏渲染各版本结构化摘要（不展示原文）。
 
-- [ ] **Step 3：LearningTasksView**
+- [x] **Step 3：LearningTasksView**
 
 页面结构：
 
 - 上方"按当前缺口生成学习任务"按钮（后端未就绪 disabled）。
 - 主区域：任务卡片列表，每卡片含目标、关联评分维度、状态徽章；后端未就绪时整列 `BackendNotReadyNotice`，等待"learning 接口"。
 
-- [ ] **Step 4：AgentTraceView**
+- [x] **Step 4：AgentTraceView**
 
 页面结构：
 
@@ -567,7 +567,7 @@ git commit -m "feat(frontend): add analysis run view and report view"
 - 主区域：完整 `AgentTraceTimeline`（脱敏摘要展开版），允许节点级折叠。
 - 后端未就绪时：整页 `BackendNotReadyNotice`，等待 "agent_runs 接口"。
 
-- [ ] **Step 5：运行测试与类型检查**
+- [x] **Step 5：运行测试与类型检查**
 
 每个 view 至少有一个 smoke test 断言：未就绪态渲染 `BackendNotReadyNotice`。
 
@@ -577,7 +577,7 @@ npm test
 npm run typecheck
 ```
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```powershell
 git add frontend

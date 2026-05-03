@@ -43,6 +43,22 @@ export const useAnalysesStore = defineStore('analyses', () => {
     return true
   }
 
+  async function loadAgentRun(taskId: string) {
+    loading.value = true
+    error.value = ''
+
+    const res = await fetchAgentRun(taskId)
+    if (!res.ok) {
+      error.value = res.message
+      loading.value = false
+      return false
+    }
+
+    agentRun.value = res.data
+    loading.value = false
+    return true
+  }
+
   function clear() {
     report.value = null
     agentRun.value = null
@@ -57,6 +73,7 @@ export const useAnalysesStore = defineStore('analyses', () => {
     error,
     hasIntegrityGuard,
     loadReport,
+    loadAgentRun,
     clear,
   }
 })
