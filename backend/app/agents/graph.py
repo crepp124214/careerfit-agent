@@ -18,14 +18,32 @@ NODE_SEQUENCE: list[tuple[str, Node]] = [
     ("next_best_action", nodes.next_best_action),
 ]
 
+REDACTED_EVIDENCE_KEYS = {
+    "evidence",
+    "jd_evidence",
+    "resume_evidence",
+    "projects",
+}
+
+
+def _redact_nested(value):
+    if isinstance(value, dict):
+        redacted = {}
+        for key, nested in value.items():
+            if key in {"raw_jd", "raw_resume"}:
+                redacted[key] = "[redacted]"
+            elif key in REDACTED_EVIDENCE_KEYS:
+                redacted[key] = "[redacted evidence]"
+            else:
+                redacted[key] = _redact_nested(nested)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_nested(item) for item in value]
+    return value
+
 
 def redact_state(state: CareerFitState) -> dict:
-    snapshot = deepcopy(dict(state))
-    if "raw_jd" in snapshot:
-        snapshot["raw_jd"] = "[redacted]"
-    if "raw_resume" in snapshot:
-        snapshot["raw_resume"] = "[redacted]"
-    return snapshot
+    return _redact_nested(deepcopy(dict(state)))
 
 
 def run_workflow(initial_state: CareerFitState) -> tuple[CareerFitState, list[dict]]:

@@ -39,3 +39,5 @@ def test_analysis_flow_creates_report_and_agent_runs(client):
     assert runs[0]["input_snapshot"]["raw_jd"] == "[redacted]"
     assert JD_TEXT not in str(runs)
     assert RESUME_TEXT not in str(runs)
+    assert "Need FastAPI" not in str(runs)
+    assert "Built FastAPI" not in str(runs)

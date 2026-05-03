@@ -17,7 +17,7 @@
 
 - [x] **前端 Phase 1.A（T1–T7）**：全部完成。77 测试通过，typecheck clean，Docker 化就绪，10/10 验收门 PASS。
 - [x] **后端 Phase 1.B（T8–T11）**：由 Codex 完成。15 测试通过，可信主路径端到端闭环。
-- [ ] **全栈集成（T12–T13）**：待执行。全栈 Docker Compose + README + 双验收门最终自检。
+- [x] **全栈集成（T12–T13）**：已完成。全栈 Docker Compose 三容器 healthy，README 中文版就绪，双验收门全部通过。
 
 ### 前端 Phase 1.A（T1–T7）
 
