@@ -20,6 +20,7 @@
 - `docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md`
 - `docs/DESIGN.md`（视觉设计系统；YAML token key 保留英文以兼容 `npx @google/design.md lint`，描述与正文为中文）
 - `TODOS.md`
+- `README.md`
 - `CLAUDE.md`
 
 外部同步副本：

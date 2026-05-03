@@ -17,7 +17,7 @@
 
 - [x] **前端 Phase 1.A（T1–T7）**：全部完成。77 测试通过，typecheck clean，Docker 化就绪，10/10 验收门 PASS。
 - [x] **后端 Phase 1.B（T8–T11）**：由 Codex 完成。15 测试通过，可信主路径端到端闭环。
-- [x] **全栈集成（T12–T13）**：已完成。全栈 Docker Compose 三容器 healthy，README 中文版就绪，双验收门全部通过。
+- [x] **全栈集成（T12–T13）**：已完成。全栈 Docker Compose 三容器 healthy，README 中文版就绪，双验收门全部通过。第三轮联调修复：Agent Trace 中间态 evidence 脱敏、报告页适配真实后端 snake_case 响应、favicon 404 修复、healthcheck localhost→127.0.0.1。
 
 ### 前端 Phase 1.A（T1–T7）
 
@@ -57,10 +57,10 @@
 | LangGraph 接入方式 | 真 LangGraph 编排器 | 本地顺序 runner + 兼容 workflow boundary | 选 B，但保留切换边界（`CLAUDE.md` 依赖与技术取舍） |
 | 测试 DB | SQLite + 行为差异显式覆盖 | PostgreSQL Docker 集成 + 不跑 SQLite | 双轨：单测用 SQLite，集成测试用 PostgreSQL |
 | Agent trace 服务端原始快照保留期 | 仅本地开发保留 | 始终保留并显式 TTL（如 7 天） | 选 A，生产部署前再决议 |
-| 前端 UI 库 | 无 UI 库纯手写 | 引入轻量库（如 Reka UI / Radix Vue） | 待定，由 T2 任务前评估并记录 |
-| 前端图表库 | Chart.js | ECharts | 待定，由 HistoryView 真实接通后决议 |
+| 前端 UI 库 | 无 UI 库纯手写 | 引入轻量库（如 Reka UI / Radix Vue） | 选 B：Reka UI（Phase 4 D4 审批通过） |
+| 前端图表库 | Chart.js | ECharts | 选 B：ECharts（Phase 4 D5 审批通过） |
 | 前端动效库 | 仅 CSS transitions | VueUse Motion / GSAP | 默认 CSS，复杂动效再决议 |
-| 后端 SQLAlchemy 异步 vs 同步 | 全异步 | 同步 + worker 边界 | 待定，由 T8 任务前评估 |
+| 后端 SQLAlchemy 异步 vs 同步 | 全异步 | 同步 + worker 边界 | 选 B：同步 Phase 1（Phase 4 D6 审批通过） |
 
 每次决策须写明：选择哪个、理由、影响范围、回滚条件。
 
@@ -144,9 +144,9 @@
 ### autoplan 通过门后行动清单
 
 - [x] Phase 0/0.5/1/2/3/3.5/4 全部通过审查。
-- [ ] 修订 `docs/DESIGN.md` 第 540 行 + 已知缺口 #3（移到 D12 决议下，与 T1 同步执行）。
-- [ ] 把 14 项决策同步到 `TODOS.md` "决策点" 节。
+- [x] 修订 `docs/DESIGN.md` 第 540 行 + 已知缺口 #3（D12 决议：480px 断点已写入，与 T1 同步完成）。
+- [x] 把 14 项决策同步到 `TODOS.md` "决策点" 节（"决策点"节 + "Phase 4 决策审计"节双重记录）。
 - [ ] 写 3 条 review-log（plan-ceo-review / plan-design-review / plan-eng-review，含双声标记）。
-- [ ] 建议下一步：`/ship`（commit autoplan 文档批次） → 启动 T1 实施。
+- [x] 建议下一步：T1–T13 全部完成，Phase 1 已交付。
 - [ ] 提示：T8–T11 的 PII 入口逻辑必须跑 `gstack:cso` OWASP + STRIDE 安全审计。
 
