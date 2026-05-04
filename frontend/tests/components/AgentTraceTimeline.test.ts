@@ -188,4 +188,33 @@ describe('AgentTraceTimeline', () => {
       expect(expandBtn.exists()).toBe(true)
     })
   })
+
+  describe('执行方式展示', () => {
+    it('接收 execution_meta 数据但不强制渲染细节', () => {
+      const wrapper = mount(AgentTraceTimeline, {
+        props: {
+          nodes: [
+            {
+              node_name: 'jd_parser',
+              status: 'success',
+              duration: 1000,
+              summary: '解析完成',
+              length: 500,
+              field_names: [],
+              execution_meta: {
+                agent_role: 'jd_parser_agent',
+                execution_mode: 'llm' as const,
+                model_name: 'fake-model',
+                fallback_used: false,
+                schema_valid: true,
+                retry_count: 0,
+              },
+            },
+          ],
+        },
+      })
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.props('nodes')[0].execution_meta?.execution_mode).toBe('llm')
+    })
+  })
 })

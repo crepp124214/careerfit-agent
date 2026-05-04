@@ -1,5 +1,14 @@
 import { requestJson } from './client'
 
+export interface AgentExecutionMeta {
+  agent_role?: string
+  execution_mode?: 'llm' | 'rule' | 'rag' | 'deterministic'
+  model_name?: string | null
+  fallback_used?: boolean
+  schema_valid?: boolean
+  retry_count?: number
+}
+
 export interface AgentNode {
   name: string
   status: 'running' | 'success' | 'failed'
@@ -10,6 +19,7 @@ export interface AgentNode {
   error?: string
   raw_jd?: string
   raw_resume?: string
+  execution_meta?: AgentExecutionMeta
 }
 
 export interface AgentRun {
@@ -25,6 +35,7 @@ interface BackendAgentRun {
   status: 'running' | 'success' | 'failed'
   input_snapshot?: Record<string, unknown>
   output_snapshot?: Record<string, unknown>
+  execution_meta?: AgentExecutionMeta
   started_at?: string
   finished_at?: string
 }
@@ -53,6 +64,7 @@ function normalizeAgentRun(taskId: string, payload: AgentRun | BackendAgentRun[]
         summary: fieldNames.length > 0 ? `输出字段：${fieldNames.join(', ')}` : '节点已完成',
         length: JSON.stringify(node.output_snapshot ?? {}).length,
         field_names: fieldNames,
+        execution_meta: node.execution_meta,
       }
     }),
   }
