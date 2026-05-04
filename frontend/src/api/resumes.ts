@@ -1,15 +1,18 @@
 import { requestJson } from './client'
 
 export interface Resume {
-  id: string
-  name: string
-  content?: string
-  createdAt: string
+  id: number
+  candidate_name: string
+  version_label: string
+  raw_text: string
+  profile: Record<string, unknown>
+  created_at: string
 }
 
 export interface CreateResumePayload {
-  name: string
-  content?: string
+  candidate_name: string
+  version_label: string
+  raw_text: string
 }
 
 export async function fetchResumes() {

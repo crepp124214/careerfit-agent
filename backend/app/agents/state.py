@@ -6,6 +6,7 @@ class CareerFitState(TypedDict, total=False):
     raw_resume: str
     jd_profile: dict[str, Any]
     resume_profile: dict[str, Any]
+    rag_results: dict[str, Any]
     match_result: dict[str, Any]
     gaps: list[dict[str, Any]]
     strengths: list[dict[str, Any]]

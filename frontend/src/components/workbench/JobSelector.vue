@@ -51,7 +51,6 @@ const emit = defineEmits<{
         @click="jobs.select(job.id)"
       >
         <span class="job-selector__name">{{ job.title }}</span>
-        <span v-if="job.company" class="job-selector__company">{{ job.company }}</span>
       </li>
     </ul>
   </section>

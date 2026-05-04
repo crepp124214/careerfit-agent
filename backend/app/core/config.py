@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     llm_api_style: str = "chat_completions"
     llm_timeout_seconds: float = 20.0
 
-    model_config = SettingsConfigDict(env_prefix="CAREERFIT_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="CAREERFIT_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 @lru_cache

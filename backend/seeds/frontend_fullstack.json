@@ -1,0 +1,44 @@
+[
+  {
+    "doc_type": "skill",
+    "title": "React 技能定义",
+    "content": "React 是 Meta 开发的声明式 UI 库，用于构建用户界面。能力层级：mentioned - 知道 React 是前端框架；project_practice - 能使用 React Hooks、组件化开发、状态管理、处理副作用，编写组件测试；deep_experience - 能设计大型 React 应用架构、性能优化（memo、lazy、虚拟列表）、自定义 Hook 抽象、SSR/SSG 方案。项目证据标准：mentioned 级别只需提及 React；project_practice 级别需要至少一个使用 React 的项目描述，包含具体组件或功能实现；deep_experience 级别需要描述性能优化、架构设计或复杂状态管理方案。",
+    "metadata": {"schema_version": "1", "skill_name": "React", "difficulty": "intermediate", "job_family": ["frontend"], "tags": ["javascript", "ui", "react"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "TypeScript 技能定义",
+    "content": "TypeScript 是 JavaScript 的超集，添加了静态类型系统。能力层级：mentioned - 知道 TypeScript 是带类型的 JavaScript；project_practice - 能使用接口、泛型、类型守卫、工具类型，在项目中应用 TypeScript；deep_experience - 能设计复杂类型系统、条件类型、映射类型、声明文件编写。项目证据标准：mentioned 级别只需提及 TypeScript；project_practice 级别需要描述在项目中使用 TypeScript 的经验，包含类型定义或泛型使用；deep_experience 级别需要描述复杂类型设计、类型体操或库的类型声明贡献。",
+    "metadata": {"schema_version": "1", "skill_name": "TypeScript", "difficulty": "intermediate", "job_family": ["frontend"], "tags": ["javascript", "typescript", "types"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "Vue.js 技能定义",
+    "content": "Vue.js 是渐进式 JavaScript 框架，用于构建用户界面。能力层级：mentioned - 知道 Vue.js 是前端框架；project_practice - 能使用 Vue 3 Composition API、响应式系统、组件通信、路由和状态管理；deep_experience - 能设计大型 Vue 应用架构、自定义指令和组合式函数、性能优化、SSR 方案。项目证据标准：mentioned 级别只需提及 Vue.js；project_practice 级别需要描述使用 Vue.js 的项目，包含组件设计或状态管理；deep_experience 级别需要描述架构设计、性能优化或复杂交互实现。",
+    "metadata": {"schema_version": "1", "skill_name": "Vue.js", "difficulty": "intermediate", "job_family": ["frontend"], "tags": ["javascript", "ui", "vue"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "CSS/响应式 技能定义",
+    "content": "CSS 响应式设计是前端核心能力，包括 Flexbox、Grid、媒体查询和移动优先策略。能力层级：mentioned - 知道 CSS 和响应式设计概念；project_practice - 能使用 Flexbox/Grid 布局、媒体查询、CSS 变量，实现多端适配；deep_experience - 能设计设计系统、CSS 架构方案（BEM/CSS Modules/CSS-in-JS）、处理复杂动画和无障碍。项目证据标准：mentioned 级别只需提及 CSS 或响应式；project_practice 级别需要描述实现响应式布局的项目经验；deep_experience 级别需要描述设计系统、CSS 架构或复杂动画实现。",
+    "metadata": {"schema_version": "1", "skill_name": "CSS", "difficulty": "intermediate", "job_family": ["frontend"], "tags": ["css", "responsive", "design"]}
+  },
+  {
+    "doc_type": "job_profile",
+    "title": "前端/全栈岗位画像",
+    "content": "前端/全栈开发工程师核心技能：JavaScript/TypeScript、React 或 Vue.js、CSS/响应式设计、HTTP/REST API。加分技能：Node.js、Webpack/Vite 构建工具、测试（Jest/Vitest/Cypress）、性能优化、SSR/SSG。面试关注点：1. 组件设计和状态管理能力；2. CSS 布局和响应式实现；3. 前端性能优化经验；4. 与后端 API 协作能力；5. 测试习惯和代码质量意识。",
+    "metadata": {"schema_version": "1", "job_family": ["frontend"], "tags": ["frontend", "javascript", "ui"]}
+  },
+  {
+    "doc_type": "interview",
+    "title": "前端/全栈面试题",
+    "content": "基础题：1. 解释 JavaScript 事件循环和异步编程；2. React/Vue 组件生命周期和渲染机制；3. CSS 盒模型和 BFC 概念。项目深挖题：1. 描述你实现过最复杂的交互功能，如何处理状态和性能？2. 你如何处理前端应用的错误监控和用户反馈？3. 如何设计一个可复用的组件库？场景设计题：1. 设计一个实时协作编辑器的前端架构；2. 设计一个高性能长列表渲染方案；3. 如何实现前端微服务架构？",
+    "metadata": {"schema_version": "1", "job_family": ["frontend"], "tags": ["interview", "frontend"]}
+  },
+  {
+    "doc_type": "learning",
+    "title": "前端/全栈学习资源",
+    "content": "学习路径：1. HTML/CSS/JavaScript 基础 → React/Vue 入门 → 组件设计模式；2. TypeScript → 状态管理 → 测试；3. 构建工具 → 性能优化 → SSR/SSG。实践任务：1. 用 React/Vue 构建一个任务管理应用，包含拖拽排序、筛选和持久化；2. 实现一个响应式仪表盘，支持桌面/平板/移动端三套布局；3. 为一个现有项目添加单元测试和 E2E 测试。验收标准：1. 组件测试覆盖率 > 70%；2. 三端布局在真实设备上可用；3. 能在面试中白板画出组件树和数据流。",
+    "metadata": {"schema_version": "1", "job_family": ["frontend"], "tags": ["learning", "frontend"]}
+  }
+]

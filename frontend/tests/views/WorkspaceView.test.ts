@@ -66,6 +66,8 @@ describe('WorkspaceView', () => {
         totalScore: 70,
         dimensions: [],
         suggestions: [],
+        interviewQuestions: [],
+        learningPlan: [],
         nextBestAction: {
           headline: '优先补齐 Docker 的可验证证据',
           actionLabel: '查看学习任务',

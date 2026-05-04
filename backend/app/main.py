@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agent_runs, analysis, jobs, learning, reports, resumes
+from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -14,6 +14,8 @@ CAPABILITIES = {
     "reports": "ready",
     "agentRuns": "ready",
     "learning": "ready",
+    "knowledge": "ready",
+    "interview": "ready",
 }
 
 
@@ -33,6 +35,9 @@ def create_app() -> FastAPI:
         allow_origins=[
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5176",
         ],
         allow_methods=["*"],
         allow_headers=["*"],
@@ -51,6 +56,8 @@ def create_app() -> FastAPI:
     app.include_router(analysis.router)
     app.include_router(reports.router)
     app.include_router(agent_runs.router)
+    app.include_router(knowledge.router)
+    app.include_router(interview.router)
     app.include_router(learning.router)
 
     return app

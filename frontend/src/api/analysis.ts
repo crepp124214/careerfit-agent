@@ -1,25 +1,27 @@
 import { requestJson } from './client'
 
 export interface AnalysisTask {
-  id: string
-  jobId: string
-  resumeId: string
+  id: number
+  job_id: number
+  resume_id: number
   status: 'pending' | 'running' | 'completed' | 'failed'
-  createdAt: string
+  error_message: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface CreateAnalysisPayload {
-  jobId: string
-  resumeId: string
+  job_id: number
+  resume_id: number
 }
 
 export async function createAnalysis(payload: CreateAnalysisPayload) {
-  return requestJson<AnalysisTask>('/analyses', {
+  return requestJson<AnalysisTask>('/analysis', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
 }
 
-export async function fetchAnalysis(id: string) {
-  return requestJson<AnalysisTask>(`/analyses/${id}`)
+export async function fetchAnalysis(id: number) {
+  return requestJson<AnalysisTask>(`/analysis/${id}`)
 }

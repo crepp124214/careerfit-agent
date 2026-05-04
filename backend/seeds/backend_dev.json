@@ -1,0 +1,50 @@
+[
+  {
+    "doc_type": "skill",
+    "title": "FastAPI 技能定义",
+    "content": "FastAPI 是一个高性能 Python Web 框架，基于 Starlette 和 Pydantic 构建。能力层级：mentioned - 知道 FastAPI 是 Python Web 框架；project_practice - 能独立设计和实现 API 端点，使用依赖注入、路径参数、请求体校验，编写 API 测试；deep_experience - 能设计生产级 FastAPI 服务，包括中间件、认证、数据库集成、异步处理、性能优化。项目证据标准：mentioned 级别只需在简历中提及 FastAPI；project_practice 级别需要至少一个使用 FastAPI 的项目描述，包含具体端点或功能；deep_experience 级别需要描述生产环境部署、性能指标或架构设计。",
+    "metadata": {"schema_version": "1", "skill_name": "FastAPI", "difficulty": "intermediate", "job_family": ["backend"], "tags": ["python", "web", "api"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "SQLAlchemy 技能定义",
+    "content": "SQLAlchemy 是 Python 最流行的 ORM 和数据库工具包。能力层级：mentioned - 知道 SQLAlchemy 是 Python ORM；project_practice - 能使用 SQLAlchemy Core 或 ORM 定义模型、编写查询、处理关系和迁移；deep_experience - 能设计复杂查询、优化性能、处理并发和连接池、使用异步 SQLAlchemy。项目证据标准：mentioned 级别只需提及 SQLAlchemy；project_practice 级别需要至少一个使用 SQLAlchemy 的项目，描述模型设计或查询实现；deep_experience 级别需要描述数据库优化、迁移策略或复杂查询场景。",
+    "metadata": {"schema_version": "1", "skill_name": "SQLAlchemy", "difficulty": "intermediate", "job_family": ["backend"], "tags": ["python", "database", "orm"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "PostgreSQL 技能定义",
+    "content": "PostgreSQL 是功能强大的开源关系型数据库。能力层级：mentioned - 知道 PostgreSQL 是关系型数据库；project_practice - 能设计表结构、编写 SQL 查询、使用索引和事务；deep_experience - 能优化查询性能、配置参数、使用高级特性如 JSONB、全文搜索、pgvector 扩展。项目证据标准：mentioned 级别只需提及 PostgreSQL；project_practice 级别需要描述使用 PostgreSQL 的项目，包含表设计或查询优化；deep_experience 级别需要描述性能调优、高可用方案或高级特性使用。",
+    "metadata": {"schema_version": "1", "skill_name": "PostgreSQL", "difficulty": "intermediate", "job_family": ["backend"], "tags": ["database", "sql", "postgresql"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "Redis 技能定义",
+    "content": "Redis 是高性能内存键值存储，常用于缓存、会话管理和消息队列。能力层级：mentioned - 知道 Redis 是缓存或键值存储；project_practice - 能使用 Redis 实现缓存策略、会话存储或简单消息队列；deep_experience - 能设计 Redis 集群方案、处理持久化、使用 Lua 脚本、优化内存使用。项目证据标准：mentioned 级别只需提及 Redis；project_practice 级别需要描述使用 Redis 缓存或会话管理的项目；deep_experience 级别需要描述 Redis 集群部署、性能优化或高级数据结构使用。",
+    "metadata": {"schema_version": "1", "skill_name": "Redis", "difficulty": "intermediate", "job_family": ["backend"], "tags": ["cache", "nosql", "redis"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "Docker 技能定义",
+    "content": "Docker 是容器化平台，用于打包、分发和运行应用。能力层级：mentioned - 知道 Docker 是容器化工具；project_practice - 能编写 Dockerfile、使用 docker-compose 编排多容器应用、管理镜像；deep_experience - 能优化镜像大小、设计 CI/CD 流水线、处理多阶段构建和安全扫描。项目证据标准：mentioned 级别只需提及 Docker；project_practice 级别需要描述使用 Docker 部署项目的经验；deep_experience 级别需要描述多服务编排、CI/CD 集成或镜像优化。",
+    "metadata": {"schema_version": "1", "skill_name": "Docker", "difficulty": "intermediate", "job_family": ["backend", "devops"], "tags": ["container", "devops", "docker"]}
+  },
+  {
+    "doc_type": "job_profile",
+    "title": "后端开发岗位画像",
+    "content": "后端开发工程师核心技能：Python（FastAPI/Django/Flask）、数据库（PostgreSQL/MySQL/Redis）、API 设计（REST/GraphQL）、容器化（Docker/K8s）。加分技能：消息队列（RabbitMQ/Kafka）、微服务架构、CI/CD、云服务（AWS/GCP）。面试关注点：1. 数据库设计与查询优化能力；2. API 设计与错误处理规范；3. 并发和性能问题处理经验；4. 系统设计能力（缓存策略、数据一致性）；5. 测试习惯和代码质量意识。",
+    "metadata": {"schema_version": "1", "job_family": ["backend"], "tags": ["backend", "python", "api"]}
+  },
+  {
+    "doc_type": "interview",
+    "title": "后端开发面试题",
+    "content": "基础题：1. 解释 RESTful API 设计原则；2. 数据库索引的工作原理和使用场景；3. HTTP 状态码的含义和使用规范。项目深挖题：1. 描述你设计过最复杂的 API，如何处理错误和边界情况？2. 你遇到过最棘手的数据库性能问题是什么，如何解决的？3. 如何保证 API 的向后兼容性？场景设计题：1. 设计一个短链接服务，如何处理高并发？2. 设计一个限流系统，支持多种限流策略；3. 如何设计一个分布式任务队列？",
+    "metadata": {"schema_version": "1", "job_family": ["backend"], "tags": ["interview", "backend"]}
+  },
+  {
+    "doc_type": "learning",
+    "title": "后端开发学习资源",
+    "content": "学习路径：1. Python 基础 → FastAPI 入门 → 数据库操作 → API 设计；2. Docker 入门 → 容器编排 → CI/CD 集成；3. 系统设计基础 → 缓存策略 → 消息队列。实践任务：1. 用 FastAPI 构建一个博客 API，包含用户认证、CRUD、分页和测试；2. 用 Docker Compose 编排 FastAPI + PostgreSQL + Redis 三容器应用；3. 实现一个带限流的 API 网关。验收标准：1. API 测试覆盖率 > 80%；2. Docker 容器能一键启动；3. 能在面试中清晰描述设计决策和权衡。",
+    "metadata": {"schema_version": "1", "job_family": ["backend"], "tags": ["learning", "backend"]}
+  }
+]

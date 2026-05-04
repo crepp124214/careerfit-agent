@@ -11,6 +11,8 @@ import ReportView from '@/views/ReportView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import VersionDiffView from '@/views/VersionDiffView.vue'
 import LearningTasksView from '@/views/LearningTasksView.vue'
+import InterviewListView from '@/views/InterviewListView.vue'
+import InterviewDetailView from '@/views/InterviewDetailView.vue'
 import AgentTraceView from '@/views/AgentTraceView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -26,6 +28,8 @@ export const routes: RouteRecordRaw[] = [
   { path: '/history', name: 'history', component: HistoryView },
   { path: '/diff', name: 'version-diff', component: VersionDiffView },
   { path: '/learning', name: 'learning', component: LearningTasksView },
+  { path: '/interview', name: 'interview-list', component: InterviewListView },
+  { path: '/interview/:id', name: 'interview-detail', component: InterviewDetailView },
   { path: '/trace/:taskId', name: 'agent-trace', component: AgentTraceView, props: true },
   { path: '/settings', name: 'settings', component: SettingsView },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },

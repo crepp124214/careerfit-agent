@@ -1,9 +1,18 @@
 import { requestJson } from './client'
 
+export interface KnowledgeEvidenceItem {
+  docId?: number
+  title: string
+  snippet: string
+  available: boolean
+  reason?: string
+}
+
 export interface Evidence {
   jdExcerpt: string
   resumeExcerpt: string
   dimensionName: string
+  knowledgeEvidence?: KnowledgeEvidenceItem[]
 }
 
 export interface Dimension {
@@ -38,12 +47,24 @@ export interface IntegrityGuardResult {
   blockedItems: string[]
 }
 
+export interface InterviewQuestion {
+  skill: string
+  question: string
+}
+
+export interface LearningPlanItem {
+  skill: string
+  task: string
+}
+
 export interface Report {
   id: string
   taskId: string
   totalScore: number
   dimensions: Dimension[]
   suggestions: Suggestion[]
+  interviewQuestions: InterviewQuestion[]
+  learningPlan: LearningPlanItem[]
   nextBestAction: NextBestAction
   integrityGuard?: IntegrityGuardResult
 }
@@ -53,16 +74,35 @@ interface BackendScoreItem {
   score: number
   jd_evidence?: string[]
   resume_evidence?: string[]
+  knowledge_evidence?: Array<{
+    doc_id?: number
+    title?: string
+    snippet?: string
+    available?: boolean
+    reason?: string
+  }>
 }
 
 interface BackendSuggestion {
   title?: string
   suggestion?: string
+  jd_requirement?: string
+  resume_evidence?: string
   integrity?: {
     risk_level?: 'high' | 'medium' | 'low'
     risk_codes?: string[]
     explanation?: string
   }
+}
+
+interface BackendInterviewQuestion {
+  skill: string
+  question: string
+}
+
+interface BackendLearningPlanItem {
+  skill: string
+  task: string
 }
 
 interface BackendReport {
@@ -72,6 +112,8 @@ interface BackendReport {
   score_breakdown: Record<string, number>
   gaps?: Array<{ skill: string; reason?: string; jd_evidence?: string[] }>
   resume_suggestions?: BackendSuggestion[]
+  interview_questions?: BackendInterviewQuestion[]
+  learning_plan?: BackendLearningPlanItem[]
   next_best_action?: {
     title?: string
     description?: string
@@ -102,6 +144,13 @@ function normalizeReport(payload: Report | BackendReport): Report {
         jdExcerpt: item.jd_evidence?.[0] ?? '',
         resumeExcerpt: item.resume_evidence?.[0] ?? '',
         dimensionName: item.skill,
+        knowledgeEvidence: (item.knowledge_evidence ?? []).map((ke) => ({
+          docId: ke.doc_id,
+          title: ke.title ?? '',
+          snippet: ke.snippet ?? '',
+          available: ke.available ?? false,
+          reason: ke.reason,
+        })),
       },
     ],
   }))
@@ -109,13 +158,25 @@ function normalizeReport(payload: Report | BackendReport): Report {
   const suggestions: Suggestion[] = (payload.resume_suggestions ?? []).map((item) => ({
     original: item.title ?? '简历建议',
     optimized: item.suggestion ?? '',
-    jdRequirement: '',
-    resumeEvidence: '',
+    jdRequirement: item.jd_requirement ?? '',
+    resumeEvidence: item.resume_evidence ?? '',
     riskLevel: item.integrity?.risk_level ?? 'low',
     blocked: (item.integrity?.risk_level ?? 'low') === 'high',
   }))
 
   const blockedSuggestions = suggestions.filter((item) => item.blocked)
+
+  const interviewQuestions: InterviewQuestion[] = (payload.interview_questions ?? []).map(
+    (item) => ({
+      skill: item.skill,
+      question: item.question,
+    }),
+  )
+
+  const learningPlan: LearningPlanItem[] = (payload.learning_plan ?? []).map((item) => ({
+    skill: item.skill,
+    task: item.task,
+  }))
 
   return {
     id: String(payload.id),
@@ -123,6 +184,8 @@ function normalizeReport(payload: Report | BackendReport): Report {
     totalScore: payload.final_score,
     dimensions,
     suggestions,
+    interviewQuestions,
+    learningPlan,
     nextBestAction: {
       headline: payload.next_best_action?.title ?? '当前没有推荐行动',
       actionLabel: '查看下一步',

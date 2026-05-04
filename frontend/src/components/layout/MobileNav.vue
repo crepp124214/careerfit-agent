@@ -10,6 +10,7 @@ import {
   Clock,
   GitCompare,
   BookOpen,
+  MessageSquare,
   Settings,
   Lock,
 } from 'lucide-vue-next'
@@ -21,6 +22,7 @@ const ICON_MAP: Record<string, typeof LayoutDashboard> = {
   history: Clock,
   'version-diff': GitCompare,
   learning: BookOpen,
+  interview: MessageSquare,
   settings: Settings,
 }
 
@@ -31,7 +33,7 @@ interface NavItem {
   label: string
   route: string
   name: string
-  cap: 'jobs' | 'resumes' | 'analysis' | 'reports' | 'agentRuns' | 'learning' | null
+  cap: 'jobs' | 'resumes' | 'analysis' | 'reports' | 'agentRuns' | 'learning' | 'interview' | null
 }
 
 const ITEMS: NavItem[] = [
@@ -41,6 +43,7 @@ const ITEMS: NavItem[] = [
   { label: '历史', route: '/history', name: 'history', cap: 'reports' },
   { label: '对比', route: '/diff', name: 'version-diff', cap: 'reports' },
   { label: '学习', route: '/learning', name: 'learning', cap: 'learning' },
+  { label: '面试', route: '/interview', name: 'interview', cap: 'interview' },
   { label: '设置', route: '/settings', name: 'settings', cap: null },
 ]
 

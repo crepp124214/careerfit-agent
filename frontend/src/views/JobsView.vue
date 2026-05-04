@@ -30,11 +30,11 @@ onMounted(() => {
 
 async function submit() {
   if (!newTitle.value.trim()) return
+  const rawText = newJdText.value.trim() || newTitle.value.trim()
   submitting.value = true
   await jobs.add({
     title: newTitle.value.trim(),
-    company: newCompany.value.trim() || undefined,
-    jdText: newJdText.value.trim() || undefined,
+    raw_text: rawText,
   })
   submitting.value = false
   showModal.value = false
@@ -43,8 +43,8 @@ async function submit() {
   newJdText.value = ''
 }
 
-function goToDetail(id: string) {
-  router.push({ name: 'job-detail', params: { id } })
+function goToDetail(id: number) {
+  router.push({ name: 'job-detail', params: { id: String(id) } })
 }
 </script>
 
@@ -86,9 +86,8 @@ function goToDetail(id: string) {
       >
         <div class="jobs-view__item-main">
           <span class="jobs-view__item-title">{{ job.title }}</span>
-          <span v-if="job.company" class="jobs-view__item-company">{{ job.company }}</span>
         </div>
-        <span class="jobs-view__item-date">{{ job.createdAt }}</span>
+        <span class="jobs-view__item-date">{{ job.created_at }}</span>
       </li>
     </ul>
 

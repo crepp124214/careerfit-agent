@@ -7,7 +7,7 @@ export const useJobsStore = defineStore('jobs', () => {
   const list = ref<Job[]>([])
   const loading = ref(false)
   const error = ref('')
-  const selectedId = ref<string | null>(null)
+  const selectedId = ref<number | null>(null)
 
   const selectedJob = computed(() =>
     list.value.find((j) => j.id === selectedId.value) ?? null,
@@ -36,8 +36,8 @@ export const useJobsStore = defineStore('jobs', () => {
     selectedId.value = res.data.id
   }
 
-  async function loadOne(id: string) {
-    const res = await fetchJob(id)
+  async function loadOne(id: number) {
+    const res = await fetchJob(String(id))
     if (!res.ok) {
       error.value = res.message
       return null
@@ -45,7 +45,7 @@ export const useJobsStore = defineStore('jobs', () => {
     return res.data
   }
 
-  function select(id: string | null) {
+  function select(id: number | null) {
     selectedId.value = id
   }
 

@@ -33,6 +33,11 @@ const needsExpand = computed(() => {
   return jd.length > MAX_LENGTH || resume.length > MAX_LENGTH
 })
 
+const hasKnowledgeEvidence = computed(() => {
+  const ke = props.evidence.knowledgeEvidence
+  return ke && ke.length > 0
+})
+
 function toggle() {
   expanded.value = !expanded.value
 }
@@ -56,6 +61,25 @@ function toggle() {
         <pre v-if="resumeDisplay" class="evidence-card__text">{{ resumeDisplay }}</pre>
         <span v-else class="evidence-card__missing">未在简历中找到对应证据</span>
       </div>
+    </div>
+
+    <div v-if="hasKnowledgeEvidence" class="evidence-card__knowledge">
+      <span class="evidence-card__label">知识库标准</span>
+      <ul class="evidence-card__knowledge-list">
+        <li
+          v-for="(item, idx) in evidence.knowledgeEvidence"
+          :key="idx"
+          class="evidence-card__knowledge-item"
+        >
+          <template v-if="item.available">
+            <span class="evidence-card__knowledge-title">{{ item.title }}</span>
+            <pre class="evidence-card__text evidence-card__text--compact">{{ item.snippet }}</pre>
+          </template>
+          <span v-else class="evidence-card__knowledge-unavailable">
+            {{ item.reason || '知识库证据不足' }}
+          </span>
+        </li>
+      </ul>
     </div>
 
     <button
@@ -117,9 +141,49 @@ function toggle() {
   border-radius: var(--rounded-xs);
 }
 
+.evidence-card__text--compact {
+  font-size: var(--font-caption-size);
+  padding: var(--space-xxs) var(--space-xs);
+}
+
 .evidence-card__missing {
   font-size: var(--font-body-sm-size);
   color: var(--color-ink-tertiary);
+  font-style: italic;
+}
+
+.evidence-card__knowledge {
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.evidence-card__knowledge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.evidence-card__knowledge-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evidence-card__knowledge-title {
+  font-size: var(--font-caption-size);
+  font-weight: 600;
+  color: var(--color-ink-subtle);
+}
+
+.evidence-card__knowledge-unavailable {
+  font-size: var(--font-caption-size);
+  color: var(--color-status-warning, #d97706);
   font-style: italic;
 }
 

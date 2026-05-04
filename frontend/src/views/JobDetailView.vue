@@ -12,7 +12,7 @@ const router = useRouter()
 const availability = useAvailabilityStore()
 const jobs = useJobsStore()
 
-const jobId = ref(route.params.id as string)
+const jobId = ref(Number(route.params.id))
 const job = ref<Awaited<ReturnType<typeof jobs.loadOne>> | null>(null)
 const loading = ref(false)
 
@@ -25,7 +25,7 @@ async function load() {
 
 watch(() => route.params.id, (id) => {
   if (typeof id === 'string') {
-    jobId.value = id
+    jobId.value = Number(id)
     load()
   }
 }, { immediate: true })
@@ -45,12 +45,11 @@ watch(() => route.params.id, (id) => {
 
     <div v-else-if="job" class="job-detail-view__card">
       <h1 class="job-detail-view__title">{{ job.title }}</h1>
-      <p v-if="job.company" class="job-detail-view__company">{{ job.company }}</p>
-      <div v-if="job.jdText" class="job-detail-view__jd">
+      <div v-if="job.raw_text" class="job-detail-view__jd">
         <h2 class="job-detail-view__section-title">职位描述</h2>
-        <pre class="job-detail-view__jd-text">{{ job.jdText }}</pre>
+        <pre class="job-detail-view__jd-text">{{ job.raw_text }}</pre>
       </div>
-      <p class="job-detail-view__meta">创建于 {{ job.createdAt }}</p>
+      <p class="job-detail-view__meta">创建于 {{ job.created_at }}</p>
     </div>
 
     <p v-else class="job-detail-view__not-found">未找到该岗位。</p>

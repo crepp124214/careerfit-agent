@@ -50,8 +50,8 @@ const emit = defineEmits<{
         :aria-selected="resumes.selectedId === resume.id"
         @click="resumes.select(resume.id)"
       >
-        <span class="resume-selector__name">{{ resume.name }}</span>
-        <span class="resume-selector__date">{{ resume.createdAt }}</span>
+        <span class="resume-selector__name">{{ resume.candidate_name }} — {{ resume.version_label }}</span>
+        <span class="resume-selector__date">{{ resume.created_at }}</span>
       </li>
     </ul>
   </section>

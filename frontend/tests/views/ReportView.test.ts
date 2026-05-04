@@ -28,6 +28,8 @@ function makeReport(overrides: Partial<Report> = {}): Report {
     id: 'report-001',
     taskId: 'task-001',
     totalScore: 72,
+    interviewQuestions: [],
+    learningPlan: [],
     dimensions: [
       {
         name: '技术匹配',

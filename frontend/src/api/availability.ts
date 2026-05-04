@@ -7,6 +7,8 @@ export interface Capabilities {
   reports: boolean
   agentRuns: boolean
   learning: boolean
+  knowledge: boolean
+  interview: boolean
 }
 
 type CapabilityValue = boolean | 'unknown' | 'pending' | 'ready' | 'unavailable'
@@ -31,6 +33,8 @@ function normalizeCapabilities(payload: CapabilityEnvelope | CapabilityMap): Cap
     reports: isReady(source.reports),
     agentRuns: isReady(source.agentRuns),
     learning: isReady(source.learning),
+    knowledge: isReady(source.knowledge),
+    interview: isReady(source.interview),
   }
 }
 

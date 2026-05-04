@@ -15,8 +15,25 @@ def resume_parser(state: CareerFitState) -> CareerFitState:
     return {"resume_profile": parse_resume_profile(state["raw_resume"])}
 
 
+def rag_retriever(state: CareerFitState) -> CareerFitState:
+    rag_results = state.get("rag_results", {})
+    if rag_results:
+        return {"rag_results": rag_results}
+    jd_profile = state.get("jd_profile", {})
+    required_skills = jd_profile.get("required_skills") or []
+    results = {}
+    for skill in required_skills:
+        results[skill] = {
+            "documents": [],
+            "available": False,
+            "reason": "知识库证据不足",
+        }
+    return {"rag_results": results}
+
+
 def match_scorer(state: CareerFitState) -> CareerFitState:
-    return {"match_result": score_match(state["jd_profile"], state["resume_profile"])}
+    rag_results = state.get("rag_results")
+    return {"match_result": score_match(state["jd_profile"], state["resume_profile"], rag_results=rag_results)}
 
 
 def gap_analyzer(state: CareerFitState) -> CareerFitState:

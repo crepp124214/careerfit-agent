@@ -7,7 +7,7 @@ export const useResumesStore = defineStore('resumes', () => {
   const list = ref<Resume[]>([])
   const loading = ref(false)
   const error = ref('')
-  const selectedId = ref<string | null>(null)
+  const selectedId = ref<number | null>(null)
 
   const selectedResume = computed(() =>
     list.value.find((r) => r.id === selectedId.value) ?? null,
@@ -36,8 +36,8 @@ export const useResumesStore = defineStore('resumes', () => {
     selectedId.value = res.data.id
   }
 
-  async function loadOne(id: string) {
-    const res = await fetchResume(id)
+  async function loadOne(id: number) {
+    const res = await fetchResume(String(id))
     if (!res.ok) {
       error.value = res.message
       return null
@@ -45,7 +45,7 @@ export const useResumesStore = defineStore('resumes', () => {
     return res.data
   }
 
-  function select(id: string | null) {
+  function select(id: number | null) {
     selectedId.value = id
   }
 

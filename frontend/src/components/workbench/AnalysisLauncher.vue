@@ -40,7 +40,7 @@ const emit = defineEmits<{
       </p>
       <p class="analysis-launcher__hint">
         已选简历：
-        <strong>{{ resumes.selectedResume?.name ?? '未选择' }}</strong>
+        <strong>{{ resumes.selectedResume?.candidate_name ?? '未选择' }}</strong>
       </p>
       <AppButton
         variant="primary"

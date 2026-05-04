@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useResumeDiffStore } from '@/stores/resumeDiff'
+import { useResumesStore } from '@/stores/resumes'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
@@ -9,11 +10,13 @@ import ErrorBanner from '@/components/feedback/ErrorBanner.vue'
 
 const availability = useAvailabilityStore()
 const diffStore = useResumeDiffStore()
+const resumesStore = useResumesStore()
 
 const isUnavailable = computed(() => availability.states.resumes === 'unavailable')
 const isLoading = computed(() => diffStore.status === 'loading')
 const isError = computed(() => diffStore.status === 'error')
 const hasDiff = computed(() => diffStore.diff !== null)
+const resumeOptions = computed(() => resumesStore.list)
 
 const fromScoreDelta = computed(() => {
   const ctx = diffStore.scoreContext
@@ -58,6 +61,7 @@ function handleRetry() {
 
 onMounted(() => {
   if (!isUnavailable.value) {
+    resumesStore.load()
     diffStore.clear()
   }
 })
@@ -84,8 +88,8 @@ onMounted(() => {
             @change="handleFromChange"
           >
             <option value="">选择简历版本</option>
-            <option v-if="diffStore.fromId" :value="diffStore.fromId">
-              {{ diffStore.diff?.fromResume?.versionLabel || `版本 ${diffStore.fromId}` }}
+            <option v-for="r in resumeOptions" :key="r.id" :value="String(r.id)">
+              {{ r.candidate_name }} — {{ r.version_label }}
             </option>
           </select>
         </div>
@@ -98,8 +102,8 @@ onMounted(() => {
             @change="handleToChange"
           >
             <option value="">选择简历版本</option>
-            <option v-if="diffStore.toId" :value="diffStore.toId">
-              {{ diffStore.diff?.toResume?.versionLabel || `版本 ${diffStore.toId}` }}
+            <option v-for="r in resumeOptions" :key="r.id" :value="String(r.id)">
+              {{ r.candidate_name }} — {{ r.version_label }}
             </option>
           </select>
         </div>

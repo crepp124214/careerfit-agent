@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { fetchBackendCapabilities } from '@/api/availability'
 
-type Capability = 'jobs' | 'resumes' | 'analysis' | 'reports' | 'agentRuns' | 'learning'
+type Capability = 'jobs' | 'resumes' | 'analysis' | 'reports' | 'agentRuns' | 'learning' | 'knowledge' | 'interview'
 type CapabilityState = 'unknown' | 'ready' | 'unavailable'
 
 const ALL_CAPABILITIES: Capability[] = [
@@ -12,6 +12,8 @@ const ALL_CAPABILITIES: Capability[] = [
   'reports',
   'agentRuns',
   'learning',
+  'knowledge',
+  'interview',
 ]
 
 export const useAvailabilityStore = defineStore('availability', () => {
@@ -22,6 +24,8 @@ export const useAvailabilityStore = defineStore('availability', () => {
     reports: 'unknown',
     agentRuns: 'unknown',
     learning: 'unknown',
+    knowledge: 'unknown',
+    interview: 'unknown',
   })
 
   const isLoading = ref(false)

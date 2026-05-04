@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useJobsStore } from '@/stores/jobs'
@@ -24,14 +24,24 @@ const canLaunch = computed(
 const launching = ref(false)
 const error = ref('')
 
+onMounted(() => {
+  availability.probe()
+  if (availability.states.jobs !== 'unavailable' && jobs.list.length === 0) {
+    jobs.load()
+  }
+  if (availability.states.resumes !== 'unavailable' && resumes.list.length === 0) {
+    resumes.load()
+  }
+})
+
 async function launch() {
   if (!jobs.selectedId || !resumes.selectedId) return
   launching.value = true
   error.value = ''
 
   const res = await createAnalysis({
-    jobId: jobs.selectedId,
-    resumeId: resumes.selectedId,
+    job_id: jobs.selectedId,
+    resume_id: resumes.selectedId,
   })
 
   if (!res.ok) {
@@ -65,7 +75,7 @@ async function launch() {
         <div class="analysis-run__field">
           <span class="analysis-run__label">简历版本</span>
           <span class="analysis-run__value">
-            {{ resumes.selectedResume?.name ?? '未选择' }}
+            {{ resumes.selectedResume?.candidate_name ?? '未选择' }}
           </span>
         </div>
       </div>

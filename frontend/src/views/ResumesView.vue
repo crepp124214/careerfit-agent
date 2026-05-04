@@ -29,10 +29,12 @@ onMounted(() => {
 
 async function submit() {
   if (!newName.value.trim()) return
+  const rawText = newContent.value.trim() || newName.value.trim()
   submitting.value = true
   await resumes.add({
-    name: newName.value.trim(),
-    content: newContent.value.trim() || undefined,
+    candidate_name: newName.value.trim(),
+    version_label: 'v1',
+    raw_text: rawText,
   })
   submitting.value = false
   showModal.value = false
@@ -40,7 +42,7 @@ async function submit() {
   newContent.value = ''
 }
 
-function goToDetail(id: string) {
+function goToDetail(id: number) {
   router.push({ name: 'resume-detail', params: { id } })
 }
 </script>
@@ -82,9 +84,9 @@ function goToDetail(id: string) {
         @click="goToDetail(resume.id)"
       >
         <div class="resumes-view__item-main">
-          <span class="resumes-view__item-name">{{ resume.name }}</span>
+          <span class="resumes-view__item-name">{{ resume.candidate_name }} — {{ resume.version_label }}</span>
         </div>
-        <span class="resumes-view__item-date">{{ resume.createdAt }}</span>
+        <span class="resumes-view__item-date">{{ resume.created_at }}</span>
       </li>
     </ul>
 

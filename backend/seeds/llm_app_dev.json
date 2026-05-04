@@ -1,0 +1,44 @@
+[
+  {
+    "doc_type": "skill",
+    "title": "LangChain/LangGraph 技能定义",
+    "content": "LangChain 是 LLM 应用开发框架，LangGraph 是其扩展用于构建多 Agent 工作流。能力层级：mentioned - 知道 LangChain 是 LLM 应用框架；project_practice - 能使用 LangChain 构建 RAG 系统、Chain 编排、Prompt 模板，使用 LangGraph 设计多节点工作流；deep_experience - 能设计生产级 LLM 应用架构、处理 Token 限制、实现流式输出、优化检索策略。项目证据标准：mentioned 级别只需提及 LangChain 或 LangGraph；project_practice 级别需要描述使用 LangChain 构建 RAG 或 Agent 的项目；deep_experience 级别需要描述生产环境部署、性能优化或复杂工作流设计。",
+    "metadata": {"schema_version": "1", "skill_name": "LangChain", "difficulty": "intermediate", "job_family": ["llm_app"], "tags": ["llm", "rag", "agent"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "Prompt Engineering 技能定义",
+    "content": "Prompt Engineering 是设计和优化 LLM 提示词的技术。能力层级：mentioned - 知道 Prompt Engineering 是 LLM 提示词优化技术；project_practice - 能使用 Few-shot、CoT、结构化输出等提示技巧，在实际项目中优化 Prompt；deep_experience - 能设计复杂 Prompt 策略、处理幻觉和一致性问题、评估 Prompt 效果、实现自动优化。项目证据标准：mentioned 级别只需提及 Prompt Engineering；project_practice 级别需要描述在项目中优化 Prompt 的经验；deep_experience 级别需要描述 Prompt 评估框架、自动优化或复杂策略设计。",
+    "metadata": {"schema_version": "1", "skill_name": "Prompt Engineering", "difficulty": "intermediate", "job_family": ["llm_app"], "tags": ["llm", "prompt", "nlp"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "RAG 技能定义",
+    "content": "RAG（Retrieval-Augmented Generation）是结合检索和生成的 LLM 应用架构。能力层级：mentioned - 知道 RAG 是检索增强生成技术；project_practice - 能实现 RAG 系统，包括文档分块、Embedding 生成、向量检索和答案生成；deep_experience - 能优化 RAG 系统的检索精度、处理多模态数据、实现混合检索策略、评估端到端效果。项目证据标准：mentioned 级别只需提及 RAG；project_practice 级别需要描述实现 RAG 系统的项目，包含检索和生成环节；deep_experience 级别需要描述 RAG 系统优化、评估或生产部署经验。",
+    "metadata": {"schema_version": "1", "skill_name": "RAG", "difficulty": "intermediate", "job_family": ["llm_app"], "tags": ["llm", "rag", "retrieval"]}
+  },
+  {
+    "doc_type": "skill",
+    "title": "Vector Database 技能定义",
+    "content": "向量数据库是存储和检索高维向量的专用数据库，如 pgvector、Chroma、Pinecone。能力层级：mentioned - 知道向量数据库用于语义搜索；project_practice - 能使用 pgvector 或 Chroma 存储 Embedding、实现相似度搜索、理解索引类型；deep_experience - 能优化向量索引性能、设计混合检索方案、处理大规模向量数据。项目证据标准：mentioned 级别只需提及向量数据库；project_practice 级别需要描述使用向量数据库的项目，包含 Embedding 存储和检索；deep_experience 级别需要描述向量索引优化、混合检索或大规模数据处理。",
+    "metadata": {"schema_version": "1", "skill_name": "Vector Database", "difficulty": "intermediate", "job_family": ["llm_app"], "tags": ["vector", "database", "embedding"]}
+  },
+  {
+    "doc_type": "job_profile",
+    "title": "大模型应用开发岗位画像",
+    "content": "大模型应用开发工程师核心技能：Python、LangChain/LangGraph、Prompt Engineering、RAG 架构、向量数据库。加分技能：LLM 微调、多模态处理、Agent 设计模式、评估框架。面试关注点：1. RAG 系统设计和检索优化能力；2. Prompt 设计和评估经验；3. LLM 应用可靠性处理（幻觉、安全、成本）；4. 向量数据库选型和优化；5. 从原型到生产的工程化能力。",
+    "metadata": {"schema_version": "1", "job_family": ["llm_app"], "tags": ["llm", "rag", "agent"]}
+  },
+  {
+    "doc_type": "interview",
+    "title": "大模型应用面试题",
+    "content": "基础题：1. 解释 RAG 的工作原理和关键组件；2. Embedding 模型的作用和选型考量；3. LLM 的 Token 限制如何影响应用设计。项目深挖题：1. 描述你构建的 RAG 系统，如何优化检索精度？2. 你如何处理 LLM 的幻觉和不一致输出？3. 如何评估 LLM 应用的效果？场景设计题：1. 设计一个多文档问答系统，支持跨文档推理；2. 设计一个多 Agent 协作系统，如何处理 Agent 间通信和错误恢复？3. 如何为一个 LLM 应用设计成本控制和监控方案？",
+    "metadata": {"schema_version": "1", "job_family": ["llm_app"], "tags": ["interview", "llm"]}
+  },
+  {
+    "doc_type": "learning",
+    "title": "大模型应用学习资源",
+    "content": "学习路径：1. Python 基础 → LLM API 使用 → Prompt Engineering 入门；2. LangChain 入门 → RAG 系统构建 → 向量数据库；3. LangGraph → Agent 设计 → 评估和优化。实践任务：1. 用 LangChain 构建一个文档问答系统，实现 RAG 检索和答案生成；2. 使用 pgvector 构建语义搜索引擎，支持混合检索；3. 用 LangGraph 构建一个多 Agent 工作流，包含错误恢复和重试。验收标准：1. RAG 系统能准确回答基于文档的问题；2. 语义搜索的 top-5 准确率 > 80%；3. Agent 工作流能处理至少 3 种异常情况。",
+    "metadata": {"schema_version": "1", "job_family": ["llm_app"], "tags": ["learning", "llm"]}
+  }
+]

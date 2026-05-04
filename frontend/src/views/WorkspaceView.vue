@@ -42,16 +42,20 @@ const calloutCtaTo = computed(() => {
 function onCalloutAction() {
   if (analyses.report) {
     router.push(`/reports/${analyses.report.taskId}`)
+    return
+  }
+  if (jobs.selectedId && resumes.selectedId) {
+    router.push({ name: 'analysis-run' })
   }
 }
 
-onMounted(() => {
-  availability.probe()
-  if (availability.states.jobs === 'unknown') {
-    availability.setCapability('jobs', 'unavailable')
+onMounted(async () => {
+  await availability.probe()
+  if (availability.states.jobs !== 'unavailable') {
+    jobs.load()
   }
-  if (availability.states.resumes === 'unknown') {
-    availability.setCapability('resumes', 'unavailable')
+  if (availability.states.resumes !== 'unavailable') {
+    resumes.load()
   }
 })
 </script>
@@ -70,11 +74,11 @@ onMounted(() => {
     />
 
     <div class="workspace-view__grid animate-in animate-in-stagger-2">
-      <JobSelector />
-      <ResumeSelector />
+      <JobSelector @create="router.push({ name: 'jobs' })" />
+      <ResumeSelector @create="router.push({ name: 'resumes' })" />
     </div>
 
-    <AnalysisLauncher class="animate-in animate-in-stagger-3" />
+    <AnalysisLauncher class="animate-in animate-in-stagger-3" @launch="router.push({ name: 'analysis-run' })" />
   </section>
 </template>
 

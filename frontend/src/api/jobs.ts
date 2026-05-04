@@ -1,17 +1,16 @@
 import { requestJson } from './client'
 
 export interface Job {
-  id: string
+  id: number
   title: string
-  company?: string
-  jdText?: string
-  createdAt: string
+  raw_text: string
+  profile: Record<string, unknown>
+  created_at: string
 }
 
 export interface CreateJobPayload {
   title: string
-  company?: string
-  jdText?: string
+  raw_text: string
 }
 
 export async function fetchJobs() {
