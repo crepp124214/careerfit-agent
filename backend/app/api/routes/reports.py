@@ -27,7 +27,23 @@ def get_report_endpoint(task_id: int, db: Session = Depends(get_db)):
     report = get_report_by_task(db, task_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
-    return report
+    report_dict = {
+        "id": report.id,
+        "task_id": report.task_id,
+        "final_score": report.final_score,
+        "score_breakdown": report.score_breakdown or {},
+        "score_items": report.evidence or [],
+        "strengths": report.strengths or [],
+        "gaps": report.gaps or [],
+        "resume_suggestions": report.resume_suggestions or [],
+        "interview_questions": report.interview_questions or [],
+        "learning_plan": report.learning_plan or [],
+        "next_best_action": report.next_best_action or {},
+        "evidence": report.evidence or [],
+        "scoring_version": report.scoring_version,
+        "created_at": report.created_at,
+    }
+    return report_dict
 
 
 @router.get("/{task_id}/export")

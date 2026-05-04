@@ -80,12 +80,12 @@ SKILL_CATALOG = {
     "statistics": {
         "name": "统计方法",
         "category": "statistics",
-        "aliases": ["统计", "显著性", "置信区间", "假设检验", "统计检验"],
+        "aliases": ["统计", "显著性", "置信区间", "假设检验", "统计检验", "statistical", "statistics", "hypothesis testing", "regression"],
     },
     "ab_testing": {
         "name": "A/B 测试",
         "category": "statistics",
-        "aliases": ["A/B 测试", "AB 测试", "实验设计", "对照实验"],
+        "aliases": ["A/B 测试", "AB 测试", "实验设计", "对照实验", "A/B test", "A/B tests", "AB test", "AB tests", "A/B testing", "AB testing"],
     },
     "machine_learning": {
         "name": "机器学习",

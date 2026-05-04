@@ -28,6 +28,8 @@ def llm_capability() -> str:
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    if settings.database_url.startswith("sqlite"):
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     app = FastAPI(title=settings.app_name)
     app.add_middleware(

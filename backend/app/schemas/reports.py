@@ -27,6 +27,7 @@ class ReportRead(BaseModel):
     task_id: int
     final_score: int
     score_breakdown: dict
+    score_items: list = []
     strengths: list
     gaps: list
     resume_suggestions: list
