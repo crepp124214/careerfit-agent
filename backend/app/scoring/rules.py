@@ -5,6 +5,30 @@ from app.scoring.rubric import LEVEL_WEIGHTS, clamp_score
 SCORING_VERSION = "deterministic-v1"
 
 
+def _build_knowledge_evidence(
+    skill: str, rag_results: dict | None
+) -> list[dict]:
+    if not rag_results:
+        return []
+    skill_result = rag_results.get(skill)
+    if not skill_result:
+        return []
+    if skill_result.get("available") is False:
+        return [{"available": False, "reason": skill_result.get("reason", "知识库证据不足")}]
+    documents = skill_result.get("documents", [])
+    if not documents:
+        return [{"available": False, "reason": "知识库证据不足"}]
+    return [
+        {
+            "doc_id": doc.get("doc_id"),
+            "title": doc.get("title", ""),
+            "snippet": doc.get("content_snippet", ""),
+            "available": True,
+        }
+        for doc in documents
+    ]
+
+
 def _score_skill(skill: str, resume_profile: dict) -> tuple[str, float, list[str]]:
     evidence = find_resume_evidence(skill, resume_profile)
     if not evidence:
@@ -23,9 +47,27 @@ def _average(values: list[float]) -> float:
     return sum(values) / len(values)
 
 
-def score_match(jd_profile: dict, resume_profile: dict) -> dict:
-    required_skills = jd_profile.get("required_skills") or []
-    if not required_skills:
+def _iter_dimensions(jd_profile: dict) -> list[dict]:
+    dimensions = jd_profile.get("skill_dimensions") or []
+    if dimensions:
+        return dimensions
+    return [
+        {
+            "name": skill,
+            "canonical_key": skill,
+            "category": "general",
+            "weight": 1,
+            "required_level": "project_practice",
+            "jd_evidence": (jd_profile.get("evidence") or {}).get(skill, []),
+            "aliases": [skill],
+        }
+        for skill in jd_profile.get("required_skills") or []
+    ]
+
+
+def score_match(jd_profile: dict, resume_profile: dict, rag_results: dict | None = None) -> dict:
+    dimensions = _iter_dimensions(jd_profile)
+    if not dimensions:
         return {
             "scoring_version": SCORING_VERSION,
             "final_score": 0,
@@ -42,16 +84,21 @@ def score_match(jd_profile: dict, resume_profile: dict) -> dict:
 
     score_items = []
     skill_weights = []
-    for skill in required_skills:
-        level, weight, resume_evidence = _score_skill(skill, resume_profile)
-        skill_weights.append(weight)
+    for dimension in dimensions:
+        skill_key = dimension["canonical_key"]
+        skill_name = dimension["name"]
+        level, weight, resume_evidence = _score_skill(skill_key, resume_profile)
+        skill_weights.append(weight * dimension.get("weight", 1))
         score_items.append(
             {
-                "skill": skill,
+                "skill_key": skill_key,
+                "skill": skill_name,
+                "category": dimension.get("category", "general"),
                 "level": level,
                 "score": clamp_score(weight * 100),
-                "jd_evidence": (jd_profile.get("evidence") or {}).get(skill, []),
+                "jd_evidence": dimension.get("jd_evidence", []),
                 "resume_evidence": resume_evidence,
+                "knowledge_evidence": _build_knowledge_evidence(skill_key, rag_results),
             }
         )
 
