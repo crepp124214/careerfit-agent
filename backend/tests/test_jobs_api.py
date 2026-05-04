@@ -12,8 +12,8 @@ def test_create_job_extracts_skills(client):
     assert data["id"] > 0
     assert data["title"] == "Backend Engineer"
     assert "FastAPI" in data["profile"]["required_skills"]
-    assert data["profile"]["schema_version"] == "job-profile-v1"
-    assert data["profile"]["evidence"]["FastAPI"]
+    assert data["profile"]["schema_version"] == "job-profile-v2"
+    assert data["profile"]["evidence"]["fastapi"]
 
 
 def test_create_job_rejects_empty_jd(client):

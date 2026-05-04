@@ -1,16 +1,32 @@
+import re
+
 from sqlalchemy.orm import Session
 
 from app.db.models import ResumeVersion
 from app.schemas.resumes import ResumeCreate
-from app.services.job_service import KNOWN_SKILLS, _find_evidence
+from app.services.job_service import SKILL_CATALOG, _find_evidence
 
 
 def parse_resume_profile(raw_text: str) -> dict:
-    skills = [skill for skill in KNOWN_SKILLS if _find_evidence(raw_text, skill)]
-    evidence = {skill: _find_evidence(raw_text, skill) for skill in skills}
-    projects = [sentence.strip() for sentence in raw_text.split(".") if "built" in sentence.lower()]
+    evidence = {}
+    skills = []
+    for key, item in SKILL_CATALOG.items():
+        matched = []
+        for alias in item["aliases"]:
+            matched.extend(_find_evidence(raw_text, alias))
+        matched = list(dict.fromkeys(matched))
+        if matched:
+            evidence[key] = matched
+            skills.append(item["name"])
+
+    projects = [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?。！？\n])\s*", raw_text)
+        if any(term in sentence for term in ["项目", "构建", "完成", "支持", "分析"])
+    ]
+
     return {
-        "schema_version": "resume-profile-v1",
+        "schema_version": "resume-profile-v2",
         "skills": skills,
         "projects": projects,
         "domain_keywords": [],

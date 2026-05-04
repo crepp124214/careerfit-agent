@@ -15,8 +15,8 @@ def test_create_resume_extracts_skills(client):
     assert data["id"] > 0
     assert data["candidate_name"] == "Alex Chen"
     assert "FastAPI" in data["profile"]["skills"]
-    assert data["profile"]["schema_version"] == "resume-profile-v1"
-    assert data["profile"]["evidence"]["FastAPI"]
+    assert data["profile"]["schema_version"] == "resume-profile-v2"
+    assert data["profile"]["evidence"]["fastapi"]
 
 
 def test_create_resume_rejects_empty_text(client):
