@@ -3,10 +3,19 @@ from __future__ import annotations
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+EMBEDDING_DIMENSION = 384
+
+try:
+    from pgvector.sqlalchemy import Vector
+
+    _VECTOR_AVAILABLE = True
+except ImportError:
+    _VECTOR_AVAILABLE = False
 
 
 def utc_now() -> datetime:
@@ -25,6 +34,31 @@ class LearningTaskStatus(str, enum.Enum):
     doing = "doing"
     done = "done"
     paused = "paused"
+
+
+class InterviewSessionStatus(str, enum.Enum):
+    created = "created"
+    in_progress = "in_progress"
+    completed = "completed"
+
+
+class InterviewQuestionStatus(str, enum.Enum):
+    not_started = "not_started"
+    practicing = "practicing"
+    completed = "completed"
+    skipped = "skipped"
+
+
+class InterviewQuestionCategory(str, enum.Enum):
+    basic = "basic"
+    project_deep_dive = "project_deep_dive"
+    scenario_design = "scenario_design"
+
+
+class InterviewQuestionDifficulty(str, enum.Enum):
+    easy = "easy"
+    medium = "medium"
+    hard = "hard"
 
 
 class JobDescription(Base):
@@ -129,7 +163,78 @@ class AgentRun(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="success")
     input_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     output_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    execution_meta: Mapped[dict] = mapped_column(JSON, default=dict)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     task: Mapped[AnalysisTask] = relationship(back_populates="agent_runs")
+
+
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    doc_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=lambda: {"schema_version": "1"}
+    )
+    embedding_json: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    if _VECTOR_AVAILABLE:
+        embedding = mapped_column(Vector(EMBEDDING_DIMENSION), nullable=True)
+
+    @property
+    def schema_version(self) -> str:
+        return str(self.metadata_.get("schema_version", "1"))
+
+
+class InterviewSession(Base):
+    __tablename__ = "interview_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    report_id: Mapped[int] = mapped_column(ForeignKey("analysis_reports.id"), unique=True, nullable=False)
+    job_title: Mapped[str] = mapped_column(String(200), nullable=False)
+    status: Mapped[InterviewSessionStatus] = mapped_column(
+        Enum(InterviewSessionStatus), nullable=False, default=InterviewSessionStatus.created
+    )
+    total_questions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completed_questions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    metadata_: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=lambda: {"schema_version": "1"}
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    questions: Mapped[list[InterviewQuestion]] = relationship(back_populates="session", order_by="InterviewQuestion.sort_order")
+
+    @property
+    def schema_version(self) -> str:
+        return str(self.metadata_.get("schema_version", "1"))
+
+
+class InterviewQuestion(Base):
+    __tablename__ = "interview_questions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("interview_sessions.id"), nullable=False)
+    skill: Mapped[str] = mapped_column(String(100), nullable=False)
+    category: Mapped[InterviewQuestionCategory] = mapped_column(
+        Enum(InterviewQuestionCategory), nullable=False, default=InterviewQuestionCategory.basic
+    )
+    difficulty: Mapped[InterviewQuestionDifficulty] = mapped_column(
+        Enum(InterviewQuestionDifficulty), nullable=False, default=InterviewQuestionDifficulty.medium
+    )
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follow_ups: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="report")
+    status: Mapped[InterviewQuestionStatus] = mapped_column(
+        Enum(InterviewQuestionStatus), nullable=False, default=InterviewQuestionStatus.not_started
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    session: Mapped[InterviewSession] = relationship(back_populates="questions")

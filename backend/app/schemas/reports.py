@@ -47,6 +47,7 @@ class AgentRunRead(BaseModel):
     status: str
     input_snapshot: dict
     output_snapshot: dict
+    execution_meta: dict = {}
     started_at: datetime
     finished_at: datetime
 

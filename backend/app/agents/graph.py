@@ -10,6 +10,7 @@ Node = Callable[[CareerFitState], CareerFitState]
 NODE_SEQUENCE: list[tuple[str, Node]] = [
     ("jd_parser", nodes.jd_parser),
     ("resume_parser", nodes.resume_parser),
+    ("rag_retriever", nodes.rag_retriever),
     ("match_scorer", nodes.match_scorer),
     ("gap_analyzer", nodes.gap_analyzer),
     ("resume_optimizer", nodes.resume_optimizer),
@@ -22,10 +23,12 @@ REDACTED_EVIDENCE_KEYS = {
     "evidence",
     "jd_evidence",
     "resume_evidence",
+    "knowledge_evidence",
     "projects",
     "messages",
     "prompt",
     "api_key",
+    "rag_results",
 }
 
 
@@ -58,12 +61,22 @@ def run_workflow(initial_state: CareerFitState) -> tuple[CareerFitState, list[di
         output = node(state)
         state.update(output)
         finished_at = datetime.now(timezone.utc)
+
+        execution_meta = output.pop("_execution_meta", {
+            "agent_role": node_name,
+            "execution_mode": "deterministic",
+            "model_name": None,
+            "fallback_used": False,
+            "schema_valid": True,
+            "retry_count": 0,
+        })
         trace.append(
             {
                 "node_name": node_name,
                 "status": "success",
                 "input_snapshot": input_snapshot,
                 "output_snapshot": redact_state(output),
+                "execution_meta": execution_meta,
                 "started_at": started_at,
                 "finished_at": finished_at,
             }

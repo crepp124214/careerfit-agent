@@ -4,9 +4,28 @@ from sqlalchemy.orm import Session
 
 from app.agents.graph import run_workflow
 from app.db.models import AgentRun, AnalysisReport, AnalysisStatus, AnalysisTask
+from app.rag.retrieval import retrieve_by_skill
 from app.schemas.analysis import AnalysisCreate
-from app.services.job_service import get_job
+from app.services.job_service import get_job, parse_job_profile
 from app.services.resume_service import get_resume
+
+
+def _build_rag_results(db: Session, required_skills: list[str]) -> dict:
+    rag_results = {}
+    for skill in required_skills:
+        documents = retrieve_by_skill(db, skill, top_k=3)
+        if documents:
+            rag_results[skill] = {
+                "documents": documents,
+                "available": True,
+            }
+        else:
+            rag_results[skill] = {
+                "documents": [],
+                "available": False,
+                "reason": "知识库证据不足",
+            }
+    return rag_results
 
 
 def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
@@ -21,7 +40,17 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
     db.refresh(task)
 
     try:
-        final_state, trace = run_workflow({"raw_jd": job.raw_text, "raw_resume": resume.raw_text})
+        jd_profile = parse_job_profile(job.raw_text)
+        required_skills = jd_profile.get("required_skills") or []
+        rag_results = _build_rag_results(db, required_skills)
+
+        initial_state = {
+            "raw_jd": job.raw_text,
+            "raw_resume": resume.raw_text,
+            "jd_profile": jd_profile,
+            "rag_results": rag_results,
+        }
+        final_state, trace = run_workflow(initial_state)
         match_result = final_state["match_result"]
         report = AnalysisReport(
             task_id=task.id,

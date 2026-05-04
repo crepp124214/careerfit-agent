@@ -45,3 +45,20 @@ def test_analysis_flow_creates_report_and_agent_runs(client):
     learning_response = client.post("/api/learning/tasks/generate", json={"task_id": task["id"]})
     assert learning_response.status_code == 201
     assert learning_response.json()
+
+
+def test_agent_run_execution_meta_persisted_and_returned(client):
+    job_resp = client.post("/api/jobs", json={"title": "数据分析师", "raw_text": "需要 SQL 和 Python 进行数据提取、清洗和多表关联分析。"})
+    assert job_resp.status_code == 201
+    resume_resp = client.post("/api/resumes", json={"candidate_name": "候选人", "version_label": "v1", "raw_text": "使用 SQL 和 Python 做过数据分析项目，完成数据提取和可视化工作。"})
+    assert resume_resp.status_code == 201
+
+    task_resp = client.post("/api/analysis", json={"job_id": job_resp.json()["id"], "resume_id": resume_resp.json()["id"]})
+
+    runs_resp = client.get(f"/api/agent-runs/{task_resp.json()['id']}")
+
+    assert runs_resp.status_code == 200
+    runs = runs_resp.json()
+    assert runs
+    assert "execution_meta" in runs[0]
+    assert "execution_mode" in runs[0]["execution_meta"]
