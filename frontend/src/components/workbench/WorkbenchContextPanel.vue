@@ -127,6 +127,15 @@ const hasSelection = computed(() => selectedJob.value || selectedResume.value)
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.context-card:hover {
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .context-card__header {

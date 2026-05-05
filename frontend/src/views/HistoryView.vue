@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useHistoryStore } from '@/stores/history'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import ErrorBanner from '@/components/feedback/ErrorBanner.vue'
+import ScoreTrendChart from '@/components/history/ScoreTrendChart.vue'
 
+const router = useRouter()
 const availability = useAvailabilityStore()
 const historyStore = useHistoryStore()
 
@@ -39,6 +42,8 @@ const scoreDeltaLabel = computed(() => {
   return '持平'
 })
 
+const sortedItems = computed(() => [...historyStore.items].reverse())
+
 onMounted(() => {
   if (!isUnavailable.value) {
     historyStore.load()
@@ -47,6 +52,10 @@ onMounted(() => {
 
 function handleRetry() {
   historyStore.load()
+}
+
+function goToReport(taskId: number | string) {
+  router.push(`/reports/${taskId}`)
 }
 </script>
 
@@ -103,18 +112,22 @@ function handleRetry() {
         数据不足以形成趋势，至少完成两次分析后才能展示趋势变化。
       </p>
 
-      <div class="history-view__chart" aria-label="分数趋势图表">
-        <div class="history-view__chart-placeholder">
-          <p class="history-view__chart-text">
-            {{ historyStore.hasEnoughData ? '趋势图表功能即将上线' : '需要更多数据以生成趋势图' }}
-          </p>
-        </div>
+      <div v-if="historyStore.hasEnoughData" class="history-view__chart" aria-label="分数趋势图表">
+        <ScoreTrendChart :items="sortedItems" :height="220" />
       </div>
 
       <div class="history-view__list">
         <h2 class="history-view__list-title">历史报告</h2>
         <ul class="history-view__list-items">
-          <li v-for="item in historyStore.items" :key="item.taskId" class="history-view__list-item">
+          <li
+            v-for="item in historyStore.items"
+            :key="item.taskId"
+            class="history-view__list-item"
+            tabindex="0"
+            role="button"
+            @click="goToReport(item.taskId)"
+            @keydown.enter="goToReport(item.taskId)"
+          >
             <span class="history-view__list-score">{{ item.finalScore }}</span>
             <span class="history-view__list-job">{{ item.jobTitle }}</span>
             <span class="history-view__list-resume">{{ item.resumeLabel }}</span>
@@ -152,7 +165,9 @@ function handleRetry() {
   gap: var(--space-xl);
   padding: var(--space-lg);
   background-color: var(--color-surface-1);
-  border-radius: var(--rounded-lg);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 .history-view__summary-item {
@@ -213,24 +228,7 @@ function handleRetry() {
 }
 
 .history-view__chart {
-  min-height: 200px;
-}
-
-.history-view__chart-placeholder {
-  background-color: var(--color-surface-1);
-  border: 1px dashed var(--color-hairline-strong);
-  border-radius: var(--rounded-lg);
-  padding: var(--space-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-}
-
-.history-view__chart-text {
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: var(--font-body-size);
+  min-height: 220px;
 }
 
 .history-view__list {
@@ -261,7 +259,24 @@ function handleRetry() {
   gap: var(--space-md);
   padding: var(--space-md);
   background-color: var(--color-surface-1);
-  border-radius: var(--rounded-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.history-view__list-item:hover {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.history-view__list-item:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .history-view__list-score {
@@ -285,5 +300,27 @@ function handleRetry() {
 .history-view__list-date {
   font-size: var(--font-body-size-sm);
   color: var(--color-ink-muted);
+}
+
+@media (max-width: 640px) {
+  .history-view__summary {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .history-view__list-item {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .history-view__list-job {
+    width: 100%;
+    flex: none;
+    order: -1;
+  }
+
+  .history-view__list-resume {
+    display: none;
+  }
 }
 </style>

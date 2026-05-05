@@ -6,6 +6,7 @@ import { useJobsStore } from '@/stores/jobs'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { formatDate } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,7 +50,7 @@ watch(() => route.params.id, (id) => {
         <h2 class="job-detail-view__section-title">职位描述</h2>
         <pre class="job-detail-view__jd-text">{{ job.raw_text }}</pre>
       </div>
-      <p class="job-detail-view__meta">创建于 {{ job.created_at }}</p>
+      <p class="job-detail-view__meta">创建于 {{ formatDate(job.created_at) }}</p>
     </div>
 
     <p v-else class="job-detail-view__not-found">未找到该岗位。</p>

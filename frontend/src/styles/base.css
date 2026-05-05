@@ -108,3 +108,31 @@ samp {
   font-size: var(--font-mono-size);
   line-height: var(--font-mono-line);
 }
+
+@media print {
+  body {
+    background-color: #fff;
+    color: #000;
+  }
+
+  .app-shell__nav,
+  .app-shell__status-bar,
+  .mobile-nav,
+  .side-nav {
+    display: none !important;
+  }
+
+  .app-shell__main {
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  button {
+    display: none !important;
+  }
+}

@@ -225,8 +225,17 @@ watch(
   gap: var(--space-lg);
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
-  border-radius: var(--rounded-lg);
+  border-radius: var(--rounded-xl);
   padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.learning-task:hover {
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .learning-task__main {

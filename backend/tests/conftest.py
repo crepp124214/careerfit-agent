@@ -1,12 +1,19 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
+
+os.environ["CAREERFIT_LLM_ENABLED"] = "false"
+os.environ["CAREERFIT_ANALYSIS_SYNC"] = "1"
+get_settings.cache_clear()
 
 
 @pytest.fixture

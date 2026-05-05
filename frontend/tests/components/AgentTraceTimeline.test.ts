@@ -195,7 +195,7 @@ describe('AgentTraceTimeline', () => {
         props: {
           nodes: [
             {
-              node_name: 'jd_parser',
+              name: 'jd_parser',
               status: 'success',
               duration: 1000,
               summary: '解析完成',
@@ -214,7 +214,8 @@ describe('AgentTraceTimeline', () => {
         },
       })
       expect(wrapper.exists()).toBe(true)
-      expect(wrapper.props('nodes')[0].execution_meta?.execution_mode).toBe('llm')
+      const nodes = wrapper.props('nodes')
+      expect(nodes[0]?.execution_meta?.execution_mode).toBe('llm')
     })
   })
 })

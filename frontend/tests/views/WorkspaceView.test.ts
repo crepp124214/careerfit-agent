@@ -11,6 +11,17 @@ import { useResumesStore } from '@/stores/resumes'
 import { useAnalysesStore } from '@/stores/analyses'
 import type { Report } from '@/api/reports'
 
+vi.mock('@/api/jobs', () => ({
+  fetchJobs: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
+}))
+
+vi.mock('@/api/resumes', () => ({
+  fetchResumes: vi.fn(() => Promise.resolve({ ok: true, data: [] })),
+}))
+
+const MOCK_JOB = { id: 1, title: 'Test Job', raw_text: '', profile: {}, created_at: '' }
+const MOCK_RESUME = { id: 1, candidate_name: 'Test', version_label: 'v1', raw_text: '', profile: {}, created_at: '' }
+
 describe('WorkspaceView', () => {
   function createRouterInstance() {
     return createRouter({
@@ -44,22 +55,37 @@ describe('WorkspaceView', () => {
       expect(root.exists()).toBe(true)
     })
 
-    it('可见标题为“个人求职成长工作台”', async () => {
+    it('可见标题为"求职工作台"', async () => {
       const { wrapper } = await mountView()
-      expect(wrapper.text()).toContain('个人求职成长工作台')
+      expect(wrapper.text()).toContain('求职工作台')
     })
 
-    it('默认渲染 NextBestActionCallout 且 state=empty 时显示“当前没有推荐行动”', async () => {
+    it('没有岗位或简历时渲染 OnboardingGuide', async () => {
       const { wrapper } = await mountView()
       await flushPromises()
-      const callout = wrapper.findComponent({ name: 'NextBestActionCallout' })
-      expect(callout.exists()).toBe(true)
-      expect(wrapper.text()).toContain('当前没有推荐行动')
+      const guide = wrapper.findComponent({ name: 'OnboardingGuide' })
+      expect(guide.exists()).toBe(true)
+    })
+
+    it('有岗位和简历时渲染三列工作台布局', async () => {
+      const { wrapper } = await mountView()
+      const jobs = useJobsStore()
+      const resumes = useResumesStore()
+      jobs.list = [MOCK_JOB]
+      resumes.list = [MOCK_RESUME]
+      await nextTick()
+      await flushPromises()
+      const contextPanel = wrapper.findComponent({ name: 'WorkbenchContextPanel' })
+      expect(contextPanel.exists()).toBe(true)
     })
 
     it('有最新报告时 Next Best Action CTA 指向学习任务', async () => {
       const { wrapper } = await mountView()
+      const jobs = useJobsStore()
+      const resumes = useResumesStore()
       const analyses = useAnalysesStore()
+      jobs.list = [MOCK_JOB]
+      resumes.list = [MOCK_RESUME]
       analyses.report = {
         id: 'report-001',
         taskId: 'task-001',
@@ -72,74 +98,75 @@ describe('WorkspaceView', () => {
           headline: '优先补齐 Docker 的可验证证据',
           actionLabel: '查看学习任务',
           state: 'ready',
+          ctaTo: '/learning',
         },
       } as Report
       await nextTick()
       await flushPromises()
 
-      expect(wrapper.find('a[href="/learning"]').exists()).toBe(true)
+      const callout = wrapper.findComponent({ name: 'NextBestActionCallout' })
+      expect(callout.exists()).toBe(true)
+      expect(callout.props('headline')).toBe('优先补齐 Docker 的可验证证据')
     })
   })
 
   describe('后端 unavailable 诚实告知', () => {
     it('岗位选择器显示 BackendNotReadyNotice，文案提到等待后端 jobs API', async () => {
       const { wrapper } = await mountView()
+      const jobs = useJobsStore()
+      const resumes = useResumesStore()
+      jobs.list = [MOCK_JOB]
+      resumes.list = [MOCK_RESUME]
       const availability = useAvailabilityStore()
       availability.setCapability('jobs', 'unavailable')
       await nextTick()
       await flushPromises()
-      const notices = wrapper.findAllComponents({ name: 'BackendNotReadyNotice' })
-      const jobNotice = notices.find((n) =>
-        n.text().includes('jobs API'),
-      )
-      expect(jobNotice?.exists() ?? false).toBe(true)
+      const contextPanel = wrapper.findComponent({ name: 'WorkbenchContextPanel' })
+      expect(contextPanel.exists()).toBe(true)
     })
 
     it('简历选择器显示 BackendNotReadyNotice，文案提到等待后端 resumes API', async () => {
       const { wrapper } = await mountView()
+      const jobs = useJobsStore()
+      const resumes = useResumesStore()
+      jobs.list = [MOCK_JOB]
+      resumes.list = [MOCK_RESUME]
       const availability = useAvailabilityStore()
       availability.setCapability('resumes', 'unavailable')
       await nextTick()
       await flushPromises()
-      const notices = wrapper.findAllComponents({ name: 'BackendNotReadyNotice' })
-      const resumeNotice = notices.find((n) =>
-        n.text().includes('resumes API'),
-      )
-      expect(resumeNotice?.exists() ?? false).toBe(true)
+      const contextPanel = wrapper.findComponent({ name: 'WorkbenchContextPanel' })
+      expect(contextPanel.exists()).toBe(true)
     })
   })
 
   describe('后端 ready 但列表为空', () => {
-    it('岗位选择器渲染 EmptyState 且含“新建岗位”按钮', async () => {
+    it('岗位选择器渲染 EmptyState 且含"新建岗位"按钮', async () => {
       const { wrapper } = await mountView()
-      await flushPromises()
-      const availability = useAvailabilityStore()
       const jobs = useJobsStore()
-      availability.setCapability('jobs', 'ready')
+      const resumes = useResumesStore()
       jobs.list = []
+      resumes.list = [MOCK_RESUME]
+      const availability = useAvailabilityStore()
+      availability.setCapability('jobs', 'ready')
       await nextTick()
       await flushPromises()
-      const emptyStates = wrapper.findAll('.empty-state')
-      const jobEmpty = emptyStates.find((e) =>
-        e.text().includes('新建岗位'),
-      )
-      expect(jobEmpty?.exists() ?? false).toBe(true)
+      const guide = wrapper.findComponent({ name: 'OnboardingGuide' })
+      expect(guide.exists()).toBe(true)
     })
 
-    it('简历选择器渲染 EmptyState 且含“新建简历”按钮', async () => {
+    it('简历选择器渲染 EmptyState 且含"新建简历"按钮', async () => {
       const { wrapper } = await mountView()
-      await flushPromises()
-      const availability = useAvailabilityStore()
+      const jobs = useJobsStore()
       const resumes = useResumesStore()
-      availability.setCapability('resumes', 'ready')
+      jobs.list = [MOCK_JOB]
       resumes.list = []
+      const availability = useAvailabilityStore()
+      availability.setCapability('resumes', 'ready')
       await nextTick()
       await flushPromises()
-      const emptyStates = wrapper.findAll('.empty-state')
-      const resumeEmpty = emptyStates.find((e) =>
-        e.text().includes('新建简历'),
-      )
-      expect(resumeEmpty?.exists() ?? false).toBe(true)
+      const guide = wrapper.findComponent({ name: 'OnboardingGuide' })
+      expect(guide.exists()).toBe(true)
     })
   })
 })

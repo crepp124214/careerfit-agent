@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 
 import { useResumeDiffStore } from '@/stores/resumeDiff'
 import { compareResumes, type ResumeDiff } from '@/api/resumes'
+import { ApiErrorCode } from '@/api/client'
 
 vi.mock('@/api/resumes', () => ({
   compareResumes: vi.fn(),
@@ -71,7 +72,9 @@ describe('resumeDiff store', () => {
     vi.mocked(compareResumes).mockResolvedValue({
       ok: false,
       unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
       message: '后端接口尚未实现',
+      retryable: false,
     })
     const store = useResumeDiffStore()
     store.setFromId('1')

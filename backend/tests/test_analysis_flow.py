@@ -7,6 +7,8 @@ RESUME_TEXT = (
     "Wrote API tests for internal systems."
 )
 
+import time
+
 
 def test_analysis_flow_creates_report_and_agent_runs(client):
     job = client.post("/api/jobs", json={"title": "Backend Engineer", "raw_text": JD_TEXT}).json()
@@ -21,6 +23,13 @@ def test_analysis_flow_creates_report_and_agent_runs(client):
 
     assert task_response.status_code == 201
     task = task_response.json()
+
+    for _ in range(60):
+        if task["status"] in ("success", "failed"):
+            break
+        time.sleep(0.5)
+        task = client.get(f"/api/analysis/{task['id']}").json()
+
     assert task["status"] == "success"
 
     report_response = client.get(f"/api/reports/{task['id']}")
@@ -55,7 +64,14 @@ def test_agent_run_execution_meta_persisted_and_returned(client):
 
     task_resp = client.post("/api/analysis", json={"job_id": job_resp.json()["id"], "resume_id": resume_resp.json()["id"]})
 
-    runs_resp = client.get(f"/api/agent-runs/{task_resp.json()['id']}")
+    task_data = task_resp.json()
+    for _ in range(60):
+        if task_data["status"] in ("success", "failed"):
+            break
+        time.sleep(0.5)
+        task_data = client.get(f"/api/analysis/{task_data['id']}").json()
+
+    runs_resp = client.get(f"/api/agent-runs/{task_data['id']}")
 
     assert runs_resp.status_code == 200
     runs = runs_resp.json()

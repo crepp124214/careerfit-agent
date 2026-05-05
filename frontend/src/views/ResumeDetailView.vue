@@ -6,6 +6,7 @@ import { useResumesStore } from '@/stores/resumes'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { formatDate } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,7 +50,7 @@ watch(() => route.params.id, (id) => {
         <h2 class="resume-detail-view__section-title">简历内容</h2>
         <pre class="resume-detail-view__content-text">{{ resume.raw_text }}</pre>
       </div>
-      <p class="resume-detail-view__meta">创建于 {{ resume.created_at }}</p>
+      <p class="resume-detail-view__meta">创建于 {{ formatDate(resume.created_at) }}</p>
     </div>
 
     <p v-else class="resume-detail-view__not-found">未找到该简历。</p>

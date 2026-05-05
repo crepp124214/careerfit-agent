@@ -175,4 +175,21 @@ watch(
 .modal-leave-to {
   opacity: 0;
 }
+
+.modal-enter-active .modal,
+.modal-leave-active .modal {
+  transition:
+    opacity var(--motion-duration-base) var(--motion-easing-emphasized),
+    transform var(--motion-duration-base) var(--motion-easing-emphasized);
+}
+
+.modal-enter-from .modal {
+  opacity: 0;
+  transform: scale(0.96) translateY(8px);
+}
+
+.modal-leave-to .modal {
+  opacity: 0;
+  transform: scale(0.98) translateY(-4px);
+}
 </style>

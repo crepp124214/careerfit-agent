@@ -48,8 +48,8 @@ beforeEach(() => {
 })
 
 describe('router smoke', () => {
-  it('注册了 13 条路由（12 主路由 + 1 通配 NotFound）', () => {
-    expect(routes).toHaveLength(13)
+  it('注册了 15 条路由（14 主路由 + 1 通配 NotFound）', () => {
+    expect(routes).toHaveLength(15)
   })
 
   it('每个主路由都能解析到预期 view', async () => {

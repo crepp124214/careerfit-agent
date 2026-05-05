@@ -10,6 +10,7 @@ import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppTextarea from '@/components/common/AppTextarea.vue'
 import Modal from '@/components/common/Modal.vue'
+import { formatDate } from '@/utils/format'
 
 const router = useRouter()
 const availability = useAvailabilityStore()
@@ -86,7 +87,7 @@ function goToDetail(id: number) {
         <div class="resumes-view__item-main">
           <span class="resumes-view__item-name">{{ resume.candidate_name }} — {{ resume.version_label }}</span>
         </div>
-        <span class="resumes-view__item-date">{{ resume.created_at }}</span>
+        <span class="resumes-view__item-date">{{ formatDate(resume.created_at) }}</span>
       </li>
     </ul>
 
@@ -167,11 +168,16 @@ function goToDetail(id: number) {
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   cursor: pointer;
-  transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .resumes-view__item:hover {
   background-color: var(--color-surface-2);
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .resumes-view__item-main {

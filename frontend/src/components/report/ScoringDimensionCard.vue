@@ -1,30 +1,52 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Dimension } from '@/api/reports'
 import RiskPill from '@/components/risk/RiskPill.vue'
 import EvidenceCard from './EvidenceCard.vue'
 
-defineProps<{
+const props = defineProps<{
   dimension: Dimension
 }>()
+
+const barColor = computed(() => {
+  if (props.dimension.riskLevel === 'high') return 'var(--color-risk-high)'
+  if (props.dimension.riskLevel === 'medium') return 'var(--color-risk-medium)'
+  return 'var(--color-risk-low)'
+})
+
+const gap = computed(() => Math.max(0, props.dimension.threshold - props.dimension.score))
 </script>
 
 <template>
-  <article class="dimension-card">
-    <header class="dimension-card__header">
-      <h4 class="dimension-card__name">{{ dimension.name }}</h4>
-      <div class="dimension-card__score-row">
-        <span class="dimension-card__score">{{ dimension.score }}</span>
+  <article class="dim-card">
+    <header class="dim-card__header">
+      <h4 class="dim-card__name">{{ dimension.name }}</h4>
+      <div class="dim-card__score-row">
+        <span class="dim-card__score">{{ dimension.score }}</span>
         <RiskPill :level="dimension.riskLevel" />
       </div>
     </header>
 
-    <div class="dimension-card__threshold">
-      <span class="dimension-card__threshold-label">阈值：{{ dimension.threshold }}</span>
+    <div class="dim-card__bar-track">
+      <div
+        class="dim-card__bar-fill"
+        :style="{ width: `${dimension.score}%`, backgroundColor: barColor }"
+      />
+      <div
+        class="dim-card__bar-threshold"
+        :style="{ left: `${dimension.threshold}%` }"
+        :title="`阈值 ${dimension.threshold}`"
+      />
     </div>
 
-    <p class="dimension-card__reason">{{ dimension.reason }}</p>
+    <div class="dim-card__meta">
+      <span class="dim-card__threshold-text">阈值 {{ dimension.threshold }}</span>
+      <span v-if="gap > 0" class="dim-card__gap-text">差 {{ gap }} 分</span>
+    </div>
 
-    <div v-if="dimension.evidence?.length" class="dimension-card__evidence">
+    <p class="dim-card__reason">{{ dimension.reason }}</p>
+
+    <div v-if="dimension.evidence?.length" class="dim-card__evidence">
       <EvidenceCard
         v-for="(ev, i) in dimension.evidence"
         :key="i"
@@ -35,60 +57,100 @@ defineProps<{
 </template>
 
 <style scoped>
-.dimension-card {
-  background-color: var(--color-surface-2);
+.dim-card {
+  background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
-.dimension-card:hover {
+.dim-card:hover {
   border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-sm);
 }
 
-.dimension-card__header {
+.dim-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
-.dimension-card__name {
+.dim-card__name {
   margin: 0;
   font-size: var(--font-card-title-size);
   font-weight: var(--font-card-title-weight);
   line-height: var(--font-card-title-line);
 }
 
-.dimension-card__score-row {
+.dim-card__score-row {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  flex-shrink: 0;
 }
 
-.dimension-card__score {
+.dim-card__score {
   font-size: var(--font-card-title-size);
   font-weight: 600;
   color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
 }
 
-.dimension-card__threshold-label {
+.dim-card__bar-track {
+  position: relative;
+  height: 6px;
+  background-color: var(--color-surface-3);
+  border-radius: var(--rounded-pill);
+  overflow: visible;
+}
+
+.dim-card__bar-fill {
+  height: 100%;
+  border-radius: var(--rounded-pill);
+  transition: width 0.4s var(--motion-easing-emphasized);
+}
+
+.dim-card__bar-threshold {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background-color: var(--color-ink-subtle);
+  border-radius: 1px;
+}
+
+.dim-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dim-card__threshold-text {
   font-size: var(--font-caption-size);
   color: var(--color-ink-subtle);
 }
 
-.dimension-card__reason {
+.dim-card__gap-text {
+  font-size: var(--font-caption-size);
+  font-weight: 500;
+  color: var(--color-risk-medium);
+}
+
+.dim-card__reason {
   margin: 0;
   font-size: var(--font-body-sm-size);
   color: var(--color-ink-muted);
   line-height: var(--font-body-sm-line);
 }
 
-.dimension-card__evidence {
+.dim-card__evidence {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);

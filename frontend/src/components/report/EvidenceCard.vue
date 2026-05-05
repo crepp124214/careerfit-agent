@@ -112,8 +112,8 @@ function toggle() {
 
 .evidence-card__columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
 }
 
 .evidence-card__column {
@@ -202,9 +202,4 @@ function toggle() {
   background-color: var(--color-surface-1);
 }
 
-@media (max-width: 640px) {
-  .evidence-card__columns {
-    grid-template-columns: 1fr;
-  }
-}
 </style>

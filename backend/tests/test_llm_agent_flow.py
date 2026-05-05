@@ -33,27 +33,30 @@ def test_llm_enabled_uses_mock_enhancement(client, monkeypatch):
     from app.llm.schemas import LLMReportEnhancement
 
     def fake_enhancement(state):
-        return LLMReportEnhancement.model_validate(
-            {
-                "resume_suggestions": [
-                    {
-                        "title": "LLM 强化 FastAPI 表达",
-                        "suggestion": "保留已有 FastAPI 事实，补清楚项目边界。",
-                        "jd_requirement": "需要 FastAPI",
-                        "resume_evidence": "Built FastAPI backend services",
-                        "risk_level": "low",
-                    }
-                ],
-                "interview_questions": [
-                    {"skill": "FastAPI", "question": "LLM 问题：你如何设计 FastAPI 接口？"}
-                ],
-                "learning_plan": [{"skill": "Docker", "task": "LLM 任务：完成 Docker 化练习。"}],
-                "next_best_action": {
-                    "title": "LLM 下一步：补齐 Docker 证据",
-                    "description": "先做一个可运行 Docker 项目。",
-                    "target_skill": "Docker",
-                },
-            }
+        return (
+            LLMReportEnhancement.model_validate(
+                {
+                    "resume_suggestions": [
+                        {
+                            "title": "LLM 强化 FastAPI 表达",
+                            "suggestion": "保留已有 FastAPI 事实，补清楚项目边界。",
+                            "jd_requirement": "需要 FastAPI",
+                            "resume_evidence": "Built FastAPI backend services",
+                            "risk_level": "low",
+                        }
+                    ],
+                    "interview_questions": [
+                        {"skill": "FastAPI", "question": "LLM 问题：你如何设计 FastAPI 接口？"}
+                    ],
+                    "learning_plan": [{"skill": "Docker", "task": "LLM 任务：完成 Docker 化练习。"}],
+                    "next_best_action": {
+                        "title": "LLM 下一步：补齐 Docker 证据",
+                        "description": "先做一个可运行 Docker 项目。",
+                        "target_skill": "Docker",
+                    },
+                }
+            ),
+            "test-model",
         )
 
     monkeypatch.setattr("app.agents.nodes.generate_report_enhancement", fake_enhancement)
@@ -88,13 +91,16 @@ def test_llm_trace_does_not_expose_key_prompt_or_raw_text(client, monkeypatch):
     monkeypatch.setenv("CAREERFIT_LLM_API_KEY", "secret-test-key")
 
     def fake_enhancement(state):
-        return LLMReportEnhancement.model_validate(
-            {
-                "resume_suggestions": [],
-                "interview_questions": [],
-                "learning_plan": [],
-                "next_best_action": {"title": "LLM 下一步", "description": "继续"},
-            }
+        return (
+            LLMReportEnhancement.model_validate(
+                {
+                    "resume_suggestions": [],
+                    "interview_questions": [],
+                    "learning_plan": [],
+                    "next_best_action": {"title": "LLM 下一步", "description": "继续"},
+                }
+            ),
+            "test-model",
         )
 
     monkeypatch.setattr("app.agents.nodes.generate_report_enhancement", fake_enhancement)

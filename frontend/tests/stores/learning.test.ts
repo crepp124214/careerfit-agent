@@ -8,6 +8,7 @@ import {
   updateLearningTaskStatus,
   type LearningTask,
 } from '@/api/learning'
+import { ApiErrorCode } from '@/api/client'
 
 vi.mock('@/api/learning', () => ({
   fetchLearningTasks: vi.fn(),
@@ -50,7 +51,9 @@ describe('learning store', () => {
     vi.mocked(fetchLearningTasks).mockResolvedValue({
       ok: false,
       unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
       message: '后端接口尚未实现',
+      retryable: false,
     })
     const store = useLearningStore()
 

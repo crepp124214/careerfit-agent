@@ -267,9 +267,11 @@ onMounted(() => {
 .diff-view__summary {
   display: flex;
   gap: var(--space-xl);
-  padding: var(--space-md);
+  padding: var(--space-lg);
   background-color: var(--color-surface-1);
-  border-radius: var(--rounded-lg);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 .diff-view__summary-item {
@@ -303,7 +305,8 @@ onMounted(() => {
   gap: var(--space-sm);
   padding: var(--space-md);
   background-color: var(--color-surface-1);
-  border-radius: var(--rounded-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
   font-size: var(--font-body-size);
 }
 

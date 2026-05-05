@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, reports, resumes
+from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, llm, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -61,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(knowledge.router)
     app.include_router(interview.router)
     app.include_router(learning.router)
+    app.include_router(llm.router)
 
     return app
 

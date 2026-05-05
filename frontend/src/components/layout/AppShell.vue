@@ -1,15 +1,44 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAvailabilityStore } from '@/stores/availability'
+import { usePreferencesStore } from '@/stores/preferences'
 import SideNav from './SideNav.vue'
 import MobileNav from './MobileNav.vue'
 import StatusBar from './StatusBar.vue'
 
 const availability = useAvailabilityStore()
+const prefs = usePreferencesStore()
 
+function applyTheme(theme: string) {
+  const root = document.documentElement
+  if (theme === 'light') {
+    root.setAttribute('data-theme', 'light')
+  } else if (theme === 'dark') {
+    root.removeAttribute('data-theme')
+  } else {
+    // system: 跟随系统偏好
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      root.removeAttribute('data-theme')
+    } else {
+      root.setAttribute('data-theme', 'light')
+    }
+  }
+}
+
+// 监听主题变化
+watch(() => prefs.theme, applyTheme, { immediate: true })
+
+// 监听系统主题变化
 onMounted(() => {
   availability.probe()
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', () => {
+    if (prefs.theme === 'system') {
+      applyTheme('system')
+    }
+  })
 })
 </script>
 
@@ -57,12 +86,19 @@ onMounted(() => {
 
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity var(--motion-duration-base) var(--motion-easing-standard);
+  transition:
+    opacity var(--motion-duration-slow) var(--motion-easing-emphasized),
+    transform var(--motion-duration-slow) var(--motion-easing-emphasized);
 }
 
-.page-fade-enter-from,
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
 .page-fade-leave-to {
   opacity: 0;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {

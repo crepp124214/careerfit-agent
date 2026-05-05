@@ -142,14 +142,17 @@ function statusTone(status: string) {
 .interview-list__card {
   background: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
-  border-radius: var(--rounded-md);
+  border-radius: var(--rounded-lg);
   padding: var(--space-md);
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .interview-list__card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-hairline-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .interview-list__card-header {

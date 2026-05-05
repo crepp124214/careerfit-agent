@@ -6,6 +6,7 @@ import { nextTick } from 'vue'
 
 import ReportView from '@/views/ReportView.vue'
 import { useAvailabilityStore } from '@/stores/availability'
+import { ApiErrorCode } from '@/api/client'
 
 vi.mock('@/api/reports', () => ({
   fetchReport: vi.fn(),
@@ -13,6 +14,14 @@ vi.mock('@/api/reports', () => ({
 
 vi.mock('@/api/agentRuns', () => ({
   fetchAgentRun: vi.fn(),
+}))
+
+vi.mock('@/components/report/SkillsRadarChart.vue', () => ({
+  default: {
+    name: 'SkillsRadarChart',
+    template: '<div class="skills-radar-mock" />',
+    props: ['dimensions'],
+  },
 }))
 
 import type { Report } from '@/api/reports'
@@ -140,8 +149,20 @@ describe('ReportView', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
-    mockFetchReport.mockResolvedValue({ ok: false, unavailable: true, message: 'mock not set' })
-    mockFetchAgentRun.mockResolvedValue({ ok: false, unavailable: true, message: 'mock not set' })
+    mockFetchReport.mockResolvedValue({
+      ok: false,
+      unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
+      message: 'mock not set',
+      retryable: false,
+    })
+    mockFetchAgentRun.mockResolvedValue({
+      ok: false,
+      unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
+      message: 'mock not set',
+      retryable: false,
+    })
   })
 
   describe('错误状态', () => {
@@ -219,8 +240,12 @@ describe('ReportView', () => {
       expect(overview.exists()).toBe(true)
     })
 
-    it('数据就绪时渲染 AgentTraceTimeline', async () => {
+    it('数据就绪时渲染 AgentTraceTimeline（切换到 Trace Tab）', async () => {
       const { wrapper } = await mountWithData()
+      const traceToggle = wrapper.find('.report-view__trace-toggle')
+      expect(traceToggle.exists()).toBe(true)
+      await traceToggle.trigger('click')
+      await nextTick()
       const timeline = wrapper.findComponent({ name: 'AgentTraceTimeline' })
       expect(timeline.exists()).toBe(true)
     })
@@ -245,14 +270,22 @@ describe('ReportView', () => {
       return result
     }
 
-    it('有拦截时渲染 IntegrityGuardBanner', async () => {
+    it('有拦截时渲染 ResumeSuggestionReview 组件（切换到建议 Tab）', async () => {
       const { wrapper } = await mountWithIntegrityGuard()
-      const banner = wrapper.findComponent({ name: 'IntegrityGuardBanner' })
-      expect(banner.exists()).toBe(true)
+      const suggestionsTab = wrapper.find('button[id="tab-resume"]')
+      expect(suggestionsTab.exists()).toBe(true)
+      await suggestionsTab.trigger('click')
+      await nextTick()
+      const review = wrapper.findComponent({ name: 'ResumeSuggestionReview' })
+      expect(review.exists()).toBe(true)
     })
 
     it('被拦截卡片带有 RiskPill level=high', async () => {
       const { wrapper } = await mountWithIntegrityGuard()
+      const suggestionsTab = wrapper.find('button[id="tab-resume"]')
+      expect(suggestionsTab.exists()).toBe(true)
+      await suggestionsTab.trigger('click')
+      await nextTick()
       const highPills = wrapper.findAllComponents({ name: 'RiskPill' }).filter(
         (c) => c.props('level') === 'high',
       )

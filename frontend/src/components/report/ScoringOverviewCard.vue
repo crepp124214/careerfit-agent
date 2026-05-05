@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Dimension } from '@/api/reports'
-import RiskPill from '@/components/risk/RiskPill.vue'
 
 const props = defineProps<{
   totalScore: number
   dimensions: Dimension[]
 }>()
 
-const RING_RADIUS = 36
+const RING_RADIUS = 52
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
-const RING_VIEWBOX = 88
+const RING_VIEWBOX = 128
 
 const scoreColor = computed(() => {
   if (props.totalScore >= 70) return 'var(--color-risk-low)'
@@ -22,18 +21,36 @@ const ringOffset = computed(
   () => RING_CIRCUMFERENCE * (1 - props.totalScore / 100),
 )
 
-const best = () =>
-  [...props.dimensions].sort((a, b) => b.score - a.score)[0]
+const scoreLabel = computed(() => {
+  if (props.totalScore >= 70) return '匹配度良好'
+  if (props.totalScore >= 50) return '有待提升'
+  return '差距较大'
+})
 
-const worst = () =>
-  [...props.dimensions].sort((a, b) => a.score - b.score)[0]
+const scoreLabelColor = computed(() => {
+  if (props.totalScore >= 70) return 'var(--color-risk-low)'
+  if (props.totalScore >= 50) return 'var(--color-risk-medium)'
+  return 'var(--color-risk-high)'
+})
+
+const highCount = computed(() =>
+  props.dimensions.filter(d => d.riskLevel === 'high').length,
+)
+
+const mediumCount = computed(() =>
+  props.dimensions.filter(d => d.riskLevel === 'medium').length,
+)
+
+const lowCount = computed(() =>
+  props.dimensions.filter(d => d.riskLevel === 'low').length,
+)
 </script>
 
 <template>
-  <section class="scoring-overview" aria-label="评分总览">
-    <div class="scoring-overview__score">
+  <section class="donut-overview" aria-label="综合匹配度">
+    <div class="donut-overview__chart">
       <svg
-        class="scoring-overview__ring"
+        class="donut-overview__svg"
         :width="RING_VIEWBOX"
         :height="RING_VIEWBOX"
         :viewBox="`0 0 ${RING_VIEWBOX} ${RING_VIEWBOX}`"
@@ -44,8 +61,8 @@ const worst = () =>
           :cy="RING_VIEWBOX / 2"
           :r="RING_RADIUS"
           fill="none"
-          stroke="var(--color-surface-2)"
-          stroke-width="6"
+          stroke="var(--color-surface-3)"
+          stroke-width="8"
         />
         <circle
           :cx="RING_VIEWBOX / 2"
@@ -53,35 +70,43 @@ const worst = () =>
           :r="RING_RADIUS"
           fill="none"
           :stroke="scoreColor"
-          stroke-width="6"
+          stroke-width="8"
           stroke-linecap="round"
           :stroke-dasharray="RING_CIRCUMFERENCE"
           :stroke-dashoffset="ringOffset"
-          transform="rotate(-90 44 44)"
-          class="scoring-overview__ring-progress"
+          transform="rotate(-90 64 64)"
+          class="donut-overview__ring-progress"
+          :style="{
+            '--ring-circumference': RING_CIRCUMFERENCE,
+            '--ring-target-offset': ringOffset + 'px',
+          }"
         />
       </svg>
-      <span class="scoring-overview__number" :style="{ color: scoreColor }">{{ totalScore }}</span>
-      <span class="scoring-overview__label">总分</span>
+      <div class="donut-overview__center">
+        <span class="donut-overview__number" :style="{ color: scoreColor }">{{ totalScore }}</span>
+        <span class="donut-overview__unit">%</span>
+      </div>
     </div>
 
-    <div class="scoring-overview__summary">
-      <div v-if="dimensions.length > 0" class="scoring-overview__extremes">
-        <div class="scoring-overview__extreme">
-          <span class="scoring-overview__extreme-label">最高维度</span>
-          <span class="scoring-overview__extreme-name">
-            {{ best()?.name }}
-            <RiskPill level="low" />
-          </span>
-          <span class="scoring-overview__extreme-score">{{ best()?.score }}</span>
+    <div class="donut-overview__info">
+      <h3 class="donut-overview__title">综合匹配度</h3>
+      <p class="donut-overview__label" :style="{ color: scoreLabelColor }">{{ scoreLabel }}</p>
+
+      <div class="donut-overview__breakdown">
+        <div class="donut-overview__stat donut-overview__stat--low">
+          <span class="donut-overview__stat-dot" aria-hidden="true" />
+          <span class="donut-overview__stat-count">{{ lowCount }}</span>
+          <span class="donut-overview__stat-name">通过</span>
         </div>
-        <div class="scoring-overview__extreme">
-          <span class="scoring-overview__extreme-label">最低维度</span>
-          <span class="scoring-overview__extreme-name">
-            {{ worst()?.name }}
-            <RiskPill :level="worst()?.riskLevel ?? 'medium'" />
-          </span>
-          <span class="scoring-overview__extreme-score">{{ worst()?.score }}</span>
+        <div class="donut-overview__stat donut-overview__stat--medium">
+          <span class="donut-overview__stat-dot" aria-hidden="true" />
+          <span class="donut-overview__stat-count">{{ mediumCount }}</span>
+          <span class="donut-overview__stat-name">需关注</span>
+        </div>
+        <div class="donut-overview__stat donut-overview__stat--high">
+          <span class="donut-overview__stat-dot" aria-hidden="true" />
+          <span class="donut-overview__stat-count">{{ highCount }}</span>
+          <span class="donut-overview__stat-name">高风险</span>
         </div>
       </div>
     </div>
@@ -89,94 +114,137 @@ const worst = () =>
 </template>
 
 <style scoped>
-.scoring-overview {
-  background-color: var(--color-surface-2);
+.donut-overview {
+  background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-xl);
   padding: var(--space-xl);
   display: flex;
-  gap: var(--space-xl);
-  align-items: center;
-}
-
-.scoring-overview__score {
-  position: relative;
-  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xxs);
-}
-
-.scoring-overview__ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
-  pointer-events: none;
-}
-
-.scoring-overview__ring-progress {
-  transition: stroke-dashoffset var(--motion-duration-slow) var(--motion-easing-emphasized);
-}
-
-.scoring-overview__number {
-  font-size: var(--font-display-lg-size);
-  font-weight: var(--font-display-lg-weight);
-  line-height: var(--font-display-lg-line);
-  letter-spacing: var(--font-display-lg-letter);
-  position: relative;
-  z-index: 1;
-}
-
-.scoring-overview__label {
-  font-size: var(--font-caption-size);
-  color: var(--color-ink-subtle);
-  position: relative;
-  z-index: 1;
-}
-
-.scoring-overview__summary {
-  flex: 1;
-}
-
-.scoring-overview__extremes {
-  display: flex;
   gap: var(--space-lg);
 }
 
-.scoring-overview__extreme {
+.donut-overview__chart {
+  position: relative;
+  width: 160px;
+  height: 160px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
 }
 
-.scoring-overview__extreme-label {
-  font-size: var(--font-caption-size);
+.donut-overview__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.donut-overview__ring-progress {
+  animation: ring-draw 0.8s var(--motion-easing-emphasized) both;
+  animation-delay: 0.2s;
+  stroke-dashoffset: var(--ring-circumference);
+  animation-fill-mode: forwards;
+}
+
+.donut-overview__center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  animation: count-up 0.5s var(--motion-easing-emphasized) both;
+  animation-delay: 0.4s;
+}
+
+.donut-overview__number {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.donut-overview__unit {
+  font-size: var(--font-body-lg-size);
+  font-weight: 500;
   color: var(--color-ink-subtle);
 }
 
-.scoring-overview__extreme-name {
+.donut-overview__info {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  font-size: var(--font-body-size);
-  font-weight: 500;
+  text-align: center;
+}
+
+.donut-overview__title {
+  margin: 0;
+  font-size: var(--font-body-lg-size);
+  font-weight: 600;
   color: var(--color-ink);
 }
 
-.scoring-overview__extreme-score {
+.donut-overview__label {
+  margin: 0;
   font-size: var(--font-body-size);
-  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.donut-overview__breakdown {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.donut-overview__stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-caption-size);
+}
+
+.donut-overview__stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.donut-overview__stat--low .donut-overview__stat-dot {
+  background-color: var(--color-risk-low);
+}
+
+.donut-overview__stat--medium .donut-overview__stat-dot {
+  background-color: var(--color-risk-medium);
+}
+
+.donut-overview__stat--high .donut-overview__stat-dot {
+  background-color: var(--color-risk-high);
+}
+
+.donut-overview__stat-count {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.donut-overview__stat-name {
+  color: var(--color-ink-subtle);
 }
 
 @media (max-width: 768px) {
-  .scoring-overview {
-    flex-direction: column;
-    align-items: flex-start;
+  .donut-overview {
+    padding: var(--space-lg);
   }
 
-  .scoring-overview__extremes {
-    flex-direction: column;
+  .donut-overview__chart {
+    width: 140px;
+    height: 140px;
+  }
+
+  .donut-overview__number {
+    font-size: 36px;
   }
 }
 </style>

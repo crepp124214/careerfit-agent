@@ -11,29 +11,18 @@
 - 新增文档、重写文档、追加评审记录时，都必须先检查是否满足中文文档约束。
 - 不允许新增只有英文说明的 Markdown 文档；如果第三方模板是英文，必须改写为中文说明后再提交。
 
-## 当前文档基线
+## 稳定约束文件边界
 
-以下文档已经完成中文化，后续修改必须保持中文：
-
-- `docs/superpowers/specs/2026-05-02-careerfit-agent-design.md`
-- `docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md`
-- `docs/superpowers/test-plans/2026-05-02-careerfit-agent-test-plan.md`
-- `docs/DESIGN.md`（视觉设计系统；YAML token key 保留英文以兼容 `npx @google/design.md lint`，描述与正文为中文）
-- `TODOS.md`
-- `README.md`
-- `AGENTS.md`
-
-外部同步副本：
-
-- `C:\Users\qwer\.gstack\projects\Newproject\main-test-plan-2026-05-02-careerfit-agent.md`
-
-如果修改了项目内测试计划，必须同步更新上面的 gstack 测试计划副本。
+- `AGENTS.md` 与 `CLAUDE.md` 只记录长期有效的项目约束、边界、流程和质量门。
+- 不得把阶段进度、完成状态、一次性验证结果、临时阻塞、当前 TODO、当前分支状态或阶段总结写入 `AGENTS.md` / `CLAUDE.md`。
+- 阶段进度和待办事项必须写入 `TODOS.md`；具体实施状态必须写入对应 `docs/superpowers/plans/*` 实施计划；测试执行细节必须写入对应 `docs/superpowers/test-plans/*` 或评审记录。
+- 如用户更新长期约束，才修改 `AGENTS.md` / `CLAUDE.md`；如只是完成某个阶段或补跑某个验证命令，不得修改这两个文件。
+- 修改项目内测试计划时，必须同步更新对应的 gstack 外部测试计划副本；外部副本路径以该测试计划自身记录为准。
 
 ## 实施文档实时更新
 
 - 执行任何实现任务时，必须实时更新对应实施计划中的 checklist 状态。
-- 当前 Phase 1 实施计划位置：
-  `docs/superpowers/plans/2026-05-02-careerfit-agent-phase-1.md`
+- 当前执行阶段的实施计划位置以 `TODOS.md` 和 `docs/superpowers/plans/*` 中对应阶段文档为准。
 - 每完成一个步骤，立即把该步骤从 `- [ ]` 改为 `- [x]`。
 - 如果执行时发现计划不准确，必须先更新计划，再继续实现。
 - 如果新增、删除或调整任务范围，必须同步更新：
@@ -46,6 +35,7 @@
 - 如果影响，必须把文档更新和代码变更放在同一个提交，除非用户明确要求拆分。
 - 如果某一步执行失败，必须在实施计划对应步骤附近记录失败原因、已验证命令和下一步修正方向。
 - 如果因为环境限制无法运行某个验证命令，必须在最终说明中写清楚未运行原因，并在实施计划中保留该步骤未完成。
+- `AGENTS.md` / `CLAUDE.md` 不承担实时进度追踪职责；不要为了记录完成了哪个 Phase、跑过哪个命令或遇到哪个临时环境问题而修改它们。
 
 ## gstack 与 superpowers 协作约束
 

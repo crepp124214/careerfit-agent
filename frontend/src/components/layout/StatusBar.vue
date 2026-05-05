@@ -30,11 +30,11 @@ const store = useAvailabilityStore()
   justify-content: space-between;
   align-items: center;
   gap: var(--space-md);
-  padding: 6px var(--space-lg);
+  padding: 6px var(--space-xl);
   border-top: 1px solid var(--color-hairline);
   font-size: var(--font-caption-size);
   color: var(--color-ink-subtle);
-  background-color: var(--color-canvas);
+  background-color: var(--color-surface-1);
 }
 
 .status-bar__left {

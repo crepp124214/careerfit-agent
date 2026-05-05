@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 
 import { useHistoryStore } from '@/stores/history'
 import { fetchReportHistory, type HistoryItem } from '@/api/reports'
+import { ApiErrorCode } from '@/api/client'
 
 vi.mock('@/api/reports', () => ({
   fetchReportHistory: vi.fn(),
@@ -67,7 +68,9 @@ describe('history store', () => {
     vi.mocked(fetchReportHistory).mockResolvedValue({
       ok: false,
       unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
       message: '后端接口尚未实现',
+      retryable: false,
     })
     const store = useHistoryStore()
 

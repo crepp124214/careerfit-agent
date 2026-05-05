@@ -4,7 +4,7 @@ export interface AnalysisTask {
   id: number
   job_id: number
   resume_id: number
-  status: 'pending' | 'running' | 'completed' | 'failed'
+  status: 'pending' | 'running' | 'success' | 'completed' | 'failed'
   error_message: string | null
   created_at: string
   updated_at: string
@@ -24,4 +24,22 @@ export async function createAnalysis(payload: CreateAnalysisPayload) {
 
 export async function fetchAnalysis(id: number) {
   return requestJson<AnalysisTask>(`/analysis/${id}`)
+}
+
+export interface NodeProgress {
+  node_name: string
+  status: string
+  duration_ms: number
+  execution_meta: Record<string, any>
+}
+
+export interface AnalysisProgress {
+  task_id: number
+  status: string
+  completed_nodes: NodeProgress[]
+  total_nodes: number
+}
+
+export async function fetchAnalysisProgress(taskId: number) {
+  return requestJson<AnalysisProgress>(`/analysis/${taskId}/progress`)
 }

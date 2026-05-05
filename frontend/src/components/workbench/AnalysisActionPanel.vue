@@ -55,10 +55,6 @@ function onNbaAction() {
     router.push({ name: 'analysis-run' })
   }
 }
-
-function startAnalysis() {
-  router.push({ name: 'analysis-run' })
-}
 </script>
 
 <template>
@@ -88,11 +84,8 @@ function startAnalysis() {
       </div>
     </div>
 
-    <div v-else-if="hasSelection" class="action-panel__launcher">
-      <p class="action-panel__launcher-text">已选择岗位和简历，可以开始分析了。</p>
-      <button type="button" class="action-panel__launcher-btn" @click="startAnalysis">
-        开始分析
-      </button>
+    <div v-else-if="hasSelection" class="action-panel__ready">
+      <p class="action-panel__ready-text">已选择岗位和简历，点击上方按钮开始分析。</p>
     </div>
 
     <div v-else class="action-panel__empty">
@@ -118,7 +111,8 @@ function startAnalysis() {
   padding: var(--space-lg);
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
-  border-radius: var(--rounded-lg);
+  border-radius: var(--rounded-xl);
+  box-shadow: var(--shadow-sm);
   text-align: center;
 }
 
@@ -151,6 +145,7 @@ function startAnalysis() {
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-hairline);
   border-radius: var(--rounded-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .action-panel__gaps-title {
@@ -186,37 +181,6 @@ function startAnalysis() {
   color: var(--color-ink);
 }
 
-.action-panel__launcher {
-  padding: var(--space-lg);
-  background-color: var(--color-surface-1);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--rounded-lg);
-  text-align: center;
-}
-
-.action-panel__launcher-text {
-  margin: 0 0 var(--space-md);
-  font-size: var(--font-body-size);
-  color: var(--color-ink-muted);
-}
-
-.action-panel__launcher-btn {
-  padding: 10px 20px;
-  background-color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--rounded-md);
-  color: var(--color-on-primary);
-  font-size: var(--font-button-size);
-  font-weight: var(--font-button-weight);
-  cursor: pointer;
-  transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
-}
-
-.action-panel__launcher-btn:hover {
-  background-color: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-}
-
 .action-panel__empty {
   padding: var(--space-lg);
   background-color: var(--color-surface-1);
@@ -229,5 +193,19 @@ function startAnalysis() {
   margin: 0;
   font-size: var(--font-body-sm-size);
   color: var(--color-ink-subtle);
+}
+
+.action-panel__ready {
+  padding: var(--space-lg);
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+  text-align: center;
+}
+
+.action-panel__ready-text {
+  margin: 0;
+  font-size: var(--font-body-sm-size);
+  color: var(--color-ink-muted);
 }
 </style>

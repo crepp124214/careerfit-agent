@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import logging
+import time
+
 import httpx
+
+from app.llm.metrics import llm_metrics
 
 
 class LLMClientError(RuntimeError):
@@ -24,13 +29,83 @@ class LLMClient:
         self.api_style = api_style
         self._owns_client = http_client is None
         self.http_client = http_client or httpx.Client(timeout=timeout_seconds)
+        self._logger = logging.getLogger(__name__)
 
     def complete(self, prompt: str) -> str:
-        if self.api_style == "responses":
-            return self._complete_responses(prompt)
-        if self.api_style == "chat_completions":
-            return self._complete_chat_completions(prompt)
-        raise LLMClientError(f"Unsupported LLM api_style: {self.api_style}")
+        start_time = time.time()
+        prompt_length = len(prompt)
+
+        try:
+            if self.api_style == "responses":
+                result = self._complete_responses(prompt)
+            elif self.api_style == "chat_completions":
+                result = self._complete_chat_completions(prompt)
+            else:
+                raise LLMClientError(f"Unsupported LLM api_style: {self.api_style}")
+
+            duration = time.time() - start_time
+            self._logger.info(
+                f"LLM call completed: model={self.model}, prompt_length={prompt_length}, "
+                f"response_length={len(result)}, duration={duration:.2f}s"
+            )
+
+            llm_metrics.record_call(
+                duration=duration,
+                success=True,
+                prompt_length=prompt_length,
+                response_length=len(result),
+                model_name=self.model,
+            )
+
+            return result
+
+        except httpx.TimeoutException as exc:
+            duration = time.time() - start_time
+            self._logger.error(
+                f"LLM call timeout after {duration:.2f}s: model={self.model}, "
+                f"prompt_length={prompt_length}"
+            )
+            llm_metrics.record_call(
+                duration=duration,
+                success=False,
+                error_type="TimeoutException",
+                error_message=str(exc),
+                prompt_length=prompt_length,
+                model_name=self.model,
+            )
+            raise
+
+        except httpx.HTTPStatusError as exc:
+            duration = time.time() - start_time
+            self._logger.error(
+                f"LLM call HTTP error after {duration:.2f}s: model={self.model}, "
+                f"status={exc.response.status_code}"
+            )
+            llm_metrics.record_call(
+                duration=duration,
+                success=False,
+                error_type="HTTPStatusError",
+                error_message=f"HTTP {exc.response.status_code}: {exc.response.text[:200]}",
+                prompt_length=prompt_length,
+                model_name=self.model,
+            )
+            raise
+
+        except Exception as exc:
+            duration = time.time() - start_time
+            self._logger.error(
+                f"LLM call failed after {duration:.2f}s: model={self.model}, "
+                f"prompt_length={prompt_length}, error={exc}"
+            )
+            llm_metrics.record_call(
+                duration=duration,
+                success=False,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+                prompt_length=prompt_length,
+                model_name=self.model,
+            )
+            raise
 
     def _headers(self) -> dict[str, str]:
         return {

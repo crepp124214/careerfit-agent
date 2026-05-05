@@ -130,8 +130,12 @@ def test_generate_enhancement_retries_once_for_invalid_json(monkeypatch):
             return "not json" if len(calls) == 1 else valid_payload
 
     monkeypatch.setattr("app.llm.service.build_llm_client", lambda settings: FakeClient())
+    monkeypatch.setenv("CAREERFIT_LLM_CONCURRENT_ENABLED", "false")
 
-    enhancement = generate_report_enhancement(
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+
+    enhancement, model_name = generate_report_enhancement(
         {
             "strengths": [],
             "gaps": [],
@@ -141,4 +145,5 @@ def test_generate_enhancement_retries_once_for_invalid_json(monkeypatch):
     )
 
     assert isinstance(enhancement, LLMReportEnhancement)
+    assert model_name is not None
     assert len(calls) == 2

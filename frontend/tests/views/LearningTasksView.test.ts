@@ -12,6 +12,7 @@ import {
   updateLearningTaskStatus,
   type LearningTask,
 } from '@/api/learning'
+import { ApiErrorCode } from '@/api/client'
 
 vi.mock('@/api/learning', () => ({
   fetchLearningTasks: vi.fn(),
@@ -83,7 +84,9 @@ describe('LearningTasksView', () => {
     vi.mocked(fetchLearningTasks).mockResolvedValue({
       ok: false,
       unavailable: true,
+      code: ApiErrorCode.NOT_IMPLEMENTED,
       message: '后端接口尚未实现',
+      retryable: false,
     })
     const { wrapper, pinia } = await mountView()
     useAvailabilityStore(pinia).setCapability('learning', 'ready')

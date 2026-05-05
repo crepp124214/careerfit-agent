@@ -48,10 +48,13 @@ def retrieve_by_skill(
     top_k: int = 3,
     doc_type: str | None = None,
 ) -> list[dict[str, Any]]:
+    if _is_sqlite_db(db):
+        return _retrieve_json_fallback(db, [0.0], skill_name, top_k, doc_type)
+
     query_embedding = generate_embedding(skill_name)
     fallback = is_fallback_mode()
 
-    if _VECTOR_AVAILABLE and not fallback and not _is_sqlite_db(db):
+    if _VECTOR_AVAILABLE and not fallback:
         return _retrieve_pgvector(db, query_embedding, skill_name, top_k, doc_type)
     return _retrieve_json_fallback(db, query_embedding, skill_name, top_k, doc_type)
 

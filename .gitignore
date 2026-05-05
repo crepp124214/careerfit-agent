@@ -1,7 +1,11 @@
+# IDE and tools
 .playwright-mcp/
 .gstack/
 .superpowers/
+.trae/
 node_modules/
+
+# Environment files
 .env
 .env.*
 !.env.example
@@ -10,3 +14,65 @@ node_modules/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# Build outputs
+frontend/dist/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Screenshots (optional - remove if you want to keep them)
+# e2e/screenshots/

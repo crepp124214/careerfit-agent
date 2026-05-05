@@ -12,11 +12,41 @@ def build_report_enhancement_prompt(state: CareerFitState, *, repair_text: str |
             f"{repair_text}"
         )
 
+    score_items = state.get("match_result", {}).get("score_items", [])
+    score_items_summary = [
+        {
+            "skill": item.get("skill", item.get("skill_key")),
+            "score": item.get("score", 0),
+            "level": item.get("level"),
+            "jd_evidence": [e[:150] for e in item.get("jd_evidence", [])[:3]],
+            "resume_evidence": [e[:150] for e in item.get("resume_evidence", [])[:3]],
+        }
+        for item in score_items[:10]
+    ]
+
+    gaps_summary = [
+        {
+            "skill": gap.get("skill"),
+            "reason": gap.get("reason", ""),
+            "jd_evidence": [e[:150] for e in gap.get("jd_evidence", [])[:3]],
+        }
+        for gap in state.get("gaps", [])[:5]
+    ]
+
+    strengths_summary = [
+        {
+            "skill": strength.get("skill"),
+            "resume_evidence": [e[:150] for e in strength.get("resume_evidence", [])[:3]],
+        }
+        for strength in state.get("strengths", [])[:5]
+    ]
+
     payload = {
-        "strengths": state.get("strengths", []),
-        "gaps": state.get("gaps", []),
-        "score_items": state.get("match_result", {}).get("score_items", []),
+        "score_items": score_items_summary,
+        "gaps": gaps_summary,
+        "strengths": strengths_summary,
     }
+
     return (
         "你是计算机应届生求职成长助手。请基于结构化匹配结果生成中文建议。"
         "必须诚实，不得编造简历中不存在的经历。只输出严格 JSON，不要 Markdown。"
