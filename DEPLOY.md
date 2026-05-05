@@ -18,13 +18,13 @@ GitHub 仓库
 - Render 账号 (可用 GitHub 登录)
 - Supabase 账号 (可用 GitHub 登录)
 
----
+***
 
 ## 第一步：创建数据库 (Supabase)
 
 ### 1.1 注册并创建项目
 
-1. 访问 https://supabase.com
+1. 访问 <https://supabase.com>
 2. 点击 "Start your project"
 3. 使用 GitHub 账号登录
 4. 授权 Supabase 访问你的 GitHub
@@ -54,7 +54,6 @@ GitHub 仓库
    ```
    postgresql://postgres.[项目ID]:[密码]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
    ```
-   
    **重要**：将 `postgresql://` 改为 `postgresql+psycopg://`，最终格式：
    ```
    postgresql+psycopg://postgres.[项目ID]:[密码]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
@@ -71,13 +70,13 @@ GitHub 仓库
 4. 点击 "Run" 执行
 5. 看到成功提示即可
 
----
+***
 
 ## 第二步：部署后端 (Render)
 
 ### 2.1 注册 Render
 
-1. 访问 https://dashboard.render.com
+1. 访问 <https://dashboard.render.com>
 2. 点击 "Get Started"
 3. 选择 "Sign up with GitHub"
 4. 授权 Render 访问你的 GitHub
@@ -97,29 +96,30 @@ GitHub 仓库
 
 填写以下配置：
 
-| 设置项 | 值 |
-|-------|-----|
-| **Name** | `careerfit-backend` |
-| **Region** | `Oregon (US West)` 或 `Frankfurt (EU Central)` |
-| **Branch** | `main` |
-| **Root Directory** | `backend` |
-| **Runtime** | `Python 3` |
-| **Build Command** | `pip install -r requirements.txt` |
-| **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
-| **Instance Type** | `Free` |
+| 设置项                | 值                                                  |
+| ------------------ | -------------------------------------------------- |
+| **Name**           | `careerfit-backend`                                |
+| **Region**         | `Oregon (US West)` 或 `Frankfurt (EU Central)`      |
+| **Branch**         | `main`                                             |
+| **Root Directory** | `backend`                                          |
+| **Runtime**        | `Python 3`                                         |
+| **Build Command**  | `pip install -r requirements.txt`                  |
+| **Start Command**  | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| **Instance Type**  | `Free`                                             |
 
 ### 2.4 添加环境变量
 
 点击 "Advanced" 展开，然后点击 "Add Environment Variable"：
 
-| 变量名 | 值 | 说明 |
-|-------|-----|------|
-| `CAREERFIT_ENVIRONMENT` | `production` | 生产环境标识 |
-| `CAREERFIT_DATABASE_URL` | `postgresql+psycopg://...` | Supabase 连接字符串 |
-| `CAREERFIT_LLM_ENABLED` | `false` | 暂不启用 LLM |
-| `CAREERFIT_LLM_TIMEOUT_SECONDS` | `120` | LLM 超时时间 |
+| 变量名                             | 值                          | 说明             |
+| ------------------------------- | -------------------------- | -------------- |
+| `CAREERFIT_ENVIRONMENT`         | `production`               | 生产环境标识         |
+| `CAREERFIT_DATABASE_URL`        | `postgresql+psycopg://...` | Supabase 连接字符串 |
+| `CAREERFIT_LLM_ENABLED`         | `false`                    | 暂不启用 LLM       |
+| `CAREERFIT_LLM_TIMEOUT_SECONDS` | `120`                      | LLM 超时时间       |
 
 **添加环境变量的步骤：**
+
 1. 在 "Key" 输入框输入变量名
 2. 在 "Value" 输入框输入变量值
 3. 点击 "Add Environment Variable"
@@ -144,20 +144,20 @@ GitHub 仓库
 3. 访问 `https://你的后端地址.onrender.com/docs`
 4. 应该看到 FastAPI 自动生成的 API 文档
 
----
+***
 
 ## 第三步：部署前端 (Vercel)
 
 ### 3.1 注册 Vercel
 
-1. 访问 https://vercel.com
+1. 访问 <https://vercel.com>
 2. 点击 "Sign Up"
 3. 选择 "Continue with GitHub"
 4. 授权 Vercel 访问你的 GitHub
 
 ### 3.2 导入项目
 
-1. 登录后，点击 "Add New..." → "Project"
+1. 登录后，点击 "Add New\..." → "Project"
 2. 在 "Import Git Repository" 部分：
    - 如果看不到 `careerfit-agent` 仓库，点击 "Adjust GitHub App Permissions"
    - 勾选 "All repositories" 或只选择 `careerfit-agent`
@@ -169,25 +169,26 @@ GitHub 仓库
 
 **Configure Project 页面：**
 
-| 设置项 | 值 |
-|-------|-----|
-| **Project Name** | `careerfit-agent` |
-| **Framework Preset** | `Vue.js` |
-| **Root Directory** | 点击 "Edit"，输入 `frontend` |
-| **Build Command** | `npm run build`（默认） |
-| **Output Directory** | `dist`（默认） |
-| **Install Command** | `npm install`（默认） |
+| 设置项                  | 值                       |
+| -------------------- | ----------------------- |
+| **Project Name**     | `careerfit-agent`       |
+| **Framework Preset** | `Vue.js`                |
+| **Root Directory**   | 点击 "Edit"，输入 `frontend` |
+| **Build Command**    | `npm run build`（默认）     |
+| **Output Directory** | `dist`（默认）              |
+| **Install Command**  | `npm install`（默认）       |
 
 ### 3.4 添加环境变量
 
 在 "Environment Variables" 部分：
 
-| 变量名 | 值 |
-|-------|-----|
+| 变量名                 | 值                                 |
+| ------------------- | --------------------------------- |
 | `VITE_API_BASE_URL` | `https://你的后端地址.onrender.com/api` |
-| `VITE_APP_VARIANT` | `fullstack` |
+| `VITE_APP_VARIANT`  | `fullstack`                       |
 
 **添加步骤：**
+
 1. 在 "Key" 输入 `VITE_API_BASE_URL`
 2. 在 "Value" 输入你的后端地址（替换 `你的后端地址`）
 3. 点击 "Add"
@@ -205,7 +206,7 @@ GitHub 仓库
 2. 在项目页面可以看到部署地址，如：`https://careerfit-agent.vercel.app`
 3. 点击地址访问你的应用
 
----
+***
 
 ## 第四步：导入知识库数据
 
@@ -285,6 +286,7 @@ if __name__ == "__main__":
 ```
 
 运行脚本：
+
 ```bash
 python import_to_production.py
 ```
@@ -294,6 +296,7 @@ python import_to_production.py
 访问：`https://你的后端地址.onrender.com/api/knowledge/stats`
 
 应该看到类似：
+
 ```json
 {
   "total_documents": 30,
@@ -303,7 +306,7 @@ python import_to_production.py
 }
 ```
 
----
+***
 
 ## 第五步：配置 LLM（可选）
 
@@ -313,38 +316,40 @@ python import_to_production.py
 
 进入后端服务 → Environment：
 
-| 变量名 | 值 |
-|-------|-----|
-| `CAREERFIT_LLM_ENABLED` | `true` |
-| `CAREERFIT_LLM_PROVIDER` | `openai_compatible` |
-| `CAREERFIT_LLM_BASE_URL` | 你的 API 地址 |
-| `CAREERFIT_LLM_API_KEY` | 你的 API 密钥 |
-| `CAREERFIT_LLM_MODEL` | 模型名称（如 `gpt-4o-mini`） |
+| 变量名                      | 值                     |
+| ------------------------ | --------------------- |
+| `CAREERFIT_LLM_ENABLED`  | `true`                |
+| `CAREERFIT_LLM_PROVIDER` | `openai_compatible`   |
+| `CAREERFIT_LLM_BASE_URL` | 你的 API 地址             |
+| `CAREERFIT_LLM_API_KEY`  | 你的 API 密钥             |
+| `CAREERFIT_LLM_MODEL`    | 模型名称（如 `gpt-4o-mini`） |
 
 ### 5.2 支持的模型服务
 
-| 服务 | BASE_URL | MODEL |
-|------|----------|-------|
-| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini`, `gpt-4o` |
-| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
-| Kimi/Moonshot | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
+| 服务            | BASE\_URL                     | MODEL                   |
+| ------------- | ----------------------------- | ----------------------- |
+| OpenAI        | `https://api.openai.com/v1`   | `gpt-4o-mini`, `gpt-4o` |
+| DeepSeek      | `https://api.deepseek.com/v1` | `deepseek-chat`         |
+| Kimi/Moonshot | `https://api.moonshot.cn/v1`  | `moonshot-v1-8k`        |
 
 ### 5.3 应用更改
 
 添加环境变量后，Render 会自动重新部署。
 
----
+***
 
 ## 常见问题
 
 ### Q: 后端启动失败
 
 **检查步骤：**
+
 1. 查看 Render 的构建日志
 2. 检查环境变量是否正确
 3. 确认数据库连接字符串格式正确（`postgresql+psycopg://`）
 
 **常见错误：**
+
 - `Connection refused`: 数据库地址错误
 - `FATAL: password authentication failed`: 密码错误
 - `database "postgres" does not exist`: 数据库未创建
@@ -352,17 +357,20 @@ python import_to_production.py
 ### Q: 前端无法连接后端
 
 **检查步骤：**
+
 1. 确认 `VITE_API_BASE_URL` 配置正确
 2. 确认后端已成功部署（访问 `/health`）
 3. 检查浏览器控制台是否有 CORS 错误
 
 **解决方法：**
+
 - 确保后端地址以 `/api` 结尾
 - 确保使用 HTTPS
 
 ### Q: 知识库搜索无结果
 
 **检查步骤：**
+
 1. 确认已导入种子数据
 2. 访问 `/api/knowledge/stats` 检查文档数量
 3. 检查 pgvector 扩展是否启用
@@ -372,22 +380,23 @@ python import_to_production.py
 免费版 Render 在 15 分钟无请求后会休眠，首次访问可能需要等待 30-60 秒唤醒。
 
 **解决方法：**
+
 - 升级到付费计划
 - 使用外部监控服务定期访问
 
----
+***
 
 ## 费用说明
 
-| 服务 | 免费额度 | 限制 |
-|-----|---------|------|
-| Vercel | 无限 | 个人项目免费 |
-| Render | 750 小时/月 | 休眠机制 |
+| 服务       | 免费额度      | 限制       |
+| -------- | --------- | -------- |
+| Vercel   | 无限        | 个人项目免费   |
+| Render   | 750 小时/月  | 休眠机制     |
 | Supabase | 500MB 数据库 | 1GB 文件存储 |
 
 **总计：完全免费**（适合个人项目）
 
----
+***
 
 ## 部署检查清单
 
@@ -401,7 +410,7 @@ python import_to_production.py
 - [ ] 创建测试岗位和简历
 - [ ] 执行匹配分析测试
 
----
+***
 
 ## 下一步
 
@@ -410,9 +419,9 @@ python import_to_production.py
 - 添加监控和日志（可选）
 - 配置 LLM 服务（可选）
 
----
+***
 
 ## 支持与反馈
 
 如有问题，请在 GitHub 提交 Issue：
-https://github.com/crepp124214/careerfit-agent/issues
+<https://github.com/crepp124214/careerfit-agent/issues>
