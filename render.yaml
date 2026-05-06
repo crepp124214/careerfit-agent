@@ -1,24 +1,27 @@
 services:
   - type: web
     name: careerfit-backend
-    env: python
-    region: oregon
+    runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    region: oregon
+    branch: main
+    rootDirectory: backend
+
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12
+        value: "3.12"
       - key: CAREERFIT_ENVIRONMENT
         value: production
-      - key: CAREERFIT_DATABASE_URL
-        fromDatabase:
-          name: careerfit-db
-          property: connectionString
+      - group: database
+        - key: CAREERFIT_DATABASE_URL
+          sync: false
       - key: CAREERFIT_LLM_ENABLED
-        value: false
+        value: "false"
       - key: CAREERFIT_LLM_TIMEOUT_SECONDS
-        value: 120
+        value: "120"
 
 databases:
   - name: careerfit-db
