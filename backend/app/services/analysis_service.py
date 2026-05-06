@@ -257,40 +257,36 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
     db.commit()
     db.refresh(task)
 
-    logger.info(f"[Task {task.id}] 开始构建分析参数...")
+    logger.info(f"[Task {task.id}] 任务创建成功，准备提交到后台...")
 
-    # 在主线程中构建参数（尽量快速完成）
-    # 注意：这些操作在提交到线程池之前完成，可能会阻塞请求
-    try:
-        jd_profile = parse_job_profile(job.raw_text)
-        required_skills = jd_profile.get("required_skills") or []
-        logger.info(f"[Task {task.id}] JD 解析完成，所需技能: {len(required_skills)} 个")
-    except Exception as exc:
-        logger.error(f"[Task {task.id}] JD 解析失败: {exc}")
-        required_skills = []
-        jd_profile = {"required_skills": [], "skill_dimensions": []}
-
-    try:
-        rag_results = _build_rag_results(db, required_skills)
-        logger.info(f"[Task {task.id}] RAG 检索完成，有效结果: {sum(1 for r in rag_results.values() if r['available'])} 个")
-    except Exception as exc:
-        logger.error(f"[Task {task.id}] RAG 检索失败: {exc}")
-        rag_results = {skill: {"documents": [], "available": False, "reason": "RAG检索失败"} for skill in required_skills}
-
+    # 关键优化：不在主线程中构建 RAG 结果！
+    # 原因：RAG 检索中的 embedding 模型加载/推理可能阻塞 2+ 分钟
+    # 解决方案：将所有耗时操作（JD解析、RAG检索）都移到后台线程
+    
     sync_mode = os.environ.get("CAREERFIT_ANALYSIS_SYNC") == "1"
 
     if sync_mode:
+        # 测试模式：同步执行（仅用于本地测试）
         logger.info(f"[Task {task.id}] 同步模式执行...")
-        _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db)
+        
+        try:
+            jd_profile = parse_job_profile(job.raw_text)
+            required_skills = jd_profile.get("required_skills") or []
+            rag_results = _build_rag_results(db, required_skills)
+            _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db)
+        except Exception as exc:
+            logger.error(f"[Task {task.id}] 同步分析失败: {exc}")
+            _update_task_status(db, task.id, AnalysisStatus.failed, str(exc))
     else:
-        # 使用线程池执行后台任务，解决云端部署时 daemon 线程被提前终止的问题
+        # 生产模式：异步执行（所有耗时操作都在后台线程）
+        # 只传递必要的参数，不提前计算 RAG 结果
         logger.info(f"[Task {task.id}] 提交到后台线程池...")
         analysis_thread_pool.submit(
             task.id,
             _run_analysis_background,
-            task.id, job.id, resume.id, job.raw_text, resume.raw_text, rag_results,
+            task.id, job.id, resume.id, job.raw_text, resume.raw_text, {},  # 空 rag_results，由后台线程填充
         )
-        logger.info(f"[Task {task.id}] 已提交到后台线程池，任务ID: {task.id}")
+        logger.info(f"[Task {task.id}] 已提交到后台线程池")
 
     return task
 
