@@ -211,11 +211,11 @@ def _run_analysis_background(
     resume_raw_text: str,
     rag_results: dict,
 ) -> None:
-    """后台异步执行分析（生产环境使用）"""
-    from app.db.session import SessionLocal
+    """后台异步执行分析（生产环境使用）
 
-    # 移除不必要的 sleep 延迟（BACKGROUND_TASK_DELAY_SECONDS）
-    # 这会导致请求超时，延迟应该由客户端处理或完全不需要
+    注意：RAG 检索在此方法中执行，可能耗时较长但不会阻塞主线程。
+    """
+    from app.db.session import SessionLocal
 
     # 使用上下文管理器确保数据库会话正确关闭
     db = SessionLocal()
@@ -224,6 +224,20 @@ def _run_analysis_background(
         
         # 更新任务为 running 状态
         _update_task_status(db, task_id, AnalysisStatus.running)
+        
+        # 在后台线程中执行耗时的 RAG 检索（不影响主线程响应）
+        if not rag_results:
+            logger.info(f"[Task {task_id}] 开始后台 RAG 检索...")
+            try:
+                jd_profile = parse_job_profile(jd_raw_text)
+                required_skills = jd_profile.get("required_skills") or []
+                logger.info(f"[Task {task_id}] JD 解析完成，所需技能: {len(required_skills)} 个")
+                
+                rag_results = _build_rag_results(db, required_skills)
+                logger.info(f"[Task {task_id}] RAG 检索完成，有效结果: {sum(1 for r in rag_results.values() if r.get('available'))} 个")
+            except Exception as exc:
+                logger.error(f"[Task {task_id}] RAG 检索失败: {exc}")
+                rag_results = {}
         
         # 创建事件发布函数 - 使用安全发布机制
         def on_event(event: dict) -> None:
