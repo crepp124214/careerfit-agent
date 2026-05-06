@@ -47,5 +47,6 @@ export function connectSSE(
 }
 
 export function getAnalysisStreamUrl(taskId: number): string {
-  return `/api/analysis/${taskId}/stream`
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+  return `${baseUrl}/analysis/${taskId}/stream`
 }
