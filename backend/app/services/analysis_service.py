@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.agents.graph import run_workflow
+from app.core.constants import AnalysisConfig, RAGConfig
+from app.core.security import redact_sensitive_data, sanitize_for_log
 from app.db.models import AgentRun, AnalysisReport, AnalysisStatus, AnalysisTask
 from app.rag.retrieval import retrieve_by_skills_batch, retrieve_by_skill
 from app.schemas.analysis import AnalysisCreate
@@ -20,7 +22,9 @@ logger = logging.getLogger(__name__)
 def _build_rag_results(db: Session, required_skills: list[str]) -> dict:
     """构建 RAG 检索结果，使用批量查询优化性能"""
     # 使用批量检索避免 N+1 查询问题
-    batch_results = retrieve_by_skills_batch(db, required_skills, top_k=3)
+    batch_results = retrieve_by_skills_batch(
+        db, required_skills, top_k=RAGConfig.DEFAULT_TOP_K
+    )
     
     rag_results = {}
     for skill, documents in batch_results.items():
@@ -49,7 +53,12 @@ def _execute_analysis_core(
 ) -> None:
     start_time = time.time()
     try:
-        logger.info(f"[Task {task_id}] 开始执行分析核心逻辑")
+        # 使用脱敏后的数据记录日志
+        log_data = sanitize_for_log(
+            jd_text=jd_raw_text,
+            resume_text=resume_raw_text,
+        )
+        logger.info(f"[Task {task_id}] 开始执行分析核心逻辑, {log_data}")
         jd_profile = parse_job_profile(jd_raw_text)
 
         initial_state = {
@@ -145,7 +154,7 @@ def _run_analysis_background(
 ) -> None:
     from app.db.session import SessionLocal
 
-    time.sleep(0.5)
+    time.sleep(AnalysisConfig.BACKGROUND_TASK_DELAY_SECONDS)
 
     # 使用上下文管理器确保数据库会话正确关闭
     db = SessionLocal()

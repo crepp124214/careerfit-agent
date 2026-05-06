@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.api.error_handlers import register_error_handlers
 from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, llm, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
@@ -85,6 +86,9 @@ def create_app() -> FastAPI:
     app.include_router(interview.router)
     app.include_router(learning.router)
     app.include_router(llm.router)
+
+    # 注册全局错误处理器
+    register_error_handlers(app)
 
     return app
 

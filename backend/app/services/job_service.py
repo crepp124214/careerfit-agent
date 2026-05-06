@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -104,13 +105,28 @@ CASE_SENSITIVE_SKILLS = {"React", "ReAct", "CSS"}
 
 
 def _skill_pattern(skill: str) -> re.Pattern[str]:
+    """创建技能匹配正则表达式模式
+    
+    使用 re.escape() 转义技能名称中的特殊字符，防止正则表达式注入攻击。
+    """
+    # 转义技能名称中的正则特殊字符，防止 ReDoS 攻击
+    escaped_skill = re.escape(skill)
     if skill in CASE_SENSITIVE_SKILLS:
-        return re.compile(rf"(?<![A-Za-z0-9]){re.escape(skill)}(?![A-Za-z0-9])")
-    return re.compile(rf"(?<![A-Za-z0-9]){re.escape(skill)}(?![A-Za-z0-9])", re.IGNORECASE)
+        return re.compile(rf"(?<![A-Za-z0-9]){escaped_skill}(?![A-Za-z0-9])")
+    return re.compile(rf"(?<![A-Za-z0-9]){escaped_skill}(?![A-Za-z0-9])", re.IGNORECASE)
 
 
 def _find_evidence(raw_text: str, skill: str) -> list[str]:
-    evidence = []
+    """在文本中查找包含指定技能的句子作为证据
+    
+    Args:
+        raw_text: 原始文本内容
+        skill: 要查找的技能名称
+        
+    Returns:
+        包含该技能的句子列表
+    """
+    evidence: list[str] = []
     separators = r"(?<=[.!?。！？\n])\s*"
     for sentence in re.split(separators, raw_text.strip()):
         sentence = sentence.strip()
@@ -121,9 +137,24 @@ def _find_evidence(raw_text: str, skill: str) -> list[str]:
     return evidence
 
 
-def parse_job_profile(raw_text: str) -> dict:
-    dimensions = []
-    evidence = {}
+def parse_job_profile(raw_text: str) -> dict[str, Any]:
+    """解析职位描述文本，提取技能维度和证据
+    
+    Args:
+        raw_text: 职位描述原始文本
+        
+    Returns:
+        包含技能维度、权重、证据等的职位画像字典
+        
+    Example:
+        >>> profile = parse_job_profile("We need a Python developer with FastAPI.")
+        >>> profile["job_family"]
+        'software_engineering'
+        >>> len(profile["skill_dimensions"]) > 0
+        True
+    """
+    dimensions: list[dict[str, Any]] = []
+    evidence: dict[str, list[str]] = {}
     for key, item in SKILL_CATALOG.items():
         matched = []
         for alias in item["aliases"]:
@@ -163,6 +194,18 @@ def parse_job_profile(raw_text: str) -> dict:
 
 
 def create_job(db: Session, payload: JobCreate) -> JobDescription:
+    """创建新的职位描述
+    
+    Args:
+        db: 数据库会话
+        payload: 职位创建数据
+        
+    Returns:
+        创建的职位描述对象
+        
+    Raises:
+        SQLAlchemyError: 数据库操作失败时
+    """
     job = JobDescription(
         title=payload.title.strip(),
         raw_text=payload.raw_text,
@@ -175,8 +218,25 @@ def create_job(db: Session, payload: JobCreate) -> JobDescription:
 
 
 def list_jobs(db: Session) -> list[JobDescription]:
+    """获取所有职位列表，按创建时间倒序排列
+    
+    Args:
+        db: 数据库会话
+        
+    Returns:
+        职位描述对象列表
+    """
     return list(db.query(JobDescription).order_by(JobDescription.created_at.desc()).all())
 
 
 def get_job(db: Session, job_id: int) -> JobDescription | None:
+    """根据ID获取职位描述
+    
+    Args:
+        db: 数据库会话
+        job_id: 职位ID
+        
+    Returns:
+        职位描述对象，如果不存在则返回 None
+    """
     return db.get(JobDescription, job_id)
