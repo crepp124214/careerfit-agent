@@ -59,6 +59,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.get("/")
+    def root() -> dict[str, str]:
+        return {"status": "ok", "message": "CareerFit Agent API"}
+
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "environment": settings.environment}
