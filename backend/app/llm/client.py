@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import ssl
 import time
 
 import httpx
@@ -20,7 +21,7 @@ class LLMClient:
         api_key: str,
         model: str,
         api_style: str,
-        timeout_seconds: float = 20.0,
+        timeout_seconds: float = 60.0,
         http_client: httpx.Client | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -28,7 +29,19 @@ class LLMClient:
         self.model = model
         self.api_style = api_style
         self._owns_client = http_client is None
-        self.http_client = http_client or httpx.Client(timeout=timeout_seconds)
+        self.timeout_seconds = timeout_seconds
+        
+        if http_client is None:
+            # Create client with SSL verification and reasonable timeout
+            timeout = httpx.Timeout(timeout_seconds, connect=10.0)
+            self.http_client = httpx.Client(
+                timeout=timeout,
+                verify=True,  # Enable SSL verification
+                http2=False,  # Disable HTTP/2 to avoid some SSL issues
+            )
+        else:
+            self.http_client = http_client
+            
         self._logger = logging.getLogger(__name__)
 
     def complete(self, prompt: str) -> str:
@@ -91,6 +104,39 @@ class LLMClient:
             )
             raise
 
+        except httpx.NetworkError as exc:
+            duration = time.time() - start_time
+            error_msg = str(exc)
+            # Check for SSL-related errors
+            if "SSL" in error_msg or "EOF" in error_msg:
+                self._logger.error(
+                    f"LLM call SSL/Network error after {duration:.2f}s: model={self.model}, "
+                    f"error={error_msg[:100]}"
+                )
+                llm_metrics.record_call(
+                    duration=duration,
+                    success=False,
+                    error_type="SSLNetworkError",
+                    error_message=error_msg[:200],
+                    prompt_length=prompt_length,
+                    model_name=self.model,
+                )
+                raise LLMClientError(f"SSL/Network error when calling LLM: {error_msg[:100]}") from exc
+            else:
+                self._logger.error(
+                    f"LLM call network error after {duration:.2f}s: model={self.model}, "
+                    f"error={error_msg}"
+                )
+                llm_metrics.record_call(
+                    duration=duration,
+                    success=False,
+                    error_type="NetworkError",
+                    error_message=error_msg[:200],
+                    prompt_length=prompt_length,
+                    model_name=self.model,
+                )
+                raise
+
         except Exception as exc:
             duration = time.time() - start_time
             self._logger.error(
@@ -101,7 +147,7 @@ class LLMClient:
                 duration=duration,
                 success=False,
                 error_type=type(exc).__name__,
-                error_message=str(exc),
+                error_message=str(exc)[:200],
                 prompt_length=prompt_length,
                 model_name=self.model,
             )
