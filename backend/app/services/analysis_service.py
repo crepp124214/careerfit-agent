@@ -215,29 +215,52 @@ def _run_analysis_background(
 
     注意：RAG 检索在此方法中执行，可能耗时较长但不会阻塞主线程。
     """
+    import time as _time
+    
+    total_start_time = _time.time()
+    
     from app.db.session import SessionLocal
 
+    logger.info(f"[Task {task_id}] ========== 后台分析任务开始 ==========")
+    
     # 使用上下文管理器确保数据库会话正确关闭
     db = SessionLocal()
     try:
-        logger.info(f"[Task {task_id}] 开始后台分析任务")
+        step1_time = _time.time()
+        logger.info(f"[Task {task_id}] [Step 1/5] 数据库会话创建完成 ({(step1_time-total_start_time):.2f}s)")
         
         # 更新任务为 running 状态
         _update_task_status(db, task_id, AnalysisStatus.running)
         
+        step2_time = _time.time()
+        logger.info(f"[Task {task_id}] [Step 2/5] 任务状态更新完成 ({(step2_time-step1_time):.2f}s)")
+        
         # 在后台线程中执行耗时的 RAG 检索（不影响主线程响应）
         if not rag_results:
-            logger.info(f"[Task {task_id}] 开始后台 RAG 检索...")
+            logger.info(f"[Task {task_id}] [Step 3/5] 开始后台 RAG 检索...")
             try:
+                step3a_time = _time.time()
+                
                 jd_profile = parse_job_profile(jd_raw_text)
                 required_skills = jd_profile.get("required_skills") or []
-                logger.info(f"[Task {task_id}] JD 解析完成，所需技能: {len(required_skills)} 个")
+                logger.info(f"[Task {task_id}]   [3a] JD 解析完成，所需技能: {len(required_skills)} 个 ({(_time.time()-step3a_time):.2f}s)")
                 
+                step3b_time = _time.time()
                 rag_results = _build_rag_results(db, required_skills)
-                logger.info(f"[Task {task_id}] RAG 检索完成，有效结果: {sum(1 for r in rag_results.values() if r.get('available'))} 个")
+                available_count = sum(1 for r in rag_results.values() if r.get('available'))
+                logger.info(f"[Task {task_id}]   [3b] RAG 检索完成，有效结果: {available_count}/{len(rag_results)} 个 ({(_time.time()-step3b_time):.2f}s)")
+                
             except Exception as exc:
-                logger.error(f"[Task {task_id}] RAG 检索失败: {exc}")
+                logger.error(f"[Task {task_id}] [Step 3/5] RAG 检索失败: {exc}", exc_info=True)
                 rag_results = {}
+            
+            step3_end_time = _time.time()
+            logger.info(f"[Task {task_id}] [Step 3/5] RAG 检索总耗时: {(step3_end_time-step3a_time):.2f}s")
+        else:
+            logger.info(f"[Task {task_id}] [Step 3/5] 跳过RAG检索（已有数据）")
+        
+        step4_time = _time.time()
+        logger.info(f"[Task {task_id}] [Step 4/5] 准备执行工作流...")
         
         # 创建事件发布函数 - 使用安全发布机制
         def on_event(event: dict) -> None:
@@ -251,9 +274,15 @@ def _run_analysis_background(
             db=db,
             on_event=on_event,
         )
-        logger.info(f"[Task {task_id}] 后台分析任务完成")
+        
+        step5_time = _time.time()
+        logger.info(f"[Task {task_id}] [Step 5/5] 工作流执行完成 ({(step5_time-step4_time):.2f}s)")
+        logger.info(f"[Task {task_id}] ========== 后台分析任务完成 (总耗时: {(step5_time-total_start_time):.2f}s) ==========")
+        
     except Exception as exc:
-        logger.error(f"[Task {task_id}] 后台分析任务失败: {exc}", exc_info=True)
+        error_time = _time.time()
+        total_duration = error_time - total_start_time
+        logger.error(f"[Task {task_id}] ========== 后台分析任务失败 (耗时: {total_duration:.2f}s) ==========", exc_info=True)
         _update_task_status(db, task_id, AnalysisStatus.failed, str(exc))
     finally:
         db.close()
