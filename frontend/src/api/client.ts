@@ -1,4 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+
+// Debug: Log the actual API_BASE being used
+console.log('[API] VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+console.log('[API] Using API_BASE:', API_BASE)
+
 const DEFAULT_TIMEOUT = 30000
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
@@ -159,6 +164,7 @@ export async function requestJson<T>(
 
     try {
       const url = `${API_BASE}${path}`
+      console.log('[API] Request URL:', url)
       const response = await fetchWithTimeout(
         url,
         {

@@ -47,7 +47,12 @@ export interface InterviewSessionCreateResponse {
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL || '/api'}/interview`
 
+// Debug: Log the actual API_BASE being used
+console.log('[Interview API] VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+console.log('[Interview API] Using API_BASE:', API_BASE)
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  console.log('[Interview API] Request URL:', url)
   const resp = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
