@@ -16,6 +16,23 @@ try:
     _VECTOR_AVAILABLE = True
 except ImportError:
     _VECTOR_AVAILABLE = False
+    # Fallback: define a placeholder Vector type
+    from sqlalchemy import Float
+    from sqlalchemy.types import UserDefinedType
+    
+    class Vector(UserDefinedType):
+        """Fallback Vector type when pgvector is not available"""
+        def __init__(self, dim=None):
+            self.dim = dim
+            
+        def get_col_spec(self, **kw):
+            return "vector" if self.dim is None else f"vector({self.dim})"
+            
+        def bind_processor(self, dialect):
+            return None
+            
+        def result_processor(self, dialect, coltype):
+            return None
 
 
 def utc_now() -> datetime:

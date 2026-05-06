@@ -1,10 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, llm, reports, resumes
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
+
+
+def _init_database() -> None:
+    """Initialize database: create extension and tables"""
+    with engine.connect() as conn:
+        # Enable pgvector extension
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
 
 
 CAPABILITIES = {
@@ -30,7 +42,9 @@ def create_app() -> FastAPI:
     settings = get_settings()
     if settings.database_url.startswith("sqlite"):
         Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+    else:
+        _init_database()
     app = FastAPI(title=settings.app_name)
     app.add_middleware(
         CORSMiddleware,
