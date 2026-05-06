@@ -22,6 +22,14 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="CAREERFIT_", env_file=str(_PROJECT_ROOT / ".env"), env_file_encoding="utf-8", extra="ignore")
 
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        """Convert psycopg to psycopg2 for compatibility"""
+        if v.startswith("postgresql+psycopg://"):
+            v = v.replace("postgresql+psycopg://", "postgresql+psycopg2://", 1)
+        return v
+
     @field_validator("llm_timeout_seconds")
     @classmethod
     def validate_timeout(cls, v: float) -> float:
