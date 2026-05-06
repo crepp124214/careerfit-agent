@@ -29,10 +29,18 @@ logger = logging.getLogger(__name__)
 
 def _build_rag_results(db: Session, required_skills: list[str]) -> dict:
     """构建 RAG 检索结果，使用批量查询优化性能"""
+    import time
+    start_time = time.time()
+
     # 使用批量检索避免 N+1 查询问题
-    batch_results = retrieve_by_skills_batch(
-        db, required_skills, top_k=RAGConfig.DEFAULT_TOP_K
-    )
+    try:
+        batch_results = retrieve_by_skills_batch(
+            db, required_skills, top_k=RAGConfig.DEFAULT_TOP_K
+        )
+    except Exception as exc:
+        logger.warning(f"RAG 批量检索失败，使用降级方案: {exc}")
+        # 降级：返回空结果，不阻塞主流程
+        return {skill: {"documents": [], "available": False, "reason": "RAG检索失败"} for skill in required_skills}
 
     rag_results = {}
     for skill, documents in batch_results.items():
@@ -47,6 +55,9 @@ def _build_rag_results(db: Session, required_skills: list[str]) -> dict:
                 "available": False,
                 "reason": "知识库证据不足",
             }
+
+    elapsed = time.time() - start_time
+    logger.debug(f"RAG 检索完成，耗时: {elapsed:.2f}s，技能数: {len(required_skills)}")
     return rag_results
 
 
@@ -203,7 +214,8 @@ def _run_analysis_background(
     """后台异步执行分析（生产环境使用）"""
     from app.db.session import SessionLocal
 
-    time.sleep(AnalysisConfig.BACKGROUND_TASK_DELAY_SECONDS)
+    # 移除不必要的 sleep 延迟（BACKGROUND_TASK_DELAY_SECONDS）
+    # 这会导致请求超时，延迟应该由客户端处理或完全不需要
 
     # 使用上下文管理器确保数据库会话正确关闭
     db = SessionLocal()
@@ -245,21 +257,40 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
     db.commit()
     db.refresh(task)
 
-    jd_profile = parse_job_profile(job.raw_text)
-    required_skills = jd_profile.get("required_skills") or []
-    rag_results = _build_rag_results(db, required_skills)
+    logger.info(f"[Task {task.id}] 开始构建分析参数...")
+
+    # 在主线程中构建参数（尽量快速完成）
+    # 注意：这些操作在提交到线程池之前完成，可能会阻塞请求
+    try:
+        jd_profile = parse_job_profile(job.raw_text)
+        required_skills = jd_profile.get("required_skills") or []
+        logger.info(f"[Task {task.id}] JD 解析完成，所需技能: {len(required_skills)} 个")
+    except Exception as exc:
+        logger.error(f"[Task {task.id}] JD 解析失败: {exc}")
+        required_skills = []
+        jd_profile = {"required_skills": [], "skill_dimensions": []}
+
+    try:
+        rag_results = _build_rag_results(db, required_skills)
+        logger.info(f"[Task {task.id}] RAG 检索完成，有效结果: {sum(1 for r in rag_results.values() if r['available'])} 个")
+    except Exception as exc:
+        logger.error(f"[Task {task.id}] RAG 检索失败: {exc}")
+        rag_results = {skill: {"documents": [], "available": False, "reason": "RAG检索失败"} for skill in required_skills}
 
     sync_mode = os.environ.get("CAREERFIT_ANALYSIS_SYNC") == "1"
 
     if sync_mode:
+        logger.info(f"[Task {task.id}] 同步模式执行...")
         _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db)
     else:
         # 使用线程池执行后台任务，解决云端部署时 daemon 线程被提前终止的问题
+        logger.info(f"[Task {task.id}] 提交到后台线程池...")
         analysis_thread_pool.submit(
             task.id,
             _run_analysis_background,
             task.id, job.id, resume.id, job.raw_text, resume.raw_text, rag_results,
         )
+        logger.info(f"[Task {task.id}] 已提交到后台线程池，任务ID: {task.id}")
 
     return task
 
