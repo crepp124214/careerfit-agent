@@ -9,8 +9,9 @@ const store = useInterviewStore()
 const availability = useAvailabilityStore()
 const router = useRouter()
 
-onMounted(() => {
-  if (availability.states.interview === 'ready' || availability.states.interview === 'unknown') {
+onMounted(async () => {
+  await availability.probe()
+  if (availability.states.interview === 'ready') {
     store.fetchSessions()
   }
 })

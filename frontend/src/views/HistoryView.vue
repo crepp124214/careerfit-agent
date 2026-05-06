@@ -44,8 +44,9 @@ const scoreDeltaLabel = computed(() => {
 
 const sortedItems = computed(() => [...historyStore.items].reverse())
 
-onMounted(() => {
-  if (!isUnavailable.value) {
+onMounted(async () => {
+  await availability.probe()
+  if (availability.states.reports === 'ready') {
     historyStore.load()
   }
 })

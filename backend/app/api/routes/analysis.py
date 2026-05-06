@@ -13,6 +13,7 @@ from app.services.analysis_service import (
     get_analysis_task,
     list_agent_runs,
 )
+from app.api.routes.analysis_cache import analysis_event_cache
 from app.services.event_bus import event_bus
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
@@ -28,6 +29,11 @@ NODE_INDEX_MAP = _build_node_index()
 
 
 def _replay_events_from_runs(task_id: int, runs: list):
+    # 检查缓存
+    cached_events = analysis_event_cache.get(task_id, runs)
+    if cached_events is not None:
+        return cached_events
+    
     events: list[dict] = []
     for r in runs:
         node_name = r.node_name
@@ -97,6 +103,9 @@ def _replay_events_from_runs(task_id: int, runs: list):
             "summary": meta.get("summary", ""),
         })
 
+    # 将结果存入缓存
+    analysis_event_cache.set(task_id, runs, events)
+    
     return events
 
 

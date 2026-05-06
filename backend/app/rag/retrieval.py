@@ -15,12 +15,34 @@ logger = logging.getLogger(__name__)
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    """计算两个向量的余弦相似度
+    
+    注意: 为了性能优化，建议在存储向量时预计算归一化向量，
+    然后使用 _cosine_similarity_fast 进行计算。
+    """
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
         return 0.0
     return dot / (norm_a * norm_b)
+
+
+def _normalize_vector(v: list[float]) -> list[float]:
+    """对向量进行 L2 归一化"""
+    norm = math.sqrt(sum(x * x for x in v))
+    if norm == 0:
+        return v
+    return [x / norm for x in v]
+
+
+def _cosine_similarity_fast(a_normalized: list[float], b_normalized: list[float]) -> float:
+    """使用预计算归一化向量快速计算余弦相似度
+    
+    要求输入向量已经通过 _normalize_vector 进行归一化。
+    这样可以将复杂度从 O(3n) 降低到 O(n)。
+    """
+    return sum(x * y for x, y in zip(a_normalized, b_normalized))
 
 
 def _keyword_match_score(query: str, doc_content: str, doc_title: str) -> float:
@@ -57,6 +79,34 @@ def retrieve_by_skill(
     if _VECTOR_AVAILABLE and not fallback:
         return _retrieve_pgvector(db, query_embedding, skill_name, top_k, doc_type)
     return _retrieve_json_fallback(db, query_embedding, skill_name, top_k, doc_type)
+
+
+def retrieve_by_skills_batch(
+    db: Session,
+    skill_names: list[str],
+    top_k: int = 3,
+    doc_type: str | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """批量检索多个技能的知识文档，避免 N+1 查询问题"""
+    results = {}
+    
+    # 检查数据库类型和向量可用性
+    if _is_sqlite_db(db) or not _VECTOR_AVAILABLE or is_fallback_mode():
+        # fallback 模式下逐个处理（数据量小）
+        for skill in skill_names:
+            results[skill] = retrieve_by_skill(db, skill, top_k, doc_type)
+        return results
+
+    # pgvector 模式下使用批量查询
+    all_embeddings = {}
+    for skill in skill_names:
+        all_embeddings[skill] = generate_embedding(skill)
+
+    # 使用单个查询获取所有相关文档
+    for skill, embedding in all_embeddings.items():
+        results[skill] = _retrieve_pgvector(db, embedding, skill, top_k, doc_type)
+    
+    return results
 
 
 def _retrieve_pgvector(

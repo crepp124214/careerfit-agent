@@ -21,9 +21,9 @@ const newName = ref('')
 const newContent = ref('')
 const submitting = ref(false)
 
-onMounted(() => {
-  availability.probe()
-  if (availability.states.resumes !== 'unavailable') {
+onMounted(async () => {
+  await availability.probe()
+  if (availability.states.resumes === 'ready') {
     resumes.load()
   }
 })

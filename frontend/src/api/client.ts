@@ -1,5 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
-const DEFAULT_TIMEOUT = 30000
+const DEFAULT_TIMEOUT = 120000  // 增加到 120 秒，因为分析任务创建可能需要时间
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 

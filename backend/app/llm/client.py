@@ -6,6 +6,7 @@ import time
 
 import httpx
 
+from app.llm.client_cache import llm_client_cache
 from app.llm.metrics import llm_metrics
 
 
@@ -48,6 +49,23 @@ class LLMClient:
         start_time = time.time()
         prompt_length = len(prompt)
 
+        # 检查客户端缓存
+        cached_result = llm_client_cache.get(prompt, self.model, self.api_style)
+        if cached_result is not None:
+            self._logger.info(
+                f"LLM cache hit: model={self.model}, prompt_length={prompt_length}, "
+                f"response_length={len(cached_result)}"
+            )
+            llm_metrics.record_call(
+                duration=0.0,
+                success=True,
+                cached=True,
+                prompt_length=prompt_length,
+                response_length=len(cached_result),
+                model_name=self.model,
+            )
+            return cached_result
+
         try:
             if self.api_style == "responses":
                 result = self._complete_responses(prompt)
@@ -61,6 +79,9 @@ class LLMClient:
                 f"LLM call completed: model={self.model}, prompt_length={prompt_length}, "
                 f"response_length={len(result)}, duration={duration:.2f}s"
             )
+
+            # 将结果存入缓存
+            llm_client_cache.set(prompt, self.model, self.api_style, result)
 
             llm_metrics.record_call(
                 duration=duration,
