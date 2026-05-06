@@ -198,10 +198,9 @@ class KnowledgeDocument(Base):
         "metadata", JSON, nullable=False, default=lambda: {"schema_version": "1"}
     )
     embedding_json: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # 使用 JSON 存储向量，避免 pgvector 扩展依赖问题
+    embedding_vector: Mapped[list | None] = mapped_column("embedding", JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-
-    if _VECTOR_AVAILABLE:
-        embedding = mapped_column(Vector(EMBEDDING_DIMENSION), nullable=True)
 
     @property
     def schema_version(self) -> str:

@@ -42,9 +42,8 @@ def import_documents(
             content=doc_data.content,
             metadata_=metadata,
             embedding_json=embedding,
+            embedding_vector=embedding,
         )
-        if hasattr(KnowledgeDocument, "embedding"):
-            db_doc.embedding = embedding
         db.add(db_doc)
         imported += 1
 

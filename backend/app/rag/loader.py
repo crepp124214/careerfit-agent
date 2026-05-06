@@ -63,9 +63,8 @@ def load_seed_data(db: Session, seed_name: str) -> int:
             content=doc_data["content"],
             metadata_=metadata,
             embedding_json=embedding,
+            embedding_vector=embedding,
         )
-        if hasattr(KnowledgeDocument, "embedding"):
-            doc.embedding = embedding
         db.add(doc)
         imported += 1
 
