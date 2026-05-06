@@ -32,72 +32,15 @@ def _build_rag_results(db: Session, required_skills: list[str]) -> dict:
     return rag_results
 
 
-def _run_analysis_sync(
+def _execute_analysis_core(
     task_id: int,
     jd_raw_text: str,
-    *,
     resume_raw_text: str,
     rag_results: dict,
     db: Session,
+    *,
+    on_event=None,
 ) -> None:
-    jd_profile = parse_job_profile(jd_raw_text)
-
-    initial_state = {
-        "raw_jd": jd_raw_text,
-        "raw_resume": resume_raw_text,
-        "jd_profile": jd_profile,
-        "rag_results": rag_results,
-    }
-
-    def on_node_complete(trace_item: dict) -> None:
-        try:
-            db.add(AgentRun(task_id=task_id, **trace_item))
-            db.commit()
-        except Exception:
-            db.rollback()
-
-    final_state, trace = run_workflow(
-        initial_state,
-        task_id=task_id,
-        on_node_complete=on_node_complete,
-    )
-
-    match_result = final_state["match_result"]
-    report = AnalysisReport(
-        task_id=task_id,
-        final_score=match_result["final_score"],
-        score_breakdown=match_result["score_breakdown"],
-        strengths=final_state.get("strengths", []),
-        gaps=final_state.get("gaps", []),
-        resume_suggestions=final_state.get("resume_suggestions", []),
-        interview_questions=final_state.get("interview_questions", []),
-        learning_plan=final_state.get("learning_plan", []),
-        next_best_action=final_state.get("next_best_action", {}),
-        evidence=match_result["score_items"],
-        scoring_version=match_result["scoring_version"],
-    )
-    db.add(report)
-
-    task = db.query(AnalysisTask).filter(AnalysisTask.id == task_id).one_or_none()
-    if task:
-        task.status = AnalysisStatus.success
-        task.updated_at = datetime.now(timezone.utc)
-    db.commit()
-
-
-def _run_analysis_background(
-    task_id: int,
-    job_id: int,
-    resume_id: int,
-    jd_raw_text: str,
-    resume_raw_text: str,
-    rag_results: dict,
-) -> None:
-    from app.db.session import SessionLocal
-
-    time.sleep(0.5)
-
-    db = SessionLocal()
     try:
         jd_profile = parse_job_profile(jd_raw_text)
 
@@ -107,9 +50,6 @@ def _run_analysis_background(
             "jd_profile": jd_profile,
             "rag_results": rag_results,
         }
-
-        def on_event(event: dict) -> None:
-            event_bus.publish(task_id, event)
 
         def on_node_complete(trace_item: dict) -> None:
             try:
@@ -157,6 +97,54 @@ def _run_analysis_background(
                 db.commit()
         except Exception:
             db.rollback()
+        raise
+
+
+def _run_analysis_sync(
+    task_id: int,
+    jd_raw_text: str,
+    *,
+    resume_raw_text: str,
+    rag_results: dict,
+    db: Session,
+) -> None:
+    _execute_analysis_core(
+        task_id=task_id,
+        jd_raw_text=jd_raw_text,
+        resume_raw_text=resume_raw_text,
+        rag_results=rag_results,
+        db=db,
+        on_event=None,
+    )
+
+
+def _run_analysis_background(
+    task_id: int,
+    job_id: int,
+    resume_id: int,
+    jd_raw_text: str,
+    resume_raw_text: str,
+    rag_results: dict,
+) -> None:
+    from app.db.session import SessionLocal
+
+    time.sleep(0.5)
+
+    db = SessionLocal()
+    try:
+        def on_event(event: dict) -> None:
+            event_bus.publish(task_id, event)
+
+        _execute_analysis_core(
+            task_id=task_id,
+            jd_raw_text=jd_raw_text,
+            resume_raw_text=resume_raw_text,
+            rag_results=rag_results,
+            db=db,
+            on_event=on_event,
+        )
+    except Exception:
+        pass
     finally:
         db.close()
 
