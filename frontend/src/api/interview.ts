@@ -57,8 +57,20 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
   if (!resp.ok) {
     const body = await resp.text()
+    // 检查是否是 HTML 错误页面
+    if (body.trim().startsWith('<')) {
+      throw new Error(`backend_http_error:${resp.status}:后端返回 HTML 错误页面，请检查后端是否正常运行`)
+    }
     throw new Error(`interview_api_error:${resp.status}:${body}`)
   }
+  
+  // 检查响应内容类型
+  const contentType = resp.headers.get('content-type')
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await resp.text()
+    throw new Error(`backend_invalid_response:期望 JSON 但收到 ${contentType || '未知类型'}: ${text.substring(0, 100)}`)
+  }
+  
   return resp.json()
 }
 
