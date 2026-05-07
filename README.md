@@ -288,12 +288,21 @@ POST   /api/knowledge/search   # 搜索文档
 GET    /api/knowledge/stats    # 获取统计
 ```
 
+### 面试训练
+
+```http
+POST   /api/interview/prepare      # 生成面试题
+GET    /api/interview/history     # 面试历史
+GET    /api/interview/{id}        # 面试详情
+```
+
 ### 系统状态
 
 ```http
 GET    /health              # 健康检查
 GET    /api/capabilities    # 能力状态
 GET    /api/llm/metrics     # LLM 指标
+GET    /api/system/stats    # 系统统计
 ```
 
 完整 API 文档请访问：http://localhost:8000/docs
