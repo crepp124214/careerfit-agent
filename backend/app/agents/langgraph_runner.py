@@ -237,7 +237,7 @@ class LangGraphRunner:
     def _gap_router(self, state: CareerFitState) -> list[str]:
         gaps = state.get("gaps", [])
         if gaps:
-            return ["resume_optimizer", "interview_coach", "learning_planner", "next_best_action"]
+            return ["resume_optimizer", "interview_coach", "learning_planner"]
         return ["next_best_action"]
 
     def build_graph(self) -> Any:
@@ -258,6 +258,10 @@ class LangGraphRunner:
             "gap_analyzer",
             self._gap_router,
         )
+
+        builder.add_edge("resume_optimizer", "next_best_action")
+        builder.add_edge("interview_coach", "next_best_action")
+        builder.add_edge("learning_planner", "next_best_action")
 
         builder.set_finish_point("next_best_action")
 
