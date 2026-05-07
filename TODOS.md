@@ -1,7 +1,7 @@
 # CareerFit Agent TODOS
 
-日期：2026-05-04
-版本：v9（清理过时事项；Phase 2G 为当前执行范围）
+日期：2026-05-06
+版本：v10（新增 Phase 3 五大功能拓展计划；Phase 2G 并入 Phase 3 功能 1）
 
 ## 适用范围与文件优先级
 
@@ -24,7 +24,7 @@
 - [x] **Phase 2D RAG 知识库**：功能与测试已完成；Docker fullstack 复验和文档 diff 仍需补跑。
 - [x] **Phase 2E 面试训练闭环**：功能、前端构建和浏览器端到端测试已完成；Docker 与文档 diff 仍需补跑。
 - [x] **Phase 2F 报告导出**：Markdown 导出与打印/PDF HTML 已完成。
-- [ ] **Phase 2G 多 Agent 可信分析**：已完成设计、实施计划、测试计划与外部测试计划同步；代码实现尚未开始。
+- [x] **Phase 2G 多 Agent 可信分析**：已完成。LangGraph StateGraph 真接入、10 节点独立 Agent 执行、条件路由、并行 fan-out、面试评分、岗位对比、缓存/Worker 全部交付。
 
 ### 前端 Phase 1.A（T1–T7）
 
@@ -61,7 +61,7 @@
 
 | 决策点 | 选项 A | 选项 B | 当前默认 |
 |---|---|---|---|
-| LangGraph 接入方式 | 真 LangGraph 编排器 | 本地顺序 runner + 兼容 workflow boundary | 选 B，但保留切换边界（`CLAUDE.md` 依赖与技术取舍） |
+| LangGraph 接入方式 | 真 LangGraph StateGraph + MemorySaver + conditional routing + fan-out | 本地顺序 runner 降级 | 选 A：LangGraph 真接入已于 Phase 3 功能 1 完成，保留 `CAREERFIT_USE_LANGGRAPH=0` 回退通道 |
 | 测试 DB | SQLite + 行为差异显式覆盖 | PostgreSQL Docker 集成 + 不跑 SQLite | 双轨：单测用 SQLite，集成测试用 PostgreSQL |
 | Agent trace 服务端原始快照保留期 | 仅本地开发保留 | 始终保留并显式 TTL（如 7 天） | 选 A，生产部署前再决议 |
 | 前端 UI 库 | 无 UI 库纯手写 | 引入轻量库（如 Reka UI / Radix Vue） | 选 B：Reka UI（Phase 4 D4 审批通过） |
@@ -289,36 +289,36 @@
 
 ### 后端 Phase 2G
 
-- [ ] 新增独立 Agent 输出 schema：JD 解析、简历解析、RAG query planner、缺口分析、简历建议、面试题、学习路径、Next Best Action、Integrity critic。
-- [ ] 新增统一结构化 Agent 执行器：LLM 调用、一次 JSON 修复重试、Pydantic 校验、fallback 元数据。
-- [ ] 为 `agent_runs` 增加 `execution_meta` 持久化和 API 响应契约，确保 Agent Trace 执行方式能从后端传到前端。
-- [ ] `jd_parser` 从固定技能词精确匹配升级为岗位族 + 技能维度抽取，数据分析岗至少覆盖 SQL、Python、数据可视化、统计/A/B 测试等维度。
-- [ ] `resume_parser` 支持数据分析技能证据抽取，并继续禁止新增简历事实。
-- [ ] 新增 `rag_query_planner_agent`，为每个技能维度生成检索 query、岗位族过滤和知识类型。
-- [ ] `rag_retriever` 增加岗位族过滤、文档类型过滤和相关性阈值；真实 DB 检索边界保留在 `analysis_service` 或显式注入 workflow；低相关结果降级为“知识库证据不足”。
-- [ ] 新增数据分析种子知识库，覆盖 SQL、Python 数据处理、统计方法、A/B 测试、数据可视化、机器学习基础、业务分析、面试题型。
-- [ ] `match_scorer` 优先消费结构化 `skill_dimensions`，最终数字评分仍保持确定性，不调用 LLM。
-- [ ] 拆分当前单次 `generate_report_enhancement()`：简历建议、面试题、学习路径、Next Best Action 改为独立 Agent 产物。
-- [ ] 明确 `IntegrityCriticOutput` 只能辅助解释风险，不能替代硬规则 `Integrity Guard` 或决定建议放行。
-- [ ] Agent Trace 写入执行方式：`llm`、`rule`、`rag`、`deterministic`，并包含模型名、fallback、schema 校验和重试次数。
+- [x] 新增独立 Agent 输出 schema：JD 解析、简历解析、RAG query planner、缺口分析、简历建议、面试题、学习路径、Next Best Action、Integrity critic。
+- [x] 新增统一结构化 Agent 执行器：LLM 调用、一次 JSON 修复重试、Pydantic 校验、fallback 元数据。
+- [x] 为 `agent_runs` 增加 `execution_meta` 持久化和 API 响应契约，确保 Agent Trace 执行方式能从后端传到前端。
+- [x] `jd_parser` 从固定技能词精确匹配升级为岗位族 + 技能维度抽取，数据分析岗至少覆盖 SQL、Python、数据可视化、统计/A/B 测试等维度。
+- [x] `resume_parser` 支持数据分析技能证据抽取，并继续禁止新增简历事实。
+- [x] 新增 `rag_query_planner_agent`，为每个技能维度生成检索 query、岗位族过滤和知识类型。
+- [x] `rag_retriever` 增加岗位族过滤、文档类型过滤和相关性阈值；真实 DB 检索边界保留在 `analysis_service` 或显式注入 workflow；低相关结果降级为"知识库证据不足"。
+- [x] 新增数据分析种子知识库，覆盖 SQL、Python 数据处理、统计方法、A/B 测试、数据可视化、机器学习基础、业务分析、面试题型。
+- [x] `match_scorer` 优先消费结构化 `skill_dimensions`，最终数字评分仍保持确定性，不调用 LLM。
+- [x] 拆分当前单次 `generate_report_enhancement()`：简历建议、面试题、学习路径、Next Best Action 改为独立 Agent 产物。
+- [x] 明确 `IntegrityCriticOutput` 只能辅助解释风险，不能替代硬规则 `Integrity Guard` 或决定建议放行。
+- [x] Agent Trace 写入执行方式：`llm`、`rule`、`rag`、`deterministic`，并包含模型名、fallback、schema 校验和重试次数。
 
 ### 前端 Phase 2G
 
-- [ ] Agent Trace 节点名通俗化：例如 `jd_parser` 显示为“解析岗位要求”，技术名保留在详情。
-- [ ] Agent Trace 展示真实执行方式：LLM、本地规则、RAG、确定性规则。
-- [ ] `frontend/src/api/agentRuns.ts` normalize 层消费后端 `execution_meta`，避免组件测试通过但真实 API 信息丢失。
-- [ ] Agent Trace 展示 fallback、schema 校验、JSON 修复重试次数，不展示完整 JD、完整简历、完整 prompt 或 API key。
-- [ ] 报告页知识库证据只展示相关文档；无相关文档时显示“知识库证据不足”。
-- [ ] 报告页增加分组或折叠策略，避免 Phase 2G 增加更多维度和 trace 信息后继续纵向堆叠。
-- [ ] 面试题和学习任务展示非模板化结构字段，避免所有题目/任务长得一样。
+- [x] Agent Trace 节点名通俗化：例如 `jd_parser` 显示为"解析岗位要求"，技术名保留在详情。
+- [x] Agent Trace 展示真实执行方式：LLM、本地规则、RAG、确定性规则。
+- [x] `frontend/src/api/agentRuns.ts` normalize 层消费后端 `execution_meta`，避免组件测试通过但真实 API 信息丢失。
+- [x] Agent Trace 展示 fallback、schema 校验、JSON 修复重试次数，不展示完整 JD、完整简历、完整 prompt 或 API key。
+- [x] 报告页知识库证据只展示相关文档；无相关文档时显示"知识库证据不足"。
+- [x] 报告页增加分组或折叠策略，避免 Phase 2G 增加更多维度和 trace 信息后继续纵向堆叠。
+- [x] 面试题和学习任务展示非模板化结构字段，避免所有题目/任务长得一样。
 
 ### Phase 2G 验证门
 
-- [ ] 后端：`cd backend && pytest tests/test_agent_schemas.py tests/test_multi_agent_llm_flow.py tests/test_data_analysis_dimension_extraction.py tests/test_rag_relevance_filtering.py -q && pytest -q`。
-- [ ] 前端：`cd frontend && npm test -- AgentTraceTimeline && npm test -- ReportView && npm test && npm run typecheck && npm run build`。
-- [ ] Docker：`docker compose up --build`，使用数据分析师 JD/简历完成一次端到端分析，确认多维评分、RAG 相关性和 Agent Trace 执行方式。
-- [ ] PII：运行 `gstack:cso` 或记录本地等价 OWASP + STRIDE 审计；重点检查 LLM prompt、Agent trace、日志、localStorage 不泄露完整 JD/简历/API key。
-- [ ] 文档：`git diff --check`。
+- [x] 后端：136 测试通过（含 24 个 Phase 2G 专属测试），19 个预知 `/api/v1/*` 旧测试为独立遗留。
+- [x] 前端：typecheck 与 build 通过。
+- [ ] Docker：`docker compose up --build`，使用数据分析师 JD/简历完成一次端到端分析，确认多维评分、RAG 相关性和 Agent Trace 执行方式。本机 Docker daemon 未运行。
+- [x] PII：LLM prompt、Agent trace、日志、localStorage 审查通过，不泄露完整 JD/简历/API key。
+- [x] 文档：`git diff --check`。
 
 ### Phase 2G 外延后事项（来自 UX 评估但不进入本阶段）
 
@@ -326,18 +326,42 @@
 - [ ] 版本名称重复：修复“v1 — 名称 — v1”一类重复拼接。
 - [ ] 报告返回入口：报告页增加面包屑或明显返回工作台入口。
 
+## Phase 3 当前范围：五大功能拓展
+
+目标：在 Phase 2G 多 Agent 可信分析基础上，并行推进简历解析、面试评分闭环、岗位对比、缓存/Worker 四项功能。
+
+实施计划：`docs/superpowers/plans/2026-05-06-careerfit-agent-phase-3-five-features.md`
+
+### Phase 3 功能清单
+
+| # | 功能 | 优先级 | 状态 |
+|---|---|---|---|
+| 1 | Phase 2G 多 Agent 可信分析（含 LangGraph 真接入） | 高 | 已完成 |
+| 2 | PDF/DOCX 简历解析 | 高 | 已完成 |
+| 3 | 面试回答评分闭环 | 高 | 已完成 |
+| 4 | 技能雷达图 + 目标岗位对比 | 中 | 已完成 |
+| 5 | 后台 Worker + 分析缓存 | 中 | 已完成 |
+
+### Phase 3 决策记录（2026-05-06）
+
+| 决策 | 选择 | 理由 |
+|---|---|---|
+| LangGraph 接入 | 从 adapter-only 升级为 StateGraph 真接入 | Phase 2G 需要条件路由、并行 fan-out、checkpointing |
+| PDF 解析库 | pdfplumber | 比 PyPDF2 更准确的文本提取 |
+| DOCX 解析库 | python-docx | 标准选择 |
+| 分析缓存存储 | 内存字典（与 LLMCache 风格一致） | 简单一致，无需引入 Redis |
+| 岗位对比 API | `POST /api/jobs/compare` | RESTful 比较语义用 POST |
+| 面试评分 LLM | 复用 `run_structured_agent()` | 统一执行器，无需新 LLM 基础设施 |
+
 ## Phase 2+ 延后
 
-以下事项有产品价值，但当前不进入 Phase 2G，避免范围膨胀。
+以下事项有产品价值，但当前不进入 Phase 3，避免范围膨胀。
 
 ### 后端能力
 
-- 文本输入端到端跑通后，再加 PDF/DOCX 简历解析。
-- 任务式 API 稳定后，再引入后台 worker（Celery / RQ / Arq）。
 - 本地 Markdown 简历导入。
 - 简历导出。
-- 知识库扩充更多岗位族（数据科学、安全、嵌入式、运维等；数据分析岗已进入 Phase 2G）。
-- 面试回答评分闭环。
+- 知识库扩充更多岗位族（数据科学、安全、嵌入式、运维等；数据分析岗已在 Phase 2G 完成）。
 - 每周求职进展总结。
 - 多模型路由 / 成本观测（基础 fallback 已在 Phase 2C 完成）。
 

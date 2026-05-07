@@ -15,6 +15,10 @@ export interface CreateResumePayload {
   raw_text: string
 }
 
+export interface ResumeUploadResponse extends Resume {
+  parsed_from: string
+}
+
 export async function fetchResumes() {
   return requestJson<Resume[]>('/resumes')
 }
@@ -24,6 +28,27 @@ export async function createResume(payload: CreateResumePayload) {
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export async function uploadResume(
+  file: File,
+  candidateName?: string,
+  versionLabel?: string,
+): Promise<ResumeUploadResponse> {
+  const form = new FormData()
+  form.append('file', file)
+  if (candidateName) form.append('candidate_name', candidateName)
+  if (versionLabel) form.append('version_label', versionLabel)
+
+  const res = await fetch('/api/resumes/upload', {
+    method: 'POST',
+    body: form,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: { message: 'Upload failed' } }))
+    throw new Error(err?.error?.message || 'Upload failed')
+  }
+  return res.json()
 }
 
 export async function fetchResume(id: string) {

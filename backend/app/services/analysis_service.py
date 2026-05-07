@@ -20,6 +20,7 @@ from app.core.thread_pool import analysis_thread_pool
 from app.db.models import AgentRun, AnalysisReport, AnalysisStatus, AnalysisTask
 from app.rag.retrieval import retrieve_by_skills_batch, retrieve_by_skill
 from app.schemas.analysis import AnalysisCreate
+from app.services.analysis_cache_service import analysis_cache
 from app.services.event_bus import event_bus
 from app.services.job_service import get_job, parse_job_profile
 from app.services.resume_service import get_resume
@@ -149,15 +150,31 @@ def _execute_analysis_core(
     db.flush()
 
     # 写入报告
+    match_result = state.get("match_result", {})
+    score_items = match_result.get("score_items", [])
+    evidence = [
+        {
+            "skill": item.get("skill", item.get("skill_key")),
+            "score": item.get("score", 0),
+            "level": item.get("level"),
+            "jd_evidence": item.get("jd_evidence", []),
+            "resume_evidence": item.get("resume_evidence", []),
+            "knowledge_evidence": item.get("knowledge_evidence", []),
+        }
+        for item in score_items
+    ]
     report = AnalysisReport(
         task_id=task_id,
-        final_score=state.get("final_score") or 0,
-        match_details=state.get("match_details"),
-        gap_analysis=state.get("gap_analysis"),
-        resume_optimization=state.get("resume_optimization"),
-        interview_questions=state.get("interview_questions"),
-        learning_plan=state.get("learning_plan"),
-        next_best_action=state.get("next_best_action"),
+        final_score=match_result.get("final_score", 0),
+        score_breakdown=match_result.get("score_breakdown", {}),
+        strengths=state.get("strengths", []),
+        gaps=state.get("gaps", []),
+        resume_suggestions=state.get("resume_suggestions", []),
+        interview_questions=state.get("interview_questions", []),
+        learning_plan=state.get("learning_plan", []),
+        next_best_action=state.get("next_best_action", {}),
+        evidence=evidence,
+        scoring_version=match_result.get("scoring_version", "v1"),
     )
     db.add(report)
     db.flush()
@@ -171,7 +188,7 @@ def _execute_analysis_core(
         on_event({
             "type": "workflow_completed",
             "task_id": task_id,
-            "final_score": state.get("final_score") or 0,
+            "final_score": match_result.get("final_score", 0),
             "total_duration_ms": int(total_duration * 1000),
         })
     
@@ -201,6 +218,42 @@ def _run_analysis_sync(
         db.rollback()
         _update_task_status(db, task_id, AnalysisStatus.failed, str(exc))
         raise
+
+
+def _cache_analysis_result(db: Session, task_id: int, job_id: int, resume_id: int) -> None:
+    try:
+        report = db.query(AnalysisReport).filter(AnalysisReport.task_id == task_id).first()
+        if report is None:
+            return
+        agent_runs = db.query(AgentRun).filter(AgentRun.task_id == task_id).all()
+        cache_data = {
+            "report": {
+                "final_score": report.final_score,
+                "score_breakdown": report.score_breakdown,
+                "strengths": report.strengths,
+                "gaps": report.gaps,
+                "resume_suggestions": report.resume_suggestions,
+                "interview_questions": report.interview_questions,
+                "learning_plan": report.learning_plan,
+                "next_best_action": report.next_best_action,
+                "evidence": report.evidence,
+                "scoring_version": report.scoring_version,
+            },
+            "agent_runs": [
+                {
+                    "node_name": r.node_name,
+                    "status": r.status,
+                    "input_snapshot": r.input_snapshot,
+                    "output_snapshot": r.output_snapshot,
+                    "execution_meta": r.execution_meta,
+                }
+                for r in agent_runs
+            ],
+        }
+        analysis_cache.set(job_id, resume_id, cache_data)
+        logger.info(f"[Cache] 分析结果已缓存: job_id={job_id}, resume_id={resume_id}")
+    except Exception as exc:
+        logger.warning(f"[Cache] 缓存分析结果失败: {exc}")
 
 
 def _run_analysis_background(
@@ -279,6 +332,8 @@ def _run_analysis_background(
         logger.info(f"[Task {task_id}] [Step 5/5] 工作流执行完成 ({(step5_time-step4_time):.2f}s)")
         logger.info(f"[Task {task_id}] ========== 后台分析任务完成 (总耗时: {(step5_time-total_start_time):.2f}s) ==========")
         
+        _cache_analysis_result(db, task_id, job_id, resume_id)
+
     except Exception as exc:
         error_time = _time.time()
         total_duration = error_time - total_start_time
@@ -295,6 +350,47 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
     if job is None or resume is None:
         raise ValueError("job_or_resume_not_found")
 
+    cached = analysis_cache.get(job.id, resume.id)
+    if cached is not None:
+        logger.info(f"[Cache] 分析缓存命中: job_id={job.id}, resume_id={resume.id}")
+        task = AnalysisTask(job_id=job.id, resume_id=resume.id, status=AnalysisStatus.success)
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+
+        report_data = cached.get("report")
+        if report_data:
+            report = AnalysisReport(
+                task_id=task.id,
+                final_score=report_data.get("final_score", 0),
+                score_breakdown=report_data.get("score_breakdown", {}),
+                strengths=report_data.get("strengths", []),
+                gaps=report_data.get("gaps", []),
+                resume_suggestions=report_data.get("resume_suggestions", []),
+                interview_questions=report_data.get("interview_questions", []),
+                learning_plan=report_data.get("learning_plan", []),
+                next_best_action=report_data.get("next_best_action", {}),
+                evidence=report_data.get("evidence", []),
+                scoring_version=report_data.get("scoring_version", "v1"),
+            )
+            db.add(report)
+            db.commit()
+            db.refresh(report)
+
+        for run_data in cached.get("agent_runs", []):
+            run = AgentRun(
+                task_id=task.id,
+                node_name=run_data.get("node_name", ""),
+                status=run_data.get("status", "success"),
+                input_snapshot=run_data.get("input_snapshot", {}),
+                output_snapshot=run_data.get("output_snapshot", {}),
+                execution_meta=run_data.get("execution_meta", {}),
+            )
+            db.add(run)
+        db.commit()
+
+        return task
+
     task = AnalysisTask(job_id=job.id, resume_id=resume.id, status=AnalysisStatus.running)
     db.add(task)
     db.commit()
@@ -302,32 +398,25 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
 
     logger.info(f"[Task {task.id}] 任务创建成功，准备提交到后台...")
 
-    # 关键优化：不在主线程中构建 RAG 结果！
-    # 原因：RAG 检索中的 embedding 模型加载/推理可能阻塞 2+ 分钟
-    # 解决方案：将所有耗时操作（JD解析、RAG检索）都移到后台线程
-    
     sync_mode = os.environ.get("CAREERFIT_ANALYSIS_SYNC") == "1"
 
     if sync_mode:
-        # 测试模式：同步执行（仅用于本地测试）
         logger.info(f"[Task {task.id}] 同步模式执行...")
-        
         try:
             jd_profile = parse_job_profile(job.raw_text)
             required_skills = jd_profile.get("required_skills") or []
             rag_results = _build_rag_results(db, required_skills)
             _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db)
+            _cache_analysis_result(db, task.id, job.id, resume.id)
         except Exception as exc:
             logger.error(f"[Task {task.id}] 同步分析失败: {exc}")
             _update_task_status(db, task.id, AnalysisStatus.failed, str(exc))
     else:
-        # 生产模式：异步执行（所有耗时操作都在后台线程）
-        # 只传递必要的参数，不提前计算 RAG 结果
         logger.info(f"[Task {task.id}] 提交到后台线程池...")
         analysis_thread_pool.submit(
             task.id,
             _run_analysis_background,
-            task.id, job.id, resume.id, job.raw_text, resume.raw_text, {},  # 空 rag_results，由后台线程填充
+            task.id, job.id, resume.id, job.raw_text, resume.raw_text, {},
         )
         logger.info(f"[Task {task.id}] 已提交到后台线程池")
 

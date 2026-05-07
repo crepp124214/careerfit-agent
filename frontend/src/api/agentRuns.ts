@@ -57,16 +57,42 @@ function normalizeAgentRun(taskId: string, payload: AgentRun | BackendAgentRun[]
     taskId,
     nodes: payload.map((node) => {
       const fieldNames = summarizeKeys(node.output_snapshot)
+      const meta = node.execution_meta
+      let summary = fieldNames.length > 0 ? `输出字段：${fieldNames.join(', ')}` : '节点已完成'
+      if (meta) {
+        const modeLabel = modeToLabel(meta.execution_mode)
+        summary = meta.fallback_used
+          ? `${modeLabel}（回退）`
+          : modeLabel
+        if (fieldNames.length > 0) {
+          summary += ` · ${fieldNames.join(', ')}`
+        }
+      }
       return {
         name: node.node_name,
         status: node.status,
         duration: durationMs(node.started_at, node.finished_at),
-        summary: fieldNames.length > 0 ? `输出字段：${fieldNames.join(', ')}` : '节点已完成',
+        summary,
         length: JSON.stringify(node.output_snapshot ?? {}).length,
         field_names: fieldNames,
-        execution_meta: node.execution_meta,
+        execution_meta: meta,
       }
     }),
+  }
+}
+
+function modeToLabel(mode?: string) {
+  switch (mode) {
+    case 'llm':
+      return 'LLM'
+    case 'rule':
+      return '规则'
+    case 'rag':
+      return 'RAG'
+    case 'deterministic':
+      return '确定性'
+    default:
+      return '未知'
   }
 }
 

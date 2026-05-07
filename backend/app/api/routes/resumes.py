@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.resumes import ResumeCreate, ResumeDiffResponse, ResumeRead
+from app.schemas.resumes import ResumeCreate, ResumeDiffResponse, ResumeRead, ResumeUploadResponse
+from app.services.file_parser import parse_upload
 from app.services.resume_diff_service import compare_resumes
 from app.services.resume_service import create_resume, get_resume, list_resumes
 
@@ -12,6 +13,35 @@ router = APIRouter(prefix="/api/resumes", tags=["resumes"])
 @router.post("", response_model=ResumeRead, status_code=status.HTTP_201_CREATED)
 def create_resume_endpoint(payload: ResumeCreate, db: Session = Depends(get_db)):
     return create_resume(db, payload)
+
+
+@router.post("/upload", response_model=ResumeUploadResponse, status_code=status.HTTP_201_CREATED)
+def upload_resume_endpoint(
+    file: UploadFile,
+    candidate_name: str = Form(""),
+    version_label: str = Form("uploaded"),
+    db: Session = Depends(get_db),
+):
+    content = file.file.read()
+    raw_text = parse_upload(file.filename or "upload", content)
+    candidate_name = candidate_name or file.filename or "上传简历"
+
+    create_payload = ResumeCreate(
+        candidate_name=candidate_name,
+        version_label=version_label,
+        raw_text=raw_text,
+    )
+    resume = create_resume(db, create_payload)
+
+    return ResumeUploadResponse(
+        id=resume.id,
+        candidate_name=resume.candidate_name,
+        version_label=resume.version_label,
+        raw_text=resume.raw_text,
+        parsed_from=file.filename or "unknown",
+        profile=resume.profile,
+        created_at=resume.created_at,
+    )
 
 
 @router.get("", response_model=list[ResumeRead])

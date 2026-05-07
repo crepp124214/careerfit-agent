@@ -13,6 +13,9 @@ const filterSkill = ref('')
 const filterCategory = ref('')
 const filterDifficulty = ref('')
 
+const answerTexts = ref<Record<number, string>>({})
+const submittingAnswers = ref<Record<number, boolean>>({})
+
 onMounted(() => {
   const id = Number(route.params.id)
   if (id) store.fetchSession(id)
@@ -96,6 +99,42 @@ function blurNotes(qid: number) {
     saveNotes(qid, val)
   }
 }
+
+function getAnswerText(qid: number): string {
+  return answerTexts.value[qid] ?? session.value?.questions.find((q) => q.id === qid)?.answerText ?? ''
+}
+
+function setAnswerText(qid: number, val: string) {
+  answerTexts.value[qid] = val
+}
+
+function isSubmitting(qid: number): boolean {
+  return !!submittingAnswers.value[qid]
+}
+
+async function handleSubmitAnswer(sessionId: number, questionId: number) {
+  const text = answerTexts.value[questionId]
+  if (!text || !text.trim()) return
+  submittingAnswers.value[questionId] = true
+  await store.submitAnswer(sessionId, questionId, text)
+  submittingAnswers.value[questionId] = false
+  answerTexts.value[questionId] = ''
+}
+
+function scoreColor(score: number | null): string {
+  if (score === null) return 'var(--color-ink-muted)'
+  if (score >= 80) return '#16a34a'
+  if (score >= 60) return '#ca8a04'
+  return '#dc2626'
+}
+
+function scoreLabel(score: number | null): string {
+  if (score === null) return '未评分'
+  if (score >= 80) return '优秀'
+  if (score >= 60) return '良好'
+  if (score >= 40) return '一般'
+  return '需加强'
+}
 </script>
 
 <template>
@@ -176,6 +215,87 @@ function blurNotes(qid: number) {
               追问：{{ fu }}
             </li>
           </ul>
+
+          <!-- 答题区 -->
+          <div class="interview-detail__answer-area">
+            <div class="interview-detail__answer-input-row">
+              <textarea
+                v-if="q.status !== 'completed' && q.status !== 'skipped'"
+                :value="getAnswerText(q.id)"
+                class="interview-detail__answer-input"
+                placeholder="输入你的回答…"
+                rows="3"
+                maxlength="5000"
+                @input="setAnswerText(q.id, ($event.target as HTMLTextAreaElement).value)"
+              />
+            </div>
+
+            <div v-if="q.status !== 'completed' && q.status !== 'skipped'" class="interview-detail__answer-actions">
+              <button
+                type="button"
+                class="interview-detail__submit-btn"
+                :disabled="!getAnswerText(q.id)?.trim() || isSubmitting(q.id)"
+                :aria-busy="isSubmitting(q.id)"
+                @click="handleSubmitAnswer(session!.id, q.id)"
+              >
+                {{ isSubmitting(q.id) ? '评分中…' : '提交回答' }}
+              </button>
+              <span class="interview-detail__attempt-hint" v-if="q.attemptCount > 0">
+                已作答 {{ q.attemptCount }} 次
+              </span>
+            </div>
+
+            <!-- 评分反馈 -->
+            <div v-if="q.answerScore !== null" class="interview-detail__score-card">
+              <div class="interview-detail__score-header">
+                <span class="interview-detail__score-value" :style="{ color: scoreColor(q.answerScore) }">
+                  {{ q.answerScore }}
+                </span>
+                <span class="interview-detail__score-label" :style="{ color: scoreColor(q.answerScore) }">
+                  {{ scoreLabel(q.answerScore) }}
+                </span>
+                <span class="interview-detail__score-time">
+                  上次提交：{{ q.answerSubmittedAt ? new Date(q.answerSubmittedAt).toLocaleString('zh-CN') : '' }}
+                </span>
+              </div>
+
+              <div class="interview-detail__score-bar">
+                <div
+                  class="interview-detail__score-fill"
+                  :style="{ width: `${q.answerScore}%`, background: scoreColor(q.answerScore) }"
+                />
+              </div>
+
+              <div v-if="q.answerFeedback" class="interview-detail__feedback-dims">
+                <div class="interview-detail__feedback-dim">
+                  <span class="interview-detail__feedback-dim-label">正确性</span>
+                  <p class="interview-detail__feedback-dim-text">{{ q.answerFeedback.correctness_feedback }}</p>
+                </div>
+                <div class="interview-detail__feedback-dim">
+                  <span class="interview-detail__feedback-dim-label">完整性</span>
+                  <p class="interview-detail__feedback-dim-text">{{ q.answerFeedback.completeness_feedback }}</p>
+                </div>
+                <div class="interview-detail__feedback-dim">
+                  <span class="interview-detail__feedback-dim-label">清晰度</span>
+                  <p class="interview-detail__feedback-dim-text">{{ q.answerFeedback.clarity_feedback }}</p>
+                </div>
+                <div class="interview-detail__feedback-dim interview-detail__feedback-dim--improve">
+                  <span class="interview-detail__feedback-dim-label">改进建议</span>
+                  <p class="interview-detail__feedback-dim-text">{{ q.answerFeedback.improvement_suggestion }}</p>
+                </div>
+              </div>
+
+              <div class="interview-detail__score-actions">
+                <button
+                  type="button"
+                  class="interview-detail__retry-btn"
+                  @click="() => {}"
+                >
+                  重新作答
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div class="interview-detail__question-actions">
             <button
@@ -461,5 +581,150 @@ function blurNotes(qid: number) {
   text-align: center;
   color: var(--color-ink-tertiary);
   padding: var(--space-lg);
+}
+
+.interview-detail__answer-area {
+  margin-top: var(--space-sm);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-sm);
+}
+
+.interview-detail__answer-input {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-sm);
+  font-size: var(--font-body-sm-size);
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.6;
+  background: var(--color-surface-0);
+  color: var(--color-ink);
+}
+
+.interview-detail__answer-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+.interview-detail__answer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.interview-detail__submit-btn {
+  padding: 6px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--rounded-sm);
+  font-size: var(--font-caption-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.interview-detail__submit-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.interview-detail__submit-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.interview-detail__attempt-hint {
+  font-size: var(--font-caption-size);
+  color: var(--color-ink-tertiary);
+}
+
+.interview-detail__score-card {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--color-surface-2);
+  border-radius: var(--rounded-sm);
+}
+
+.interview-detail__score-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.interview-detail__score-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.interview-detail__score-label {
+  font-size: var(--font-caption-size);
+  font-weight: 500;
+}
+
+.interview-detail__score-time {
+  font-size: var(--font-caption-size);
+  color: var(--color-ink-tertiary);
+  margin-left: auto;
+}
+
+.interview-detail__score-bar {
+  height: 6px;
+  background: var(--color-surface-1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+
+.interview-detail__score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.interview-detail__feedback-dims {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.interview-detail__feedback-dim-label {
+  font-size: var(--font-caption-size);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.interview-detail__feedback-dim-text {
+  font-size: var(--font-body-sm-size);
+  color: var(--color-ink);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.interview-detail__feedback-dim--improve .interview-detail__feedback-dim-label {
+  color: var(--color-primary);
+}
+
+.interview-detail__score-actions {
+  margin-top: var(--space-sm);
+}
+
+.interview-detail__retry-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-sm);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: var(--font-caption-size);
+  cursor: pointer;
+}
+
+.interview-detail__retry-btn:hover {
+  background: var(--color-surface-1);
 }
 </style>

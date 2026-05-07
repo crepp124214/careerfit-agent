@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,3 +18,25 @@ class JobRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobCompareRequest(BaseModel):
+    job_ids: list[int] = Field(min_length=2, max_length=5)
+
+
+class JobCompareDimension(BaseModel):
+    name: str
+    category: str
+    required_level: str
+    weight: float
+
+
+class JobCompareItem(BaseModel):
+    job_id: int
+    job_title: str
+    dimensions: list[JobCompareDimension] = Field(default_factory=list)
+
+
+class JobCompareResponse(BaseModel):
+    schema_version: str = "1"
+    items: list[JobCompareItem]

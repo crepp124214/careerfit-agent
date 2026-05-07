@@ -1,3 +1,11 @@
+"""Agent 工作流编排
+
+提供两种运行模式：
+- LangGraph (默认)：使用 StateGraph 的条件路由和 checkpointing
+- 本地顺序 runner (降级)：使用自定义顺序执行器
+"""
+
+import os
 from collections.abc import Callable
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -11,6 +19,7 @@ Node = Callable[[CareerFitState], CareerFitState]
 NODE_SEQUENCE: list[tuple[str, Node]] = [
     ("jd_parser", nodes.jd_parser),
     ("resume_parser", nodes.resume_parser),
+    ("rag_query_planner", nodes.rag_query_planner),
     ("rag_retriever", nodes.rag_retriever),
     ("match_scorer", nodes.match_scorer),
     ("gap_analyzer", nodes.gap_analyzer),
@@ -23,6 +32,7 @@ NODE_SEQUENCE: list[tuple[str, Node]] = [
 NODE_LABELS: dict[str, str] = {
     "jd_parser": "JD 解析",
     "resume_parser": "简历解析",
+    "rag_query_planner": "检索策略规划",
     "rag_retriever": "知识库检索",
     "match_scorer": "匹配评分",
     "gap_analyzer": "缺口分析",
@@ -84,7 +94,7 @@ def _make_event(
     return event
 
 
-def run_workflow(
+def _run_workflow_sequential(
     initial_state: CareerFitState,
     *,
     task_id: int = 0,
@@ -295,3 +305,26 @@ def run_workflow(
         )
 
     return state, trace
+
+
+def run_workflow(
+    initial_state: CareerFitState,
+    *,
+    task_id: int = 0,
+    on_event: Callable[[dict[str, Any]], None] | None = None,
+    on_node_complete: Callable[[dict[str, Any]], None] | None = None,
+) -> tuple[CareerFitState, list[dict]]:
+    if os.environ.get("CAREERFIT_USE_LANGGRAPH", "1") == "1":
+        from app.agents.langgraph_runner import run_workflow_langgraph
+        return run_workflow_langgraph(
+            initial_state,
+            task_id=task_id,
+            on_event=on_event,
+            on_node_complete=on_node_complete,
+        )
+    return _run_workflow_sequential(
+        initial_state,
+        task_id=task_id,
+        on_event=on_event,
+        on_node_complete=on_node_complete,
+    )

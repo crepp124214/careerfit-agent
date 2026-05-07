@@ -5,6 +5,7 @@ import {
   listSessions as apiListSessions,
   getSession as apiGetSession,
   updateQuestion as apiUpdateQuestion,
+  submitAnswer as apiSubmitAnswer,
   isInterviewNotReady,
 } from '@/api/interview'
 import type { InterviewSession, InterviewSessionDetail } from '@/api/interview'
@@ -109,6 +110,26 @@ export const useInterviewStore = defineStore('interview', () => {
     }
   }
 
+  async function submitAnswerAction(sessionId: number, questionId: number, answerText: string) {
+    try {
+      const result = await apiSubmitAnswer(sessionId, questionId, answerText)
+      if (currentSession.value && currentSession.value.id === sessionId) {
+        const q = currentSession.value.questions.find((q) => q.id === questionId)
+        if (q) {
+          q.answerText = result.answerText
+          q.answerScore = result.answerScore
+          q.answerFeedback = result.answerFeedback
+          q.attemptCount = result.attemptCount
+          q.status = result.status
+        }
+      }
+      return result
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'unknown_error'
+      return null
+    }
+  }
+
   return {
     sessions,
     currentSession,
@@ -120,5 +141,6 @@ export const useInterviewStore = defineStore('interview', () => {
     fetchSession,
     createSession,
     updateQuestionStatus,
+    submitAnswer: submitAnswerAction,
   }
 })

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { fetchResumes, createResume, fetchResume } from '@/api/resumes'
+import { fetchResumes, createResume, fetchResume, uploadResume } from '@/api/resumes'
 import type { Resume, CreateResumePayload } from '@/api/resumes'
 
 export const useResumesStore = defineStore('resumes', () => {
@@ -36,6 +36,19 @@ export const useResumesStore = defineStore('resumes', () => {
     selectedId.value = res.data.id
   }
 
+  async function upload(file: File, candidateName?: string) {
+    error.value = ''
+    try {
+      const data = await uploadResume(file, candidateName)
+      list.value.unshift(data)
+      selectedId.value = data.id
+      return data
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '上传失败'
+      return null
+    }
+  }
+
   async function loadOne(id: number) {
     const res = await fetchResume(String(id))
     if (!res.ok) {
@@ -57,6 +70,7 @@ export const useResumesStore = defineStore('resumes', () => {
     selectedResume,
     load,
     add,
+    upload,
     loadOne,
     select,
   }

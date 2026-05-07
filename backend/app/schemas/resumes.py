@@ -9,6 +9,18 @@ class ResumeCreate(BaseModel):
     raw_text: str = Field(min_length=20)
 
 
+class ResumeUploadResponse(BaseModel):
+    id: int
+    candidate_name: str
+    version_label: str
+    raw_text: str
+    parsed_from: str
+    profile: dict
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ResumeRead(BaseModel):
     id: int
     candidate_name: str

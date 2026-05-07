@@ -252,5 +252,10 @@ class InterviewQuestion(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    answer_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    answer_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    answer_feedback: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    answer_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     session: Mapped[InterviewSession] = relationship(back_populates="questions")

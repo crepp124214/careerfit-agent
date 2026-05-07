@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     llm_api_style: str = "chat_completions"
     llm_timeout_seconds: float = 20.0
     llm_concurrent_enabled: bool = True
+    use_langgraph: bool = True
 
     model_config = SettingsConfigDict(env_prefix="CAREERFIT_", env_file=str(_PROJECT_ROOT / ".env"), env_file_encoding="utf-8", extra="ignore")
 

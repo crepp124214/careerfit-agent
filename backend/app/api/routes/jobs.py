@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.jobs import JobCreate, JobRead
-from app.services.job_service import create_job, get_job, list_jobs
+from app.schemas.jobs import JobCompareRequest, JobCompareResponse, JobCompareItem, JobCompareDimension, JobCreate, JobRead
+from app.services.job_service import compare_jobs, create_job, get_job, list_jobs
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
@@ -24,3 +24,20 @@ def get_job_endpoint(job_id: int, db: Session = Depends(get_db)):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.post("/compare", response_model=JobCompareResponse)
+def compare_jobs_endpoint(payload: JobCompareRequest, db: Session = Depends(get_db)):
+    try:
+        items = compare_jobs(db, payload.job_ids)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    compare_items = [
+        JobCompareItem(
+            job_id=item["job_id"],
+            job_title=item["job_title"],
+            dimensions=[JobCompareDimension(**d) for d in item["dimensions"]],
+        )
+        for item in items
+    ]
+    return JobCompareResponse(items=compare_items)

@@ -240,3 +240,31 @@ def get_job(db: Session, job_id: int) -> JobDescription | None:
         职位描述对象，如果不存在则返回 None
     """
     return db.get(JobDescription, job_id)
+
+
+def compare_jobs(db: Session, job_ids: list[int]) -> list[dict]:
+    jobs: list[JobDescription] = []
+    for jid in job_ids:
+        job = db.get(JobDescription, jid)
+        if job is None:
+            raise ValueError(f"job_not_found:{jid}")
+        jobs.append(job)
+
+    result = []
+    for job in jobs:
+        profile = job.profile or {}
+        dimensions = profile.get("skill_dimensions", [])
+        job_dimensions = []
+        for dim in dimensions:
+            job_dimensions.append({
+                "name": dim.get("name", ""),
+                "category": dim.get("category", ""),
+                "required_level": dim.get("required_level", "mentioned"),
+                "weight": dim.get("weight", 0),
+            })
+        result.append({
+            "job_id": job.id,
+            "job_title": job.title,
+            "dimensions": job_dimensions,
+        })
+    return result

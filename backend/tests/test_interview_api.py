@@ -198,3 +198,150 @@ def test_capabilities_includes_interview(client):
 
     data = resp.json()
     assert data["capabilities"]["interview"] == "ready"
+
+
+def test_submit_answer_uses_fallback(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    detail_resp = test_client.get(f"/api/interview/sessions/{session_id}")
+    question_id = detail_resp.json()["questions"][0]["id"]
+
+    resp = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/{question_id}/submit",
+        json={"answer_text": "我在FastAPI上做了几个RESTful API项目，包括用户认证和数据查询。"},
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == question_id
+    assert data["answer_text"] is not None
+    assert data["answer_score"] is not None
+    assert data["answer_feedback"] is not None
+    assert data["attempt_count"] == 1
+
+
+def test_submit_answer_updates_status_to_practicing(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    detail_resp = test_client.get(f"/api/interview/sessions/{session_id}")
+    question = detail_resp.json()["questions"][0]
+    assert question["status"] == "not_started"
+
+    resp = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/{question['id']}/submit",
+        json={"answer_text": "我在FastAPI上做了几个RESTful API项目。"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "practicing"
+
+
+def test_submit_answer_increments_attempt_count(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    detail_resp = test_client.get(f"/api/interview/sessions/{session_id}")
+    question_id = detail_resp.json()["questions"][0]["id"]
+
+    resp1 = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/{question_id}/submit",
+        json={"answer_text": "第一次回答"},
+    )
+    assert resp1.json()["attempt_count"] == 1
+
+    resp2 = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/{question_id}/submit",
+        json={"answer_text": "第二次回答，补充更多细节"},
+    )
+    assert resp2.json()["attempt_count"] == 2
+
+
+def test_submit_answer_question_not_found(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    resp = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/9999/submit",
+        json={"answer_text": "测试回答"},
+    )
+
+    assert resp.status_code == 404
+
+
+def test_submit_answer_session_not_found(client):
+    test_client, _ = client
+
+    resp = test_client.post(
+        "/api/interview/sessions/9999/questions/1/submit",
+        json={"answer_text": "测试回答"},
+    )
+
+    assert resp.status_code == 404
+
+
+def test_submit_answer_empty_text_rejected(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    detail_resp = test_client.get(f"/api/interview/sessions/{session_id}")
+    question_id = detail_resp.json()["questions"][0]["id"]
+
+    resp = test_client.post(
+        f"/api/interview/sessions/{session_id}/questions/{question_id}/submit",
+        json={"answer_text": ""},
+    )
+
+    assert resp.status_code == 422
+
+
+def test_session_detail_includes_answer_fields(client):
+    test_client, db_factory = client
+    db = db_factory()
+    report = _seed_report(db)
+    create_resp = test_client.post("/api/interview/sessions", json={"report_id": report.id, "include_rag": False})
+    session_id = create_resp.json()["session"]["id"]
+
+    detail_resp = test_client.get(f"/api/interview/sessions/{session_id}")
+    question = detail_resp.json()["questions"][0]
+
+    assert "answer_text" in question
+    assert "answer_score" in question
+    assert "answer_feedback" in question
+    assert "answer_submitted_at" in question
+    assert "attempt_count" in question
+
+
+def test_service_score_answer_fallback():
+    from app.services.interview_service import score_answer
+    from app.db.models import InterviewQuestion
+
+    question = InterviewQuestion(
+        skill="FastAPI",
+        question="请说明你在 FastAPI 上的实践",
+        answer_hint=None,
+    )
+
+    result = score_answer(question, "我用FastAPI做过RESTful API项目")
+
+    assert result["score"] == 50
+    assert "无法评估正确性" in result["correctness_feedback"]
+    assert "无法评估完整性" in result["completeness_feedback"]
+    assert "无法评估清晰度" in result["clarity_feedback"]
+    assert "继续练习" in result["improvement_suggestion"]

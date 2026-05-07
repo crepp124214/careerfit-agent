@@ -61,6 +61,21 @@ function formatDuration(ms: number) {
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
+
+function executionModeLabel(mode?: string) {
+  switch (mode) {
+    case 'llm':
+      return 'LLM'
+    case 'rule':
+      return '规则'
+    case 'rag':
+      return 'RAG'
+    case 'deterministic':
+      return '确定性'
+    default:
+      return mode || '未知'
+  }
+}
 </script>
 
 <template>
@@ -74,7 +89,16 @@ function formatDuration(ms: number) {
         class="agent-trace__row"
       >
         <div class="agent-trace__row-header">
-          <span class="agent-trace__node-name">{{ node.name }}</span>
+          <div class="agent-trace__row-title">
+            <span class="agent-trace__node-name">{{ node.name }}</span>
+            <span
+              v-if="node.execution_meta?.execution_mode"
+              class="agent-trace__mode-badge"
+              :class="`agent-trace__mode-badge--${node.execution_meta.execution_mode}`"
+            >
+              {{ executionModeLabel(node.execution_meta.execution_mode) }}
+            </span>
+          </div>
           <div class="agent-trace__badges">
             <StatusBadge :tone="statusTone(node.status)">
               {{ statusLabel(node.status) }}
@@ -86,6 +110,18 @@ function formatDuration(ms: number) {
         <p class="agent-trace__summary">{{ node.summary }}</p>
 
         <div class="agent-trace__meta">
+          <span v-if="node.execution_meta" class="agent-trace__meta-item">
+            schema 校验：{{ node.execution_meta.schema_valid ? '通过' : '失败' }}
+          </span>
+          <span v-if="node.execution_meta?.retry_count !== undefined && node.execution_meta.retry_count > 0" class="agent-trace__meta-item">
+            重试：{{ node.execution_meta.retry_count }} 次
+          </span>
+          <span v-if="node.execution_meta?.fallback_used" class="agent-trace__meta-item agent-trace__meta-item--warn">
+            回退到规则引擎
+          </span>
+          <span v-if="node.execution_meta?.model_name" class="agent-trace__meta-item">
+            {{ node.execution_meta.model_name }}
+          </span>
           <span v-if="node.length" class="agent-trace__meta-item">
             长度：{{ node.length }}
           </span>
@@ -160,10 +196,43 @@ function formatDuration(ms: number) {
   gap: var(--space-sm);
 }
 
+.agent-trace__row-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
 .agent-trace__node-name {
   font-size: var(--font-body-size);
   font-weight: 500;
   color: var(--color-ink);
+}
+
+.agent-trace__mode-badge {
+  font-size: var(--font-caption-size);
+  padding: 1px 6px;
+  border-radius: var(--rounded-sm);
+  font-weight: 500;
+}
+
+.agent-trace__mode-badge--llm {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.agent-trace__mode-badge--rule {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.agent-trace__mode-badge--rag {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.agent-trace__mode-badge--deterministic {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .agent-trace__badges {
@@ -195,6 +264,11 @@ function formatDuration(ms: number) {
   color: var(--color-ink-subtle);
 }
 
+.agent-trace__meta-item--warn {
+  color: var(--color-risk-medium, #b45309);
+  font-weight: 500;
+}
+
 .agent-trace__error {
   margin: 0;
   font-size: var(--font-caption-size);
@@ -215,5 +289,27 @@ function formatDuration(ms: number) {
 
 .agent-trace__toggle:hover {
   background-color: var(--color-surface-2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .agent-trace__mode-badge--llm {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  .agent-trace__mode-badge--rule {
+    background: #374151;
+    color: #d1d5db;
+  }
+
+  .agent-trace__mode-badge--rag {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+
+  .agent-trace__mode-badge--deterministic {
+    background: #78350f;
+    color: #fcd34d;
+  }
 }
 </style>

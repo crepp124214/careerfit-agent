@@ -20,11 +20,20 @@ class InterviewQuestionRead(BaseModel):
     status: str
     notes: str | None = None
     sort_order: int = 0
+    answer_text: str | None = None
+    answer_score: int | None = None
+    answer_feedback: dict | None = None
+    answer_submitted_at: str | None = None
+    attempt_count: int = 0
 
 
 class InterviewQuestionUpdate(BaseModel):
     status: str | None = None
     notes: str | None = None
+
+
+class InterviewAnswerSubmit(BaseModel):
+    answer_text: str = Field(..., min_length=1, max_length=5000)
 
 
 class InterviewSessionRead(BaseModel):
@@ -59,3 +68,13 @@ class InterviewSessionListResponse(BaseModel):
 class InterviewSessionCreateResponse(BaseModel):
     schema_version: str = "1"
     session: InterviewSessionRead
+
+
+class InterviewAnswerSubmitResponse(BaseModel):
+    schema_version: str = "1"
+    id: int
+    status: str
+    answer_text: str | None = None
+    answer_score: int | None = None
+    answer_feedback: dict | None = None
+    attempt_count: int = 0

@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.interview import (
+    InterviewAnswerSubmit,
+    InterviewAnswerSubmitResponse,
     InterviewQuestionUpdate,
     InterviewSessionCreate,
     InterviewSessionCreateResponse,
@@ -10,7 +12,7 @@ from app.schemas.interview import (
     InterviewSessionListResponse,
     InterviewSessionRead,
 )
-from app.services.interview_service import create_session, get_session, list_sessions, update_question
+from app.services.interview_service import create_session, get_session, list_sessions, submit_answer, update_question
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
 
@@ -74,6 +76,11 @@ def get_interview_session(session_id: int, db: Session = Depends(get_db)):
             status=q.status.value if hasattr(q.status, "value") else str(q.status),
             notes=q.notes,
             sort_order=q.sort_order,
+            answer_text=q.answer_text,
+            answer_score=q.answer_score,
+            answer_feedback=q.answer_feedback,
+            answer_submitted_at=q.answer_submitted_at.isoformat() if q.answer_submitted_at else None,
+            attempt_count=q.attempt_count,
         )
         for q in session.questions
     ]
@@ -117,3 +124,34 @@ def update_interview_question(
         "status": question.status.value if hasattr(question.status, "value") else str(question.status),
         "notes": question.notes,
     }
+
+
+@router.post("/sessions/{session_id}/questions/{question_id}/submit", response_model=InterviewAnswerSubmitResponse)
+def submit_interview_answer(
+    session_id: int,
+    question_id: int,
+    payload: InterviewAnswerSubmit,
+    db: Session = Depends(get_db),
+):
+    try:
+        question = submit_answer(
+            db,
+            session_id=session_id,
+            question_id=question_id,
+            answer_text=payload.answer_text,
+        )
+    except ValueError as exc:
+        error_msg = str(exc)
+        if "question_not_found" in error_msg:
+            raise HTTPException(status_code=404, detail="question_not_found")
+        if "session_not_found" in error_msg:
+            raise HTTPException(status_code=404, detail="session_not_found")
+        raise
+    return InterviewAnswerSubmitResponse(
+        id=question.id,
+        status=question.status.value if hasattr(question.status, "value") else str(question.status),
+        answer_text=question.answer_text,
+        answer_score=question.answer_score,
+        answer_feedback=question.answer_feedback,
+        attempt_count=question.attempt_count,
+    )

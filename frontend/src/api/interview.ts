@@ -18,6 +18,11 @@ export interface InterviewQuestion {
   status: string
   notes: string | null
   sortOrder: number
+  answerText: string | null
+  answerScore: number | null
+  answerFeedback: Record<string, string> | null
+  answerSubmittedAt: string | null
+  attemptCount: number
 }
 
 export interface InterviewSession {
@@ -43,6 +48,15 @@ export interface InterviewSessionListResponse {
 export interface InterviewSessionCreateResponse {
   schemaVersion: string
   session: InterviewSession
+}
+
+export interface InterviewAnswerSubmitResponse {
+  id: number
+  status: string
+  answerText: string | null
+  answerScore: number | null
+  answerFeedback: Record<string, string> | null
+  attemptCount: number
 }
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL || '/api'}/interview`
@@ -100,6 +114,11 @@ function normalizeQuestion(raw: Record<string, unknown>): InterviewQuestion {
     status: raw.status as string,
     notes: (raw.notes as string) || null,
     sortOrder: raw.sort_order as number,
+    answerText: (raw.answer_text as string) || null,
+    answerScore: (raw.answer_score as number) || null,
+    answerFeedback: (raw.answer_feedback as Record<string, string>) || null,
+    answerSubmittedAt: (raw.answer_submitted_at as string) || null,
+    attemptCount: (raw.attempt_count as number) || 0,
   }
 }
 
@@ -156,6 +175,28 @@ export async function updateQuestion(
     id: raw.id as number,
     status: raw.status as string,
     notes: (raw.notes as string) || null,
+  }
+}
+
+export async function submitAnswer(
+  sessionId: number,
+  questionId: number,
+  answerText: string,
+): Promise<InterviewAnswerSubmitResponse> {
+  const raw = await request<Record<string, unknown>>(
+    `${API_BASE}/sessions/${sessionId}/questions/${questionId}/submit`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ answer_text: answerText }),
+    },
+  )
+  return {
+    id: raw.id as number,
+    status: raw.status as string,
+    answerText: (raw.answer_text as string) || null,
+    answerScore: (raw.answer_score as number) || null,
+    answerFeedback: (raw.answer_feedback as Record<string, string>) || null,
+    attemptCount: (raw.attempt_count as number) || 0,
   }
 }
 

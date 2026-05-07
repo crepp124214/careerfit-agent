@@ -20,6 +20,14 @@ const showModal = ref(false)
 const newName = ref('')
 const newContent = ref('')
 const submitting = ref(false)
+const uploadMode = ref<'paste' | 'upload'>('paste')
+const uploadFile = ref<File | null>(null)
+const uploadDragOver = ref(false)
+const uploadError = ref('')
+const uploading = ref(false)
+const uploadProgress = ref(0)
+
+const ALLOWED_TYPES = '.pdf,.docx'
 
 onMounted(async () => {
   await availability.probe()
@@ -28,7 +36,61 @@ onMounted(async () => {
   }
 })
 
+function resetForm() {
+  newName.value = ''
+  newContent.value = ''
+  uploadFile.value = null
+  uploadError.value = ''
+  uploadProgress.value = 0
+  uploadMode.value = 'paste'
+}
+
+function onFileSelect(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) validateAndSetFile(file)
+}
+
+function onDragOver(event: DragEvent) {
+  event.preventDefault()
+  uploadDragOver.value = true
+}
+
+function onDragLeave() {
+  uploadDragOver.value = false
+}
+
+function onDrop(event: DragEvent) {
+  event.preventDefault()
+  uploadDragOver.value = false
+  const file = event.dataTransfer?.files?.[0]
+  if (file) validateAndSetFile(file)
+}
+
+function validateAndSetFile(file: File) {
+  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
+  if (!['.pdf', '.docx'].includes(ext)) {
+    uploadError.value = '仅支持 PDF 和 DOCX 格式'
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    uploadError.value = '文件大小不能超过 5MB'
+    return
+  }
+  uploadError.value = ''
+  uploadFile.value = file
+}
+
 async function submit() {
+  if (uploadMode.value === 'upload' && uploadFile.value) {
+    submitting.value = true
+    await resumes.upload(uploadFile.value, newName.value.trim() || undefined)
+    submitting.value = false
+    showModal.value = false
+    resetForm()
+    return
+  }
+
   if (!newName.value.trim()) return
   const rawText = newContent.value.trim() || newName.value.trim()
   submitting.value = true
@@ -39,8 +101,7 @@ async function submit() {
   })
   submitting.value = false
   showModal.value = false
-  newName.value = ''
-  newContent.value = ''
+  resetForm()
 }
 
 function goToDetail(id: number) {
@@ -94,7 +155,7 @@ function goToDetail(id: number) {
     <Modal
       :open="showModal"
       title="新建简历"
-      description="填写简历版本名称与内容。"
+      description="粘贴简历内容或上传文件。"
       @close="showModal = false"
     >
       <div class="resumes-view__form">
@@ -104,22 +165,81 @@ function goToDetail(id: number) {
           placeholder="例如：v1 — 面向字节跳动后端"
           :required="true"
         />
-        <AppTextarea
-          v-model="newContent"
-          label="简历内容（可选）"
-          placeholder="粘贴完整简历内容…"
-          :min-height="'200px'"
-        />
+
+        <div class="resumes-view__mode-tabs" role="tablist">
+          <button
+            class="resumes-view__mode-tab"
+            :class="{ 'resumes-view__mode-tab--active': uploadMode === 'paste' }"
+            role="tab"
+            :aria-selected="uploadMode === 'paste'"
+            @click="uploadMode = 'paste'"
+          >
+            粘贴内容
+          </button>
+          <button
+            class="resumes-view__mode-tab"
+            :class="{ 'resumes-view__mode-tab--active': uploadMode === 'upload' }"
+            role="tab"
+            :aria-selected="uploadMode === 'upload'"
+            @click="uploadMode = 'upload'"
+          >
+            上传文件
+          </button>
+        </div>
+
+        <template v-if="uploadMode === 'paste'">
+          <AppTextarea
+            v-model="newContent"
+            label="简历内容（可选）"
+            placeholder="粘贴完整简历内容…"
+            :min-height="'200px'"
+          />
+        </template>
+
+        <template v-else>
+          <div
+            class="resumes-view__dropzone"
+            :class="{ 'resumes-view__dropzone--dragover': uploadDragOver, 'resumes-view__dropzone--has-file': uploadFile }"
+            @dragover="onDragOver"
+            @dragleave="onDragLeave"
+            @drop="onDrop"
+          >
+            <template v-if="!uploadFile">
+              <p class="resumes-view__dropzone-text">拖拽 PDF 或 DOCX 文件到此处</p>
+              <p class="resumes-view__dropzone-or">或</p>
+              <label class="resumes-view__dropzone-label">
+                <input
+                  type="file"
+                  :accept="ALLOWED_TYPES"
+                  class="resumes-view__dropzone-input"
+                  @change="onFileSelect"
+                >
+                <span class="resumes-view__dropzone-button">选择文件</span>
+              </label>
+            </template>
+            <template v-else>
+              <p class="resumes-view__file-selected">{{ uploadFile.name }}</p>
+              <p class="resumes-view__file-size">{{ (uploadFile.size / 1024).toFixed(1) }} KB</p>
+              <AppButton variant="tertiary" @click="uploadFile = null">重新选择</AppButton>
+            </template>
+          </div>
+          <p v-if="uploadError" class="resumes-view__upload-error" role="alert">{{ uploadError }}</p>
+        </template>
       </div>
+
       <template #footer>
         <AppButton variant="tertiary" @click="showModal = false">取消</AppButton>
         <AppButton
           variant="primary"
           :loading="submitting"
-          :disabled="!newName.trim()"
+          :disabled="
+            uploading ||
+            (uploadMode === 'paste' && !newName.trim()) ||
+            (uploadMode === 'upload' && !uploadFile)
+          "
           @click="submit"
         >
-          保存
+          {{ uploadMode === 'upload' ? '上传并保存' : '保存' }}
         </AppButton>
       </template>
     </Modal>
@@ -202,5 +322,102 @@ function goToDetail(id: number) {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+}
+
+.resumes-view__mode-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-sm);
+  overflow: hidden;
+}
+
+.resumes-view__mode-tab {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-body-sm-size);
+  border: none;
+  background: var(--color-canvas);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.resumes-view__mode-tab--active {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.resumes-view__dropzone {
+  border: 2px dashed var(--color-hairline-strong);
+  border-radius: var(--rounded-md);
+  padding: var(--space-lg);
+  text-align: center;
+  transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
+  cursor: pointer;
+}
+
+.resumes-view__dropzone:hover,
+.resumes-view__dropzone--dragover {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-subtle);
+}
+
+.resumes-view__dropzone--has-file {
+  border-style: solid;
+  border-color: var(--color-risk-low, #16a34a);
+}
+
+.resumes-view__dropzone-text {
+  margin: 0;
+  font-size: var(--font-body-sm-size);
+  color: var(--color-ink-muted);
+}
+
+.resumes-view__dropzone-or {
+  margin: var(--space-xs) 0;
+  font-size: var(--font-caption-size);
+  color: var(--color-ink-subtle);
+}
+
+.resumes-view__dropzone-label {
+  cursor: pointer;
+}
+
+.resumes-view__dropzone-input {
+  display: none;
+}
+
+.resumes-view__dropzone-button {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-body-sm-size);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-sm);
+  transition: background var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.resumes-view__dropzone-button:hover {
+  background: var(--color-surface-3);
+}
+
+.resumes-view__file-selected {
+  margin: 0;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.resumes-view__file-size {
+  margin: var(--space-xxs) 0 var(--space-sm);
+  font-size: var(--font-caption-size);
+  color: var(--color-ink-subtle);
+}
+
+.resumes-view__upload-error {
+  margin: 0;
+  font-size: var(--font-caption-size);
+  color: var(--color-risk-high);
 }
 </style>

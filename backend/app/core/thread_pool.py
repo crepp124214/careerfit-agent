@@ -37,6 +37,7 @@ class AnalysisThreadPool:
         self._max_workers = max_workers
         self._active_tasks: dict[int, Future] = {}
         self._lock = threading.Lock()
+        self._completed_count = 0
         logger.info(f"分析任务线程池已初始化，最大工作线程数: {max_workers}")
 
     def submit(self, task_id: int, func: Callable, *args: Any, **kwargs: Any) -> Future:
@@ -52,15 +53,14 @@ class AnalysisThreadPool:
             Future 对象，可用于获取任务结果或状态
         """
         with self._lock:
-            # 清理已完成的任务
             completed_ids = [
                 tid for tid, future in self._active_tasks.items()
                 if future.done()
             ]
+            self._completed_count += len(completed_ids)
             for tid in completed_ids:
                 del self._active_tasks[tid]
 
-            # 提交新任务
             future = self._executor.submit(func, *args, **kwargs)
             self._active_tasks[task_id] = future
             logger.info(f"[Task {task_id}] 任务已提交到线程池，当前活跃任务数: {len(self._active_tasks)}")
@@ -111,6 +111,19 @@ class AnalysisThreadPool:
                 1 for future in self._active_tasks.values()
                 if not future.done()
             )
+
+    def get_stats(self) -> dict:
+        with self._lock:
+            active = sum(
+                1 for future in self._active_tasks.values()
+                if not future.done()
+            )
+            return {
+                "max_workers": self._max_workers,
+                "active_tasks": active,
+                "completed_tasks": self._completed_count,
+                "queued_tasks": max(0, len(self._active_tasks) - active),
+            }
 
     def shutdown(self, wait: bool = True, cancel_futures: bool = False) -> None:
         """关闭线程池
