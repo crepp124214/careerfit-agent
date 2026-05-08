@@ -305,13 +305,19 @@ Phase 1 验收门按前后端独立判定，两条都达成才算 Phase 1 完成
 - 文件上传功能未进入 Phase 1 时，不得临时加入未验证的 PDF/DOCX 解析依赖。
 - 简历/JD 输入解析、Agent prompt 装配、向量入库这些 PII 入口，必须由 `gstack:cso` 跑过 OWASP + STRIDE 安全审计；Phase 1 至少留一份基线报告，PII 入口逻辑变更后必须重跑。
 - 前端 localStorage / IndexedDB 仅存储 UI 偏好、视图状态和必要元数据（如最近打开的报告 ID、岗位 ID）；不得存储简历原文、JD 原文、Agent trace 原文或任何 PII 内容。前端会话过期或浏览器清空数据后必须能优雅恢复，不依赖本地存储中的内容真实性。
+- 前端 URL query 参数不得传递 PII 内容（包括 JD 原文、简历原文、base64 编码的上下文等）；跨页面数据传递必须使用 ID 引用（如 `report_id`），由后端从数据库读取上下文。
 
 ## 评分、RAG 与 Agent 可信度约束
 
 - 最终数字分数必须由确定性评分规则计算，LLM 不得直接决定最终分数。
+- 当前评分版本为 `deterministic-v3`，权重分配：skill_score 45%、project_score 25%、domain_score 10%、basic_requirement_score 10%、expression_score 10%、integrity_risk_penalty 5%。
+- `integrity_risk_penalty` 必须基于 score_items 中的高风险项和弱证据项比例动态计算，不得硬编码为 0。
+- `basic_requirement_score` 必须衡量简历是否满足 JD 基础要求，而非 JD 是否列出了基础要求。
+- `domain_score` 在 JD 无领域关键词时默认值不得超过 50。
+- `expression_score` 必须考虑技能与 JD 的相关性比例，不得仅按技能总数打分。
 - 所有评分维度必须 clamp 到 0-100。
 - 评分报告必须保存原始评分因子，便于复现和调试。
-- RAG 检索结果只能作为证据和标准来源；如果检索不到相关文档，必须标记“知识库证据不足”，不得编造来源。
+- RAG 检索结果只能作为证据和标准来源；如果检索不到相关文档，必须标记"知识库证据不足"，不得编造来源。
 - Agent 节点输出必须通过 Pydantic schema 或等价结构校验。
 - LLM 返回非法 JSON 时，最多允许一次修复重试；仍失败则记录失败节点，不得吞掉错误。
 - Integrity Guard 必须在最终简历建议展示前运行。
@@ -321,6 +327,23 @@ Phase 1 验收门按前后端独立判定，两条都达成才算 Phase 1 完成
   - 关联 JD 要求
   - 使用的简历证据
   - 风险等级
+
+### Gap 分析约束
+
+- `gap_analyzer` 节点必须使用 LLM + 规则混合模式，使用 `GapAnalysisOutput` schema。
+- 每个 gap 必须包含 `gap_type` 分类：`missing_skill`、`weak_evidence`、`expression_gap`、`knowledge_insufficient`。
+- 每个 gap 必须包含 `priority` 级别：`high`、`medium`、`low`，基于 JD 权重和得分判定。
+- fallback 规则也必须实现完整的 `gap_type` 分类，不得退化为"有证据/无证据"二分。
+- 下游节点（`resume_optimizer`、`interview_coach`）的 prompt 必须使用 `gap_type` 和 `priority` 生成针对性内容。
+
+### 面试题约束
+
+- 分析流程和独立面试题库的面试题数据结构必须统一，包含以下字段：skill、question、difficulty、type、purpose、what_it_tests、ideal_answer_hints、source。
+- `source` 字段区分题目来源：`jd_based`（基于 JD 要求生成）和 `resume_based`（基于简历弱点生成）。
+- 缺口技能的面试题必须使用 `source="resume_based"`，type 优先用 `behavioral` 或 `project_deep_dive`。
+- 非缺口技能的面试题必须使用 `source="jd_based"`，type 优先用 `technical` 或 `scenario`。
+- `type` 必须支持：`technical`、`behavioral`、`scenario`、`project_deep_dive`。
+- 前端 `InterviewQuestion` 接口必须包含所有上述字段。
 
 ## 后端实现约束
 
