@@ -1,4 +1,6 @@
 import logging
+import time
+from typing import Any, Callable
 
 from app.agents.state import CareerFitState
 from app.core.config import get_settings
@@ -32,22 +34,59 @@ from app.services.resume_service import parse_resume_profile
 
 logger = logging.getLogger(__name__)
 
+MAX_LLM_RETRIES = 2
+LLM_RETRY_DELAY_S = 1.0
 
-def _build_llm_client_or_none():
-    try:
-        settings = get_settings()
-        if not settings.llm_enabled:
-            logger.warning("[_build_llm_client_or_none] LLM disabled (llm_enabled=%s)", settings.llm_enabled)
-            return None
-        client = build_llm_client(settings)
-        logger.info("[_build_llm_client_or_none] LLM client created successfully, model=%s", settings.llm_model)
-        return client
-    except Exception as exc:
-        logger.error("[_build_llm_client_or_none] FAILED: %s: %s", type(exc).__name__, exc)
-        return None
+
+def _build_llm_client_with_retry(max_retries: int = MAX_LLM_RETRIES) -> tuple[Any | None, str]:
+    """
+    Build LLM client with retry mechanism for better stability
+
+    Returns:
+        (client, error_type) - error_type is None if successful
+    """
+    last_error = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            settings = get_settings()
+            if not settings.llm_enabled:
+                logger.warning("[_build_llm_client_with_retry] LLM disabled")
+                return None, "llm_disabled"
+
+            client = build_llm_client(settings)
+            logger.info(
+                "[_build_llm_client_with_retry] Client created successfully "
+                "(attempt %d/%d), model=%s",
+                attempt, max_retries, settings.llm_model,
+            )
+            return client, None
+
+        except Exception as exc:
+            last_error = exc
+            logger.warning(
+                "[_build_llm_client_with_retry] Attempt %d/%d failed: %s: %s",
+                attempt, max_retries, type(exc).__name__, exc,
+            )
+
+            if attempt < max_retries:
+                time.sleep(LLM_RETRY_DELAY_S * attempt)
+
+    logger.error(
+        "[_build_llm_client_with_retry] All %d attempts failed: %s: %s",
+        max_retries, type(last_error).__name__, last_error,
+    )
+    return None, "connection_failed"
 
 
 def _make_fallback_meta(agent_role: str, model_name: str | None, client_existed: bool, error_type: str = "unknown") -> dict:
+    error_labels = {
+        "llm_disabled": "LLM 未启用",
+        "connection_failed": "大模型 API 连接失败",
+        "parse_failed": "LLM 输出格式解析失败",
+        "llm_call_error": "LLM 调用异常",
+        "llm_unavailable": "LLM 不可用",
+    }
     return {
         "agent_role": agent_role,
         "execution_mode": "rule",
@@ -56,13 +95,15 @@ def _make_fallback_meta(agent_role: str, model_name: str | None, client_existed:
         "schema_valid": True,
         "retry_count": 0,
         "llm_error": error_type,
+        "llm_error_label": error_labels.get(error_type, error_type),
     }
 
 
 def jd_parser(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -73,6 +114,7 @@ def jd_parser(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=JDParseOutput,
                 fallback=lambda: _jd_parse_fallback(state["raw_jd"]),
+                model_name=model_name,
             )
             jd_profile = _convert_jd_parse_output(result, state["raw_jd"])
             skills = [d["name"] for d in jd_profile.get("skill_dimensions", [])]
@@ -87,8 +129,10 @@ def jd_parser(state: CareerFitState) -> CareerFitState:
                 "[jd_parser] LLM JSON 格式错误（已连接但输出不符合 schema）: %s | errors=%s",
                 str(exc), exc.validation_errors[:3],
             )
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[jd_parser] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     jd_profile = parse_job_profile(state["raw_jd"])
     skills = jd_profile.get("required_skills", [])
@@ -96,7 +140,7 @@ def jd_parser(state: CareerFitState) -> CareerFitState:
     return {
         "jd_profile": jd_profile,
         "_summary": summary,
-        "_execution_meta": _make_fallback_meta("jd_parser", model_name, client is not None, "format_error" if client is not None else "llm_unavailable"),
+        "_execution_meta": _make_fallback_meta("jd_parser", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -122,19 +166,59 @@ def _jd_parse_fallback(raw_jd: str) -> JDParseOutput:
 
 
 def _convert_jd_parse_output(output: JDParseOutput, raw_jd: str) -> dict:
+    # 先用规则引擎解析，获取权重和证据
+    rule_based_profile = parse_job_profile(raw_jd)
+    rule_dimensions = {d["canonical_key"]: d for d in rule_based_profile.get("skill_dimensions", [])}
+    
+    # 构建名称到key的映射（用于LLM输出key不匹配时查找）
+    from app.services.job_service import SKILL_CATALOG
+    name_to_key = {item["name"].lower(): key for key, item in SKILL_CATALOG.items()}
+    alias_to_key = {}
+    for key, item in SKILL_CATALOG.items():
+        for alias in item.get("aliases", []):
+            alias_to_key[alias.lower()] = key
+    
+    def find_rule_key(llm_key: str, llm_name: str) -> str | None:
+        """根据LLM输出的key或name找到对应的规则引擎key"""
+        # 直接匹配
+        if llm_key in rule_dimensions:
+            return llm_key
+        # 按名称匹配
+        if llm_name.lower() in name_to_key:
+            return name_to_key[llm_name.lower()]
+        # 按别名匹配
+        if llm_key.lower() in alias_to_key:
+            return alias_to_key[llm_key.lower()]
+        if llm_name.lower() in alias_to_key:
+            return alias_to_key[llm_name.lower()]
+        return None
+    
     dimensions = []
     evidence_map = {}
     for dim in output.dimensions:
+        llm_key = dim.canonical_key
+        llm_name = dim.name
+        
+        # 尝试找到对应的规则引擎key
+        rule_key = find_rule_key(llm_key, llm_name)
+        
+        # 使用规则引擎的key（如果找到），否则使用LLM的key
+        canonical_key = rule_key if rule_key else llm_key
+        
+        # 使用规则引擎计算的权重（更合理），如果规则引擎没有该技能，则使用LLM的权重
+        rule_dim = rule_dimensions.get(canonical_key) if rule_key else None
+        weight = rule_dim["weight"] if rule_dim else dim.weight
+        
         dimensions.append({
             "name": dim.name,
-            "canonical_key": dim.canonical_key,
+            "canonical_key": canonical_key,
             "category": dim.category,
-            "weight": dim.weight,
+            "weight": weight,
             "required_level": dim.required_level,
             "jd_evidence": dim.jd_evidence,
             "aliases": dim.aliases,
         })
-        evidence_map[dim.canonical_key] = dim.jd_evidence
+        evidence_map[canonical_key] = dim.jd_evidence
 
     legacy_skills = [dim["name"] for dim in dimensions]
 
@@ -153,7 +237,8 @@ def _convert_jd_parse_output(output: JDParseOutput, raw_jd: str) -> dict:
 def resume_parser(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -164,6 +249,7 @@ def resume_parser(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=ResumeParseOutput,
                 fallback=lambda: _resume_parse_fallback(state["raw_resume"]),
+                model_name=model_name,
             )
             resume_profile = _convert_resume_parse_output(result, state["raw_resume"])
             skills = [s["skill_key"] for s in resume_profile.get("skills", [])]
@@ -177,8 +263,10 @@ def resume_parser(state: CareerFitState) -> CareerFitState:
             }
         except AgentLLMError as exc:
             logger.warning("[resume_parser] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[resume_parser] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     resume_profile = parse_resume_profile(state["raw_resume"])
     skills = []
@@ -196,14 +284,7 @@ def resume_parser(state: CareerFitState) -> CareerFitState:
     return {
         "resume_profile": resume_profile,
         "_summary": summary,
-        "_execution_meta": {
-            "agent_role": "resume_parser",
-            "execution_mode": "rule",
-            "model_name": model_name,
-            "fallback_used": client is not None,
-            "schema_valid": True,
-            "retry_count": 0,
-        },
+        "_execution_meta": _make_fallback_meta("resume_parser", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -226,23 +307,54 @@ def _resume_parse_fallback(raw_resume: str) -> ResumeParseOutput:
 
 
 def _convert_resume_parse_output(output: ResumeParseOutput, raw_resume: str) -> dict:
+    # 先用规则引擎解析，获取项目经验和证据
+    rule_based_profile = parse_resume_profile(raw_resume)
+    
+    # 构建名称到key的映射（用于LLM输出key不匹配时查找）
+    from app.services.job_service import SKILL_CATALOG
+    name_to_key = {item["name"].lower(): key for key, item in SKILL_CATALOG.items()}
+    alias_to_key = {}
+    for key, item in SKILL_CATALOG.items():
+        for alias in item.get("aliases", []):
+            alias_to_key[alias.lower()] = key
+    
+    def normalize_skill_key(llm_key: str) -> str:
+        """将LLM输出的skill_key标准化为规则引擎的key"""
+        if not llm_key:
+            return llm_key
+        # 直接匹配
+        if llm_key.lower() in name_to_key:
+            return name_to_key[llm_key.lower()]
+        if llm_key.lower() in alias_to_key:
+            return alias_to_key[llm_key.lower()]
+        return llm_key.lower().replace(" ", "_").replace("/", "_")
+    
     skills = []
-    evidence = {}
+    evidence = dict(rule_based_profile.get("evidence", {}))  # 从规则引擎获取证据
+    
     for item in output.skills:
+        normalized_key = normalize_skill_key(item.skill_key)
         skill_entry = {
-            "skill_key": item.skill_key,
+            "skill_key": normalized_key,
             "evidence": item.evidence,
             "expression_level": item.expression_level,
         }
         skills.append(skill_entry)
-        if item.skill_key:
-            evidence[item.skill_key] = item.evidence
+        # LLM 的证据可能更详细，优先使用 LLM 的，但保留规则引擎的证据作为补充
+        if normalized_key and item.evidence:
+            existing = evidence.get(normalized_key, [])
+            if isinstance(existing, list):
+                # 合并证据，去重
+                combined = list(dict.fromkeys(existing + list(item.evidence)))
+                evidence[normalized_key] = combined
+            else:
+                evidence[normalized_key] = list(item.evidence)
 
     return {
         "schema_version": "resume-profile-v2",
         "skills": skills,
-        "projects": [],
-        "domain_keywords": [],
+        "projects": rule_based_profile.get("projects", []),  # 使用规则引擎提取的项目
+        "domain_keywords": rule_based_profile.get("domain_keywords", []),
         "evidence": evidence,
     }
 
@@ -251,7 +363,8 @@ def rag_query_planner(state: CareerFitState) -> CareerFitState:
     jd_profile = state.get("jd_profile", {})
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -262,6 +375,7 @@ def rag_query_planner(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=RagQueryPlanOutput,  # type: ignore
                 fallback=lambda: _rag_query_plan_fallback(jd_profile),
+                model_name=model_name,
             )
             plan = [q.model_dump() if hasattr(q, "model_dump") else q for q in result.queries]
             return {
@@ -271,14 +385,16 @@ def rag_query_planner(state: CareerFitState) -> CareerFitState:
             }
         except AgentLLMError as exc:
             logger.warning("[rag_query_planner] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[rag_query_planner] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     plan = _rag_query_plan_fallback(jd_profile)
     return {
         "rag_query_plan": plan,
         "_summary": f"规划 {len(plan)} 条检索查询",
-        "_execution_meta": _make_fallback_meta("rag_query_planner", model_name, client is not None, "format_error" if client is not None else "llm_unavailable"),
+        "_execution_meta": _make_fallback_meta("rag_query_planner", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -433,10 +549,23 @@ def _local_resume_suggestions(state: CareerFitState) -> list[dict]:
 
 
 def _local_interview_questions(state: CareerFitState) -> list[dict]:
-    return [
-        {"skill": item["skill"], "question": f"请说明你在 {item['skill']} 上最具体的一次实践。"}
-        for item in state["match_result"]["score_items"]
-    ]
+    score_items = state.get("match_result", {}).get("score_items", [])
+    if score_items:
+        return [
+            {"skill": item["skill"], "question": f"请说明你在 {item['skill']} 上最具体的一次实践。"}
+            for item in score_items
+        ]
+
+    # Fallback for INTERVIEW_ONLY mode (no match_result available)
+    interview_input = state.get("_interview_input", {})
+    skills = interview_input.get("skills", [])
+    if skills:
+        return [
+            {"skill": s, "question": f"请详细说明你在 {s} 方面的技术深度和项目经验。"}
+            for s in skills
+        ]
+
+    return [{"skill": "general", "question": "请介绍你最自豪的技术项目。"}]
 
 
 def _local_learning_plan(state: CareerFitState) -> list[dict]:
@@ -467,7 +596,8 @@ def _local_next_best_action(state: CareerFitState) -> dict:
 def resume_optimizer(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -481,6 +611,7 @@ def resume_optimizer(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=ResumeSuggestionOutput,  # type: ignore
                 fallback=lambda: ResumeSuggestionOutput(suggestions=_local_resume_suggestions(state)),
+                model_name=model_name,
             )
             suggestions = _convert_resume_suggestions(result.suggestions, state)
             return {
@@ -490,14 +621,16 @@ def resume_optimizer(state: CareerFitState) -> CareerFitState:
             }
         except AgentLLMError as exc:
             logger.warning("[resume_optimizer] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[resume_optimizer] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     suggestions = _local_resume_suggestions(state)
     return {
         "resume_suggestions": suggestions,
         "_summary": f"生成 {len(suggestions)} 条优化建议",
-        "_execution_meta": _make_fallback_meta("resume_optimizer", model_name, client is not None, "format_error" if client is not None else "llm_unavailable"),
+        "_execution_meta": _make_fallback_meta("resume_optimizer", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -528,7 +661,8 @@ def _convert_resume_suggestions(suggestions: list, state: CareerFitState) -> lis
 def interview_coach(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -543,6 +677,7 @@ def interview_coach(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=InterviewQuestionOutput,  # type: ignore
                 fallback=lambda: InterviewQuestionOutput(questions=_local_interview_questions(state)),
+                model_name=model_name,
             )
             questions = _convert_interview_questions(result.questions)
             return {
@@ -552,14 +687,16 @@ def interview_coach(state: CareerFitState) -> CareerFitState:
             }
         except AgentLLMError as exc:
             logger.warning("[interview_coach] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[interview_coach] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     questions = _local_interview_questions(state)
     return {
         "interview_questions": questions,
         "_summary": f"生成 {len(questions)} 道面试题",
-        "_execution_meta": _make_fallback_meta("interview_coach", model_name, client is not None, "format_error" if client is not None else "llm_unavailable"),
+        "_execution_meta": _make_fallback_meta("interview_coach", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -584,7 +721,8 @@ def _convert_interview_questions(questions: list) -> list[dict]:
 def learning_planner(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -598,6 +736,7 @@ def learning_planner(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=LearningPlanOutput,  # type: ignore
                 fallback=lambda: LearningPlanOutput(tasks=_local_learning_plan(state)),
+                model_name=model_name,
             )
             plan = _convert_learning_tasks(result.tasks)
             return {
@@ -607,14 +746,16 @@ def learning_planner(state: CareerFitState) -> CareerFitState:
             }
         except AgentLLMError as exc:
             logger.warning("[learning_planner] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
             logger.warning("[learning_planner] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
 
     plan = _local_learning_plan(state)
     return {
         "learning_plan": plan,
         "_summary": f"生成 {len(plan)} 项学习任务",
-        "_execution_meta": _make_fallback_meta("learning_planner", model_name, client is not None, "format_error" if client is not None else "llm_unavailable"),
+        "_execution_meta": _make_fallback_meta("learning_planner", model_name, client is not None, fallback_error_type),
     }
 
 
@@ -639,7 +780,8 @@ def _convert_learning_tasks(tasks: list) -> list[dict]:
 def next_best_action(state: CareerFitState) -> CareerFitState:
     settings = get_settings()
     model_name = settings.llm_model
-    client = _build_llm_client_or_none()
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
 
     if client is not None:
         try:
@@ -653,6 +795,7 @@ def next_best_action(state: CareerFitState) -> CareerFitState:
                 prompt=prompt,
                 output_model=NextBestActionOutput,  # type: ignore
                 fallback=lambda: NextBestActionOutput(**_local_next_best_action(state)),
+                model_name=model_name,
             )
             nba = {
                 "title": result.title,
@@ -664,19 +807,16 @@ def next_best_action(state: CareerFitState) -> CareerFitState:
                 "_summary": nba["title"],
                 "_execution_meta": meta,
             }
+        except AgentLLMError as exc:
+            logger.warning("[next_best_action] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
         except Exception as exc:
-            logger.warning("下一步行动 LLM 调用失败，回退到规则引擎: %s", exc)
+            logger.warning("[next_best_action] LLM 调用失败，回退到规则引擎: %s", exc)
+            fallback_error_type = "llm_call_error"
 
     nba = _local_next_best_action(state)
     return {
         "next_best_action": nba,
         "_summary": nba["title"],
-        "_execution_meta": {
-            "agent_role": "next_best_action",
-            "execution_mode": "rule",
-            "model_name": model_name,
-            "fallback_used": client is not None,
-            "schema_valid": True,
-            "retry_count": 0,
-        },
+        "_execution_meta": _make_fallback_meta("next_best_action", model_name, client is not None, fallback_error_type),
     }

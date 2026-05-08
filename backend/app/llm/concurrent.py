@@ -21,11 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 def _strip_code_fence(text: str) -> str:
-    """移除 markdown code fence"""
-    match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    """移除 markdown code fence 和 LLM 思考标签"""
+    stripped = re.sub(r"<think[\s>].*?</think\s*>", "", text, flags=re.DOTALL)
+    match = re.search(r"```(?:json)?\s*(.*?)\s*```", stripped, re.DOTALL)
     if match:
         return match.group(1)
-    return text
+    return stripped.strip()
 
 
 async def _call_llm_async(

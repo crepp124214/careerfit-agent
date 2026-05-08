@@ -59,7 +59,7 @@ def get_llm_status():
             api_key=settings.llm_api_key,
             model=settings.llm_model,
             api_style=settings.llm_api_style,
-            timeout_seconds=LLM_STATUS_CHECK_TIMEOUT_SECONDS,
+            timeout_seconds=10,
         )
 
         response = client.complete(TEST_PROMPT)
@@ -98,6 +98,63 @@ def get_llm_status():
             connected=False,
             model_name=settings.llm_model,
             error=f"未知错误: {str(e)}",
+        )
+
+
+@router.get("/status/quick", response_model=LLMStatusResponse)
+def get_llm_status_quick():
+    """快速检测 LLM 状态（不实际调用 LLM，仅检查配置和连通性）"""
+    settings = get_settings()
+
+    if not settings.llm_enabled:
+        return LLMStatusResponse(
+            enabled=False,
+            configured=False,
+            connected=False,
+            error="LLM 功能未启用",
+        )
+
+    if not settings.llm_api_key or not settings.llm_model:
+        return LLMStatusResponse(
+            enabled=True,
+            configured=False,
+            connected=False,
+            error="缺少 API Key 或模型名称配置",
+        )
+
+    try:
+        import httpx
+        base_url = settings.llm_base_url or "https://api.openai.com/v1"
+        models_url = base_url.rstrip("/") + "/models"
+
+        with httpx.Client(timeout=5.0) as http_client:
+            resp = http_client.get(
+                models_url,
+                headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+            )
+
+        if resp.status_code == 200:
+            return LLMStatusResponse(
+                enabled=True,
+                configured=True,
+                connected=True,
+                model_name=settings.llm_model,
+            )
+        else:
+            return LLMStatusResponse(
+                enabled=True,
+                configured=True,
+                connected=False,
+                model_name=settings.llm_model,
+                error=f"API 返回 {resp.status_code}",
+            )
+    except Exception as e:
+        return LLMStatusResponse(
+            enabled=True,
+            configured=True,
+            connected=False,
+            model_name=settings.llm_model,
+            error=f"连接检查失败: {str(e)}",
         )
 
 

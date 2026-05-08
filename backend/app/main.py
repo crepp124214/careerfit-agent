@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.api.error_handlers import register_error_handlers
-from app.api.routes import agent_runs, analysis, interview, jobs, knowledge, learning, llm, reports, resumes, system
+from app.api.routes import agent_runs, analysis, interview, interview_routes, jobs, knowledge, learning, llm, reports, resumes, system
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -84,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(agent_runs.router)
     app.include_router(knowledge.router)
     app.include_router(interview.router)
+    app.include_router(interview_routes.router)  # 新增：独立面试功能 API
     app.include_router(learning.router)
     app.include_router(llm.router)
     app.include_router(system.router)

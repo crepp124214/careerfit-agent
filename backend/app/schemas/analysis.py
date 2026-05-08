@@ -8,6 +8,7 @@ from app.db.models import AnalysisStatus
 class AnalysisCreate(BaseModel):
     job_id: int = Field(..., gt=0, description="职位ID，必须为正整数")
     resume_id: int = Field(..., gt=0, description="简历ID，必须为正整数")
+    mode: str = Field(default="full_analysis", description="分析模式: lite_analysis 或 full_analysis")
 
     @field_validator("job_id")
     @classmethod

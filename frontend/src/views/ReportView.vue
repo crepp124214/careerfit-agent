@@ -15,7 +15,6 @@ import ResumeSuggestionReview from '@/components/report/ResumeSuggestionReview.v
 import ScoreDimensionGrid from '@/components/report/ScoreDimensionGrid.vue'
 import EvidenceChainTable from '@/components/report/EvidenceChainTable.vue'
 import InterviewQuestionCard from '@/components/report/InterviewQuestionCard.vue'
-import LearningPathTimeline from '@/components/report/LearningPathTimeline.vue'
 import AgentTraceTimeline from '@/components/report/AgentTraceTimeline.vue'
 
 const route = useRoute()
@@ -139,6 +138,10 @@ watch(
     />
 
     <template v-else-if="hasReport">
+      <div v-if="analyses.report?.mode" class="report-view__mode-badge animate-in">
+        {{ analyses.report.mode === 'lite_analysis' ? '快速分析' : '完整分析' }}
+      </div>
+
       <NextBestActionCallout
         v-if="analyses.report!.nextBestAction"
         class="report-view__nba animate-in animate-in-stagger-1"
@@ -326,11 +329,6 @@ watch(
                 </button>
               </div>
             </section>
-
-            <section v-if="(analyses.report!.learningPlan?.length ?? 0) > 0" class="report-view__learning" aria-label="学习路径">
-              <h3 class="report-view__section-title">学习路径</h3>
-              <LearningPathTimeline :items="analyses.report!.learningPlan" />
-            </section>
           </div>
         </Transition>
       </div>
@@ -364,6 +362,20 @@ watch(
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-md);
+}
+
+.report-view__mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 12px;
+  font-size: var(--font-caption-size);
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--rounded-full);
+  width: fit-content;
 }
 
 .report-view__export {

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any, Callable, TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -27,11 +28,32 @@ def _repair_prompt(text: str, schema_hint: str = "") -> str:
 
 def _extract_json(text: str) -> str:
     text = text.strip()
+    text = _strip_think_tags(text)
+    text = text.strip()
+    code_fence = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    if code_fence:
+        return code_fence.group(1).strip()
     if text.startswith("```"):
         lines = text.split("\n")
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
     return text
+
+
+def _strip_think_tags(text: str) -> str:
+    """移除 LLM 输出中的 <think...>...</think > 思考标签（如 MiniMax-M2.5 的推理输出）"""
+    import re
+    stripped = re.sub(r"<think[\s>].*?</think\s*>", "", text, flags=re.DOTALL)
+    if stripped.strip() != text.strip():
+        logger.info("[_strip_think_tags] Removed <think...> tags from LLM output")
+        return stripped
+    if stripped.strip().startswith("<think"):
+        json_match = re.search(r"[\[\{]", stripped)
+        if json_match:
+            result = stripped[json_match.start():]
+            logger.info("[_strip_think_tags] Unclosed <think tag, extracted JSON from position %d", json_match.start())
+            return result
+    return stripped
 
 
 class AgentLLMError(Exception):

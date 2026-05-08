@@ -12,7 +12,7 @@ export interface LLMStatus {
 export async function fetchLLMStatus(): Promise<
   { ok: true; status: LLMStatus } | { ok: false; error: string }
 > {
-  const res = await requestJson<LLMStatus>('/llm/status')
+  const res = await requestJson<LLMStatus>('/llm/status/quick')
   if (!res.ok) {
     return { ok: false, error: res.message }
   }

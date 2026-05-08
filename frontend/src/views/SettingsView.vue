@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { usePreferencesStore, type Theme, type Density } from '@/stores/preferences'
 import { fetchLLMStatus, type LLMStatus } from '@/api/llm'
+import { requestJson } from '@/api/client'
 
 const prefs = usePreferencesStore()
 
@@ -20,7 +21,7 @@ const llmStatus = ref<LLMStatus | null>(null)
 const llmLoading = ref(false)
 const llmError = ref<string | null>(null)
 
-async function testLLMConnection() {
+async function quickCheckLLM() {
   llmLoading.value = true
   llmError.value = null
   const res = await fetchLLMStatus()
@@ -32,8 +33,20 @@ async function testLLMConnection() {
   llmLoading.value = false
 }
 
+async function testLLMConnection() {
+  llmLoading.value = true
+  llmError.value = null
+  const res = await requestJson<LLMStatus>('/llm/status')
+  if (res.ok) {
+    llmStatus.value = res.data
+  } else {
+    llmError.value = res.message
+  }
+  llmLoading.value = false
+}
+
 onMounted(() => {
-  testLLMConnection()
+  quickCheckLLM()
 })
 </script>
 

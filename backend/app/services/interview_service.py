@@ -14,6 +14,7 @@ from app.db.models import (
     InterviewSession,
     InterviewSessionStatus,
 )
+from app.schemas.interview import InterviewQuestionRead
 from app.core.config import get_settings
 from app.llm.agent_schemas import AnswerScoreOutput
 from app.llm.agent_service import run_structured_agent
@@ -224,6 +225,309 @@ def update_question(
     db.commit()
     db.refresh(question)
     return question
+
+
+# ========== 新增：独立面试功能服务层（支持多模式工作流）==========
+
+import logging
+from typing import List, Optional
+
+from app.agents.langgraph_runner import LangGraphRunner
+from app.agents.workflow_mode import WorkflowMode
+
+logger = logging.getLogger(__name__)
+
+
+class InterviewService:
+    """
+    独立面试功能服务层 - 支持智能引用机制
+    
+    职责：
+    1. 封装独立面试题生成的业务逻辑
+    2. 处理输入验证和数据转换
+    3. 支持从分析报告引用上下文
+    4. 管理面试题会话
+    """
+
+    def __init__(self):
+        self._runner_cache = {}
+
+    async def generate_questions(self, request, db: Session) -> dict:
+        """
+        生成面试题（支持引用分析报告）
+        
+        支持两种模式：
+        1. 引用模式：提供 source_report_id，自动从报告中提取 JD/简历/技能
+        2. 手动模式：直接提供 skills, jd_context, resume_context
+        
+        双数据源策略：
+        - technical/behavioral/scenario → 基于 JD 生成
+        - project_deep_dive → 基于简历生成
+        """
+        from app.schemas.interview import InterviewQuestionGenerateRequest, InterviewQuestionRead
+        
+        if request.source_report_id:
+            logger.info(f"[InterviewService] 使用引用模式: report_id={request.source_report_id}")
+            report = self._get_report(db, request.source_report_id)
+            if not report:
+                raise ValueError(f"找不到分析报告: {request.source_report_id}")
+            
+            # 从报告中自动提取上下文
+            skills = request.skills or self._extract_skills(report)
+            target_job = getattr(report.task.job, 'title', '') if report.task and hasattr(report.task, 'job') and report.task.job else ""
+            
+            # 提取 JD 和简历文本
+            jd_context = request.jd_context or ""
+            resume_context = request.resume_context or ""
+            
+            # 尝试从任务对象获取原始文本
+            if not jd_context and report.task and hasattr(report.task, 'job') and report.task.job:
+                jd_context = getattr(report.task.job, 'raw_text', "") or ""
+            if not resume_context and report.task and hasattr(report.task, 'resume') and report.task.resume:
+                resume_context = getattr(report.task.resume, 'raw_text', "") or ""
+            
+            context = {
+                "skills": skills,
+                "target_job": target_job,
+                "jd_context": jd_context,
+                "resume_context": resume_context,
+                "source": f"report_{request.source_report_id}",
+            }
+            logger.info(f"[InterviewService] 从报告 #{request.source_report_id} 自动提取上下文: skills={len(skills)}项")
+            
+        else:
+            logger.info("[InterviewService] 使用手动模式")
+            context = {
+                "skills": request.skills or [],
+                "target_job": getattr(request, 'target_job', '') or "",
+                "jd_context": getattr(request, 'jd_context', '') or "",
+                "resume_context": getattr(request, 'resume_context', '') or "",
+                "source": "manual",
+            }
+        
+        # 构建初始状态（独立模式）
+        question_types = getattr(request, 'question_types', None) or ["technical", "behavioral", "scenario", "project_deep_dive"]
+        difficulty = getattr(request, 'difficulty', 'mixed')
+        count = getattr(request, 'count', 10)
+        
+        initial_state = {
+            "_interview_input": {
+                **context,
+                "question_types": question_types,
+                "difficulty": difficulty,
+                "count": count,
+            }
+        }
+        
+        try:
+            logger.info("[InterviewService] Starting INTERVIEW_ONLY workflow...")
+            runner = LangGraphRunner(mode=WorkflowMode.INTERVIEW_ONLY)
+            result_state, trace = runner.run(initial_state)
+
+            questions = result_state.get("interview_questions", [])
+
+            if not questions:
+                logger.warning("[InterviewService] Workflow completed but no questions generated, using fallback")
+                questions = self._generate_fallback_questions(context)
+
+            question_list = []
+            for i, q in enumerate(questions):
+                if isinstance(q, dict):
+                    question_list.append(InterviewQuestionRead(
+                        id=q.get("id", i + 1),
+                        skill=q.get("skill", ""),
+                        category=q.get("type", "technical"),
+                        difficulty=q.get("difficulty", "medium"),
+                        question=q.get("question", ""),
+                        source=q.get("source", "unknown"),
+                        what_it_tests=q.get("what_it_tests"),
+                        ideal_answer_hints=q.get("ideal_answer_hints"),
+                        follow_up_suggestions=q.get("follow_up_suggestions"),
+                        created_at=None,
+                    ))
+
+            logger.info(f"[InterviewService] 成功生成 {len(question_list)} 道题目")
+
+            return {
+                "questions": [q.model_dump() for q in question_list],
+                "session_id": None,
+                "metadata": {
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "source": context.get("source", "manual"),
+                    "mode": "INTERVIEW_ONLY",
+                    "trace_nodes": len(trace) if trace else 0,
+                },
+            }
+
+        except Exception as exc:
+            logger.error(f"[InterviewService] 生成题目失败: {type(exc).__name__}: {exc}", exc_info=True)
+            logger.info("[InterviewService] Using fallback question generation...")
+            
+            fallback_questions = self._generate_fallback_questions(context)
+            
+            return {
+                "questions": [q.model_dump() for q in fallback_questions],
+                "session_id": None,
+                "metadata": {
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "source": context.get("source", "manual"),
+                    "mode": "FALLBACK",
+                    "error": str(exc),
+                    "trace_nodes": 0,
+                },
+            }
+
+    async def generate_prep_plan(self, request, db: Session) -> dict:
+        """
+        基于选定题目生成准备计划
+        
+        支持两种模式：
+        1. 引用会话：提供 source_session_id，从已保存的题目中选取
+        2. 手动模式：直接提供 selected_questions 列表
+        """
+        selected_questions = []
+        
+        # 尝试从会话获取题目
+        session_id = getattr(request, 'source_session_id', None)
+        if session_id:
+            session = self._get_session(db, session_id)
+            if session and hasattr(session, 'questions'):
+                question_ids = getattr(request, 'question_ids', None) or []
+                if question_ids:
+                    selected_questions = [
+                        {
+                            "id": q.id,
+                            "skill": q.skill,
+                            "question": q.question,
+                            "category": q.category.value if hasattr(q.category, 'value') else str(q.category),
+                            "difficulty": q.difficulty.value if hasattr(q.difficulty, 'value') else str(q.difficulty),
+                        }
+                        for q in session.questions
+                        if q.id in question_ids
+                    ]
+                else:
+                    selected_questions = [
+                        {
+                            "id": q.id,
+                            "skill": q.skill,
+                            "question": q.question,
+                            "category": q.category.value if hasattr(q.category, 'value') else str(q.category),
+                            "difficulty": q.difficulty.value if hasattr(q.difficulty, 'value') else str(q.difficulty),
+                        }
+                        for q in session.questions
+                    ]
+        
+        # 如果没有从会话获取到，尝试手动列表
+        if not selected_questions and hasattr(request, 'selected_questions') and request.selected_questions:
+            selected_questions = request.selected_questions
+        
+        if not selected_questions:
+            raise ValueError("未提供有效的题目列表或会话ID")
+        
+        prep_depth = getattr(request, 'prep_depth', 'standard')
+        
+        # 构建 PREP_ONLY 模式的初始状态
+        initial_state = {
+            "interview_questions": selected_questions,
+            "_prep_input": {
+                "selected_questions": selected_questions,
+                "prep_depth": prep_depth,
+            }
+        }
+        
+        try:
+            # 运行 PREP_ONLY 模式
+            runner = LangGraphRunner(mode=WorkflowMode.PREP_ONLY)
+            result_state, trace = runner.run(initial_state)
+            
+            prep_plans = result_state.get("learning_plan", [])
+            
+            logger.info(f"[InterviewService] 成功生成 {len(prep_plans)} 份准备计划")
+            
+            return {
+                "prep_plans": prep_plans,
+                "metadata": {
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "based_on_questions": len(selected_questions),
+                    "mode": "PREP_ONLY",
+                },
+            }
+            
+        except Exception as exc:
+            logger.error(f"[InterviewService] 生成准备计划失败: {type(exc).__name__}: {exc}", exc_info=True)
+            raise ValueError(f"生成准备计划失败: {str(exc)}")
+
+    def _get_report(self, db: Session, report_id: int):
+        """查询数据库获取分析报告"""
+        from app.db.models import AnalysisReport
+        return db.query(AnalysisReport).filter(AnalysisReport.id == report_id).first()
+
+    def _extract_skills(self, report) -> List[str]:
+        """从 match_result 中提取技能列表"""
+        score_items = []
+        if hasattr(report, 'score_breakdown') and isinstance(report.score_breakdown, dict):
+            score_items = report.score_breakdown.get("score_items", [])
+        elif hasattr(report, 'match_result') and isinstance(report.match_result, dict):
+            score_items = report.match_result.get("score_items", [])
+        
+        skills = list(set(
+            item.get("skill", item.get("skill_key", ""))
+            for item in score_items
+            if item and (item.get("skill") or item.get("skill_key"))
+        ))
+        return skills
+
+    def _get_session(self, db: Session, session_id: int):
+        """获取已保存的会话"""
+        return db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+
+    def _generate_fallback_questions(self, context: dict) -> List[InterviewQuestionRead]:
+        """
+        Fallback 题目生成（当 LLM 不可用时使用）
+        
+        基于技能列表生成通用面试题
+        """
+        skills = context.get("skills", [])
+        jd_context = context.get("jd_context", "")
+        resume_context = context.get("resume_context", "")
+        
+        fallback_questions = []
+        
+        for i, skill in enumerate(skills[:10], start=1):
+            if skill.lower() in ["python", "java", "javascript", "typescript"]:
+                question = f"请描述你在 {skill} 项目中的经验，并解释你如何处理代码质量和性能优化？"
+                what_it_tests = [f"{skill} 熟练度", "项目经验", "问题解决能力"]
+            elif skill.lower() in ["react", "vue", "angular", "前端"]:
+                question = f"请介绍一个你使用前端框架开发的复杂组件，说明你的设计思路和技术选型？"
+                what_it_tests = ["前端框架熟练度", "组件设计能力", "技术决策"]
+            elif skill.lower() in ["机器学习", "深度学习", "ml", "ai"]:
+                question = f"请描述你在 {skill} 方面的项目经验，包括数据预处理、模型选择和评估方法？"
+                what_it_tests = [f"{skill} 理论基础", "实践经验", "工程化能力"]
+            else:
+                question = f"请详细说明你在 {skill} 方面的技术栈和实践经验？"
+                what_it_tests = [f"{skill} 技术深度", "实际应用", "持续学习"]
+            
+            source = "jd_based" if jd_context else ("resume_based" if resume_context else "unknown")
+            
+            fallback_questions.append(InterviewQuestionRead(
+                id=i,
+                skill=skill,
+                category="technical",
+                difficulty="medium",
+                question=question,
+                source=source,
+                what_it_tests=what_it_tests,
+                ideal_answer_hints=None,
+                follow_up_suggestions=None,
+                created_at=None,
+            ))
+        
+        logger.info(f"[InterviewService] Generated {len(fallback_questions)} fallback questions")
+        return fallback_questions
+
+
+# 创建全局实例（供路由层使用）
+interview_service = InterviewService()
 
 
 def score_answer(question: InterviewQuestion, answer_text: str) -> dict:

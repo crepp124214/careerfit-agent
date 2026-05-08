@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -157,6 +157,15 @@ class LearningTask(Base):
         Enum(LearningTaskStatus), nullable=False, default=LearningTaskStatus.not_started
     )
     evidence_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    
+    # 面试准备计划特有字段（可选）
+    skill: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    target_question: Mapped[str | None] = mapped_column(Text, nullable=True)
+    specific_actions: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    time_investment: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    expected_outcome: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_interview_prep: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    
     task_metadata: Mapped[dict] = mapped_column(
         "metadata", JSON, nullable=False, default=lambda: {"schema_version": "1"}
     )

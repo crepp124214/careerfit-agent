@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import Callable
 from copy import deepcopy
@@ -12,6 +13,10 @@ from langgraph.graph import StateGraph
 from app.agents import nodes
 from app.agents.graph import LLM_NODES, NODE_LABELS, NODE_SEQUENCE, redact_state, _make_event
 from app.agents.state import CareerFitState
+from app.agents.workflow_mode import WorkflowMode, MODE_CONFIG
+
+
+logger = logging.getLogger(__name__)
 
 
 class LangGraphRunner:
@@ -19,10 +24,12 @@ class LangGraphRunner:
         self,
         *,
         task_id: int = 0,
+        mode: WorkflowMode = WorkflowMode.FULL_ANALYSIS,
         on_event: Callable[[dict[str, Any]], None] | None = None,
         on_node_complete: Callable[[dict[str, Any]], None] | None = None,
     ):
         self.task_id = task_id
+        self.mode = mode
         self.on_event = on_event
         self.on_node_complete = on_node_complete
         self.trace: list[dict[str, Any]] = []
@@ -179,6 +186,7 @@ class LangGraphRunner:
                 (datetime.now(timezone.utc) - llm_connection_started_at).total_seconds() * 1000
             )
         if fallback_used:
+            error_label = execution_meta.get("llm_error_label", "LLM 不可用")
             self.on_event(
                 _make_event(
                     "llm_failed",
@@ -187,7 +195,7 @@ class LangGraphRunner:
                     node_index=node_index,
                     total_nodes=total,
                     model_name=model_name,
-                    error="LLM 不可用，回退到规则引擎",
+                    error=f"{error_label}，回退到规则引擎",
                     fallback_used=True,
                     connection_duration_ms=connection_duration_ms,
                 )
@@ -240,15 +248,47 @@ class LangGraphRunner:
             return ["resume_optimizer", "interview_coach", "learning_planner"]
         return ["next_best_action"]
 
+    def _parse_router(self, state: CareerFitState) -> list[str]:
+        return ["jd_parser", "resume_parser"]
+
     def build_graph(self) -> Any:
         builder = StateGraph(CareerFitState)
 
+        if self.mode == WorkflowMode.FULL_ANALYSIS:
+            self._build_full_analysis_graph(builder)
+        elif self.mode == WorkflowMode.LITE_ANALYSIS:
+            self._build_lite_analysis_graph(builder)
+        elif self.mode == WorkflowMode.INTERVIEW_ONLY:
+            self._build_interview_only_graph(builder)
+        elif self.mode == WorkflowMode.INTERVIEW_WITH_PREP:
+            self._build_interview_with_prep_graph(builder)
+        elif self.mode == WorkflowMode.PREP_ONLY:
+            self._build_prep_only_graph(builder)
+        else:
+            logger.warning(f"[LangGraphRunner] Unknown mode: {self.mode}, falling back to FULL_ANALYSIS")
+            self._build_full_analysis_graph(builder)
+
+        checkpointer = MemorySaver()
+        self._compiled = builder.compile(checkpointer=checkpointer)
+        return self._compiled
+
+    def _build_full_analysis_graph(self, builder: StateGraph) -> None:
         node_names = [n for n, _ in NODE_SEQUENCE]
         for node_name in node_names:
             builder.add_node(node_name, self._make_wrapped_node(node_name))
 
-        builder.set_entry_point("jd_parser")
-        builder.add_edge("jd_parser", "resume_parser")
+        builder.set_entry_point("start_parse")
+
+        def start_parse(state: CareerFitState) -> dict:
+            return {}
+
+        builder.add_node("start_parse", start_parse)
+        builder.add_conditional_edges(
+            "start_parse",
+            self._parse_router,
+        )
+
+        builder.add_edge("jd_parser", "rag_query_planner")
         builder.add_edge("resume_parser", "rag_query_planner")
         builder.add_edge("rag_query_planner", "rag_retriever")
         builder.add_edge("rag_retriever", "match_scorer")
@@ -265,9 +305,43 @@ class LangGraphRunner:
 
         builder.set_finish_point("next_best_action")
 
-        checkpointer = MemorySaver()
-        self._compiled = builder.compile(checkpointer=checkpointer)
-        return self._compiled
+    def _build_lite_analysis_graph(self, builder: StateGraph) -> None:
+        nodes = MODE_CONFIG[WorkflowMode.LITE_ANALYSIS]["nodes"]
+
+        for node_name in nodes:
+            if node_name == "start_parse":
+                def start_parse(state: CareerFitState) -> dict:
+                    return {}
+                builder.add_node(node_name, start_parse)
+            else:
+                builder.add_node(node_name, self._make_wrapped_node(node_name))
+
+        builder.set_entry_point("start_parse")
+        builder.add_conditional_edges("start_parse", self._parse_router)
+        builder.add_edge("jd_parser", "rag_query_planner")
+        builder.add_edge("resume_parser", "rag_query_planner")
+        builder.add_edge("rag_query_planner", "rag_retriever")
+        builder.add_edge("rag_retriever", "match_scorer")
+        builder.add_edge("match_scorer", "gap_analyzer")
+        builder.add_edge("gap_analyzer", "next_best_action")
+        builder.set_finish_point("next_best_action")
+
+    def _build_interview_only_graph(self, builder: StateGraph) -> None:
+        builder.add_node("interview_coach", self._make_wrapped_node("interview_coach"))
+        builder.set_entry_point("interview_coach")
+        builder.set_finish_point("interview_coach")
+
+    def _build_interview_with_prep_graph(self, builder: StateGraph) -> None:
+        builder.add_node("interview_coach", self._make_wrapped_node("interview_coach"))
+        builder.add_node("learning_planner", self._make_wrapped_node("learning_planner"))
+        builder.set_entry_point("interview_coach")
+        builder.add_edge("interview_coach", "learning_planner")
+        builder.set_finish_point("learning_planner")
+
+    def _build_prep_only_graph(self, builder: StateGraph) -> None:
+        builder.add_node("learning_planner", self._make_wrapped_node("learning_planner"))
+        builder.set_entry_point("learning_planner")
+        builder.set_finish_point("learning_planner")
 
     def _emit_workflow_completed(self, state: CareerFitState, total_duration_ms: int) -> None:
         if not self.on_event:
@@ -310,11 +384,14 @@ def run_workflow_langgraph(
     initial_state: CareerFitState,
     *,
     task_id: int = 0,
+    mode: str = "full_analysis",
     on_event: Callable[[dict[str, Any]], None] | None = None,
     on_node_complete: Callable[[dict[str, Any]], None] | None = None,
 ) -> tuple[CareerFitState, list[dict]]:
+    workflow_mode = WorkflowMode(mode)
     runner = LangGraphRunner(
         task_id=task_id,
+        mode=workflow_mode,
         on_event=on_event,
         on_node_complete=on_node_complete,
     )

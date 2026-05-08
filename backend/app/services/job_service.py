@@ -33,70 +33,231 @@ KNOWN_SKILLS = [
 ]
 
 SKILL_CATALOG = {
+    # 编程语言
+    "python": {
+        "name": "Python",
+        "category": "programming",
+        "aliases": ["Python", "pandas", "NumPy", "数据处理", "PyTorch", "TensorFlow"],
+    },
+    "java": {
+        "name": "Java",
+        "category": "programming",
+        "aliases": ["Java", "JVM", "Spring Boot", "Spring", "SpringMVC", "Java EE", "Jakarta EE"],
+    },
+    "golang": {
+        "name": "Go",
+        "category": "programming",
+        "aliases": ["Go", "Golang", "Go语言"],
+    },
+    "javascript": {
+        "name": "JavaScript",
+        "category": "programming",
+        "aliases": ["JavaScript", "JS", "ES6", "Node.js", "Nodejs"],
+    },
+    "typescript": {
+        "name": "TypeScript",
+        "category": "programming",
+        "aliases": ["TypeScript", "TS"],
+    },
+    "cpp": {
+        "name": "C++",
+        "category": "programming",
+        "aliases": ["C++", "CPP", "C/C++", "STL"],
+    },
+    "csharp": {
+        "name": "C#",
+        "category": "programming",
+        "aliases": ["C#", "CSharp", ".NET", "ASP.NET"],
+    },
+    "rust": {
+        "name": "Rust",
+        "category": "programming",
+        "aliases": ["Rust"],
+    },
+    # 后端框架
     "fastapi": {
         "name": "FastAPI",
         "category": "backend",
         "aliases": ["FastAPI"],
     },
+    "django": {
+        "name": "Django",
+        "category": "backend",
+        "aliases": ["Django", "Django REST Framework", "DRF"],
+    },
+    "flask": {
+        "name": "Flask",
+        "category": "backend",
+        "aliases": ["Flask"],
+    },
+    "spring": {
+        "name": "Spring",
+        "category": "backend",
+        "aliases": ["Spring", "Spring Boot", "Spring Cloud", "SpringMVC"],
+    },
+    "express": {
+        "name": "Express",
+        "category": "backend",
+        "aliases": ["Express", "Express.js"],
+    },
+    # 数据库
+    "postgresql": {
+        "name": "PostgreSQL",
+        "category": "database",
+        "aliases": ["PostgreSQL", "Postgres", "PG"],
+    },
+    "mysql": {
+        "name": "MySQL",
+        "category": "database",
+        "aliases": ["MySQL", "MariaDB"],
+    },
+    "mongodb": {
+        "name": "MongoDB",
+        "category": "database",
+        "aliases": ["MongoDB", "Mongo", "NoSQL"],
+    },
+    "redis": {
+        "name": "Redis",
+        "category": "database",
+        "aliases": ["Redis", "缓存", "cache"],
+    },
+    "sql": {
+        "name": "SQL",
+        "category": "database",
+        "aliases": ["SQL", "数据库查询", "多表关联", "窗口函数", "数据提取", "数据库设计", "索引优化"],
+    },
+    "elasticsearch": {
+        "name": "Elasticsearch",
+        "category": "database",
+        "aliases": ["Elasticsearch", "ES", "搜索引擎", "ELK"],
+    },
+    # ORM
     "sqlalchemy": {
         "name": "SQLAlchemy",
         "category": "backend",
-        "aliases": ["SQLAlchemy"],
+        "aliases": ["SQLAlchemy", "ORM"],
     },
-    "postgresql": {
-        "name": "PostgreSQL",
-        "category": "backend",
-        "aliases": ["PostgreSQL"],
-    },
-    "python": {
-        "name": "Python",
-        "category": "programming",
-        "aliases": ["Python", "pandas", "NumPy", "数据处理"],
+    # 前端框架
+    "react": {
+        "name": "React",
+        "category": "frontend",
+        "aliases": ["React", "React.js", "ReactJS", "Next.js"],
     },
     "vue": {
         "name": "Vue",
         "category": "frontend",
-        "aliases": ["Vue", "Vue.js"],
+        "aliases": ["Vue", "Vue.js", "VueJS", "Vue3", "Nuxt.js"],
     },
-    "typescript": {
-        "name": "TypeScript",
+    "angular": {
+        "name": "Angular",
         "category": "frontend",
-        "aliases": ["TypeScript"],
+        "aliases": ["Angular"],
     },
+    # DevOps / 云原生
     "docker": {
         "name": "Docker",
         "category": "devops",
-        "aliases": ["Docker"],
+        "aliases": ["Docker", "容器化", "container"],
     },
-    "sql": {
-        "name": "SQL",
-        "category": "data_analysis",
-        "aliases": ["SQL", "数据库查询", "多表关联", "窗口函数", "数据提取"],
+    "kubernetes": {
+        "name": "Kubernetes",
+        "category": "devops",
+        "aliases": ["Kubernetes", "K8s", "容器编排"],
+    },
+    "aws": {
+        "name": "AWS",
+        "category": "cloud",
+        "aliases": ["AWS", "Amazon Web Services", "EC2", "S3", "Lambda"],
+    },
+    "aliyun": {
+        "name": "阿里云",
+        "category": "cloud",
+        "aliases": ["阿里云", "Aliyun", "ECS", "OSS", "RDS"],
+    },
+    "ci_cd": {
+        "name": "CI/CD",
+        "category": "devops",
+        "aliases": ["CI/CD", "Jenkins", "GitLab CI", "GitHub Actions", "持续集成", "持续部署"],
+    },
+    "git": {
+        "name": "Git",
+        "category": "devops",
+        "aliases": ["Git", "版本控制", "GitFlow"],
+    },
+    "linux": {
+        "name": "Linux",
+        "category": "devops",
+        "aliases": ["Linux", "Shell", "Bash", "运维", "系统管理"],
+    },
+    # 数据科学 / AI
+    "machine_learning": {
+        "name": "机器学习",
+        "category": "ai",
+        "aliases": ["机器学习", "特征分析", "模型", "算法", "ML", "scikit-learn"],
+    },
+    "deep_learning": {
+        "name": "深度学习",
+        "category": "ai",
+        "aliases": ["深度学习", "Deep Learning", "神经网络", "CNN", "RNN", "Transformer"],
+    },
+    "data_analysis": {
+        "name": "数据分析",
+        "category": "data",
+        "aliases": ["数据分析", "数据挖掘", "数据清洗", "ETL", "数据工程"],
     },
     "data_visualization": {
         "name": "数据可视化",
-        "category": "data_analysis",
-        "aliases": ["数据可视化", "Tableau", "Power BI", "ECharts", "看板", "图表"],
+        "category": "data",
+        "aliases": ["数据可视化", "Tableau", "Power BI", "ECharts", "看板", "图表", "matplotlib"],
     },
     "statistics": {
         "name": "统计方法",
-        "category": "statistics",
+        "category": "data",
         "aliases": ["统计", "显著性", "置信区间", "假设检验", "统计检验", "statistical", "statistics", "hypothesis testing", "regression"],
     },
     "ab_testing": {
         "name": "A/B 测试",
-        "category": "statistics",
-        "aliases": ["A/B 测试", "AB 测试", "实验设计", "对照实验", "A/B test", "A/B tests", "AB test", "AB tests", "A/B testing", "AB testing"],
+        "category": "data",
+        "aliases": ["A/B 测试", "AB 测试", "实验设计", "对照实验", "A/B test", "AB test", "A/B testing", "AB testing"],
     },
-    "machine_learning": {
-        "name": "机器学习",
-        "category": "machine_learning",
-        "aliases": ["机器学习", "特征分析", "模型", "算法"],
+    # 大模型 / AI 工程
+    "llm": {
+        "name": "大语言模型",
+        "category": "ai",
+        "aliases": ["LLM", "大语言模型", "大模型", "GPT", "ChatGPT", "Claude"],
     },
+    "rag": {
+        "name": "RAG",
+        "category": "ai",
+        "aliases": ["RAG", "检索增强生成", "向量检索", "embedding"],
+    },
+    "langchain": {
+        "name": "LangChain",
+        "category": "ai",
+        "aliases": ["LangChain", "LangGraph"],
+    },
+    "prompt_engineering": {
+        "name": "Prompt Engineering",
+        "category": "ai",
+        "aliases": ["Prompt Engineering", "提示工程", "Prompt"],
+    },
+    # 测试
+    "testing": {
+        "name": "软件测试",
+        "category": "quality",
+        "aliases": ["测试", "pytest", "单元测试", "集成测试", "自动化测试", "Selenium", "Cypress"],
+    },
+    # 业务
     "business_analysis": {
         "name": "业务分析",
         "category": "business",
-        "aliases": ["业务分析", "转化率", "留存", "增长", "指标体系"],
+        "aliases": ["业务分析", "转化率", "留存", "增长", "指标体系", "产品经理", "PM"],
+    },
+    # 安全
+    "security": {
+        "name": "安全",
+        "category": "security",
+        "aliases": ["安全", "网络安全", "信息安全", "渗透测试", "加密", "认证", "授权", "OAuth", "JWT"],
     },
 }
 
@@ -172,9 +333,42 @@ def parse_job_profile(raw_text: str) -> dict[str, Any]:
                 "aliases": item["aliases"],
             })
 
-    normalized_weight = 1 / len(dimensions) if dimensions else 0
+    # 根据技能在JD中的重要性分配权重
+    # 核心技能（明确强调、多次提及）权重更高
+    # 次要技能（顺带提及、可选要求）权重更低
     for dimension in dimensions:
-        dimension["weight"] = normalized_weight
+        key = dimension["canonical_key"]
+        jd_evidence = dimension.get("jd_evidence", [])
+        evidence_count = len(jd_evidence)
+        
+        # 检查是否是核心要求（有"熟练掌握"、"精通"、"必须"等强调词）
+        joined_evidence = " ".join(jd_evidence).lower()
+        is_core = any(term in joined_evidence for term in [
+            "熟练", "精通", "掌握", "必须", "必备", "核心", "重点",
+            "proficient", "master", "expert", "required", "essential", "core", "key"
+        ])
+        
+        # 检查是否是可选要求
+        is_optional = any(term in joined_evidence for term in [
+            "了解", "熟悉", "加分", "优先", "optional", "preferred", "plus", "bonus", "nice to have"
+        ])
+        
+        if is_core:
+            base_weight = 1.0
+        elif is_optional:
+            base_weight = 0.4
+        else:
+            base_weight = 0.7
+        
+        # 根据提及次数微调
+        mention_bonus = min(0.2, (evidence_count - 1) * 0.1)
+        dimension["weight"] = min(1.0, base_weight + mention_bonus)
+    
+    # 归一化权重，使总和为1
+    total_weight = sum(d["weight"] for d in dimensions)
+    if total_weight > 0:
+        for dimension in dimensions:
+            dimension["weight"] = dimension["weight"] / total_weight
 
     legacy_skills = [dimension["name"] for dimension in dimensions]
     job_family = "data_analysis" if any(

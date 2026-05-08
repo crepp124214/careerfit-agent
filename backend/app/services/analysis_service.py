@@ -105,9 +105,10 @@ def _execute_analysis_core(
     rag_results: dict,
     db: Session,
     on_event: Callable[[dict], None] | None = None,
+    mode: str = "full_analysis",
 ) -> None:
     """执行分析核心逻辑（同步）"""
-    logger.info(f"[Task {task_id}] 开始执行分析核心逻辑")
+    logger.info(f"[Task {task_id}] 开始执行分析核心逻辑 (mode={mode})")
     
     # 解析JD
     jd_profile = parse_job_profile(jd_raw_text)
@@ -127,7 +128,7 @@ def _execute_analysis_core(
     
     # 运行工作流
     workflow_started_at = datetime.now(timezone.utc)
-    state, trace = run_workflow(initial_state, task_id=task_id, on_event=on_event)
+    state, trace = run_workflow(initial_state, task_id=task_id, mode=mode, on_event=on_event)
     workflow_duration = (datetime.now(timezone.utc) - workflow_started_at).total_seconds()
 
     # 创建分析报告
@@ -202,6 +203,7 @@ def _run_analysis_sync(
     resume_raw_text: str,
     rag_results: dict,
     db: Session,
+    mode: str = "full_analysis",
 ) -> None:
     """同步执行分析（测试环境使用）"""
     try:
@@ -212,6 +214,7 @@ def _run_analysis_sync(
             rag_results=rag_results,
             db=db,
             on_event=None,
+            mode=mode,
         )
     except Exception as exc:
         logger.error(f"[Task {task_id}] 同步分析失败: {exc}", exc_info=True)
@@ -406,7 +409,7 @@ def create_analysis(db: Session, payload: AnalysisCreate) -> AnalysisTask:
             jd_profile = parse_job_profile(job.raw_text)
             required_skills = jd_profile.get("required_skills") or []
             rag_results = _build_rag_results(db, required_skills)
-            _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db)
+            _run_analysis_sync(task.id, job.raw_text, resume_raw_text=resume.raw_text, rag_results=rag_results, db=db, mode=payload.mode)
             _cache_analysis_result(db, task.id, job.id, resume.id)
         except Exception as exc:
             logger.error(f"[Task {task.id}] 同步分析失败: {exc}")

@@ -13,6 +13,7 @@ export interface AnalysisTask {
 export interface CreateAnalysisPayload {
   job_id: number
   resume_id: number
+  mode?: 'lite_analysis' | 'full_analysis'
 }
 
 export async function createAnalysis(payload: CreateAnalysisPayload) {

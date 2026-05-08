@@ -167,6 +167,7 @@ def _run_workflow_sequential(
                         (datetime.now(timezone.utc) - llm_connection_started_at).total_seconds() * 1000
                     )
                 if fallback_used:
+                    error_label = execution_meta.get("llm_error_label", "LLM 不可用")
                     on_event(
                         _make_event(
                             "llm_failed",
@@ -175,7 +176,7 @@ def _run_workflow_sequential(
                             node_index=node_index,
                             total_nodes=total,
                             model_name=model_name,
-                            error=llm_error or "LLM 不可用，回退到规则引擎",
+                            error=f"{error_label}，回退到规则引擎",
                             fallback_used=True,
                             connection_duration_ms=connection_duration_ms,
                         )
@@ -311,6 +312,7 @@ def run_workflow(
     initial_state: CareerFitState,
     *,
     task_id: int = 0,
+    mode: str = "full_analysis",
     on_event: Callable[[dict[str, Any]], None] | None = None,
     on_node_complete: Callable[[dict[str, Any]], None] | None = None,
 ) -> tuple[CareerFitState, list[dict]]:
@@ -319,6 +321,7 @@ def run_workflow(
         return run_workflow_langgraph(
             initial_state,
             task_id=task_id,
+            mode=mode,
             on_event=on_event,
             on_node_complete=on_node_complete,
         )
