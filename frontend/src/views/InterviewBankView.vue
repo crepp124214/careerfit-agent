@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
 
@@ -12,7 +12,7 @@ const form = reactive({
   skills: [] as string[],
   jdContext: '',
   resumeContext: '',
-  questionTypes: ['technical', 'behavioral', 'scenario', 'project_deep_dive'] as const,
+  questionTypes: ['technical', 'behavioral', 'scenario', 'project_deep_dive'],
   difficulty: 'mixed' as 'easy' | 'medium' | 'hard' | 'mixed',
   count: 10,
 })

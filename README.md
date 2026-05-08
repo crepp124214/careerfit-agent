@@ -352,13 +352,10 @@ careerfit-agent/
 │
 ├── docs/                        # 文档
 │   ├── DESIGN.md                # 设计文档
-│   ├── INDEX.md                 # 文档索引
-│   └── evaluation/              # 评估报告
+│   └── INDEX.md                 # 文档索引
 │
 ├── .env.example                 # 环境变量示例
-├── DEPLOY.md                    # 部署指南
 ├── README.md                    # 项目说明
-├── render.yaml                  # Render 部署配置
 └── docker-compose.yml           # Docker 配置
 ```
 
@@ -398,20 +395,56 @@ pytest -q                       # 运行测试
 
 ## 部署指南
 
-### 云平台部署（推荐）
+### Docker 部署（推荐）
 
-详见 [DEPLOY.md](./DEPLOY.md)
-
-推荐部署方案：
-- **前端**: Vercel（免费）
-- **后端**: Render（免费额度）
-- **数据库**: Supabase（免费 PostgreSQL）
-
-### Docker 部署
+使用 Docker Compose 一键部署前后端和数据库：
 
 ```bash
-docker compose up --build
+# 复制环境变量配置
+cp .env.docker .env
+
+# 编辑 .env 文件，填入必要的配置（尤其是 LLM API Key）
+
+# 启动所有服务
+docker compose up --build -d
+
+# 查看容器状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f backend
 ```
+
+访问应用：
+- 前端应用：http://localhost:5173
+- 后端 API：http://localhost:8000
+- API 文档：http://localhost:8000/docs
+
+### Docker 环境变量
+
+创建 `.env` 文件（参考 `.env.docker`）：
+
+```env
+# 基础配置
+CAREERFIT_ENVIRONMENT=production
+CAREERFIT_DATABASE_URL=postgresql+psycopg://careerfit:careerfit@postgres:5432/careerfit
+
+# PostgreSQL 数据库
+POSTGRES_DB=careerfit
+POSTGRES_USER=careerfit
+POSTGRES_PASSWORD=careerfit
+
+# 大模型配置（必须填入真实 API Key）
+CAREERFIT_LLM_ENABLED=true
+CAREERFIT_LLM_PROVIDER=openai_compatible
+CAREERFIT_LLM_BASE_URL=https://api.minimaxi.com/v1
+CAREERFIT_LLM_API_KEY=YOUR_API_KEY_HERE
+CAREERFIT_LLM_MODEL=MiniMax-M2.5
+CAREERFIT_LLM_API_STYLE=chat_completions
+CAREERFIT_LLM_TIMEOUT_SECONDS=120
+```
+
+### 手动部署
 
 ---
 
@@ -467,7 +500,6 @@ chore: 构建/工具相关
 ### 文档
 
 - [设计文档](./docs/DESIGN.md)
-- [部署指南](./DEPLOY.md)
 - [API 文档](http://localhost:8000/docs)（启动后端后访问）
 
 ### 致谢

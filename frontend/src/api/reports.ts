@@ -60,6 +60,7 @@ export interface LearningPlanItem {
 export interface Report {
   id: string
   taskId: string
+  mode?: string
   totalScore: number
   dimensions: Dimension[]
   suggestions: Suggestion[]
