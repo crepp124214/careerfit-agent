@@ -2,7 +2,7 @@ from app.scoring.evidence import find_resume_evidence
 from app.scoring.rubric import LEVEL_WEIGHTS, clamp_score
 
 
-SCORING_VERSION = "deterministic-v2"
+SCORING_VERSION = "deterministic-v3"
 
 # 深度经验关键词 — 表明候选人在该技能上有深入实践
 _DEEP_EXPERIENCE_TERMS = [
@@ -155,6 +155,22 @@ def _iter_dimensions(jd_profile: dict) -> list[dict]:
     ]
 
 
+def _compute_integrity_penalty(score_items: list[dict], resume_profile: dict) -> float:
+    """基于 score_items 中低分项的比例计算完整性风险扣分"""
+    if not score_items:
+        return 0.0
+    high_risk_count = sum(1 for item in score_items if item.get("score", 0) < 30)
+    weak_evidence_count = sum(
+        1 for item in score_items
+        if item.get("level") in ("mentioned", "basic_usage") and item.get("jd_required_level") in ("project_practice", "deep_experience")
+    )
+    total = len(score_items)
+    high_risk_ratio = high_risk_count / total
+    weak_ratio = weak_evidence_count / total
+    penalty = high_risk_ratio * 60 + weak_ratio * 40
+    return min(100, penalty)
+
+
 def score_match(jd_profile: dict, resume_profile: dict, rag_results: dict | None = None) -> dict:
     dimensions = _iter_dimensions(jd_profile)
     if not dimensions:
@@ -215,42 +231,59 @@ def score_match(jd_profile: dict, resume_profile: dict, rag_results: dict | None
     jd_domains = set(jd_profile.get("domain_keywords") or [])
     resume_domains = set(resume_profile.get("domain_keywords") or [])
     if not jd_domains:
-        domain_score = 80  # JD 没有明确领域时给中等分
+        domain_score = 50
     elif jd_domains & resume_domains:
-        domain_score = 100
+        overlap_ratio = len(jd_domains & resume_domains) / len(jd_domains)
+        domain_score = 60 + overlap_ratio * 40
     else:
-        domain_score = 40
+        domain_score = 20
     
-    # 基础要求得分：JD 中是否列出基础要求
     basic_reqs = jd_profile.get("basic_requirements", [])
     if not basic_reqs:
-        basic_requirement_score = 80
+        basic_requirement_score = 60
     else:
-        basic_requirement_score = 100
+        met_count = 0
+        for req in basic_reqs:
+            req_lower = req.lower() if isinstance(req, str) else str(req).lower()
+            resume_text = " ".join(
+                str(v) for v in resume_profile.get("evidence", {}).values()
+            ).lower()
+            if req_lower in resume_text:
+                met_count += 1
+        if met_count >= len(basic_reqs):
+            basic_requirement_score = 100
+        elif met_count > 0:
+            basic_requirement_score = 40 + (met_count / len(basic_reqs)) * 60
+        else:
+            basic_requirement_score = 20
     
-    # 表达质量得分：简历中技能数量（反映表达丰富度）
-    skill_count = len(resume_profile.get("skills", []))
-    if skill_count >= 8:
+    jd_skill_keys = {d.get("canonical_key", d.get("name", "")) for d in dimensions}
+    resume_skills = set(resume_profile.get("skills", []))
+    resume_evidence_keys = set(resume_profile.get("evidence", {}).keys())
+    relevant_count = len(jd_skill_keys & (resume_skills | resume_evidence_keys))
+    total_jd_skills = len(jd_skill_keys) or 1
+    relevance_ratio = relevant_count / total_jd_skills
+    total_skill_count = len(resume_skills | resume_evidence_keys)
+    if total_skill_count >= 8 and relevance_ratio >= 0.6:
         expression_score = 100
-    elif skill_count >= 5:
-        expression_score = 85
-    elif skill_count >= 3:
-        expression_score = 70
-    elif skill_count >= 1:
-        expression_score = 50
+    elif total_skill_count >= 5 and relevance_ratio >= 0.4:
+        expression_score = 80
+    elif total_skill_count >= 3 and relevance_ratio >= 0.3:
+        expression_score = 60
+    elif total_skill_count >= 1:
+        expression_score = int(30 * relevance_ratio + 10)
     else:
         expression_score = 0
     
-    # 完整性风险扣分
-    integrity_risk_penalty = 0
+    integrity_risk_penalty = _compute_integrity_penalty(score_items, resume_profile)
 
     # 最终得分：加权计算
     final_score = clamp_score(
-        skill_score * 0.40      # 技能匹配权重最高
-        + project_score * 0.25  # 项目经验
-        + domain_score * 0.15   # 领域匹配
-        + basic_requirement_score * 0.10  # 基础要求
-        + expression_score * 0.10  # 表达质量
+        skill_score * 0.45
+        + project_score * 0.25
+        + domain_score * 0.10
+        + basic_requirement_score * 0.10
+        + expression_score * 0.10
         - integrity_risk_penalty * 0.05
     )
 

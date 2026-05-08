@@ -2,10 +2,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
+import { requestJson } from '@/api/client'
 
 const route = useRoute()
 
-// 表单状态
 const form = reactive({
   sourceType: 'manual' as 'manual' | 'report_reference',
   targetJob: '',
@@ -15,6 +15,7 @@ const form = reactive({
   questionTypes: ['technical', 'behavioral', 'scenario', 'project_deep_dive'],
   difficulty: 'mixed' as 'easy' | 'medium' | 'hard' | 'mixed',
   count: 10,
+  sourceReportId: '' as string,
 })
 
 // UI 状态
@@ -55,20 +56,11 @@ function stopProgressTimer() {
   loadingProgress.value = 100
 }
 
-// 从路由 query 自动填充（如果从报告跳转过来）
-onMounted(() => {
-  if (route.query.source === 'analysis_report' && route.query.context) {
-    try {
-      const ctx = JSON.parse(atob(route.query.context as string))
-      form.sourceType = 'report_reference'
-      form.targetJob = ctx.target_job || ''
-      form.skills = ctx.skills || []
-      form.jdContext = ctx.jd_context || ''
-      form.resumeContext = ctx.resume_context || ''
-      successMessage.value = '✅ 已加载分析报告中的推荐上下文'
-    } catch (e) {
-      console.error('解析上下文失败:', e)
-    }
+onMounted(async () => {
+  if (route.query.source === 'analysis_report' && route.query.report_id) {
+    form.sourceType = 'report_reference'
+    form.sourceReportId = route.query.report_id as string
+    successMessage.value = '✅ 已关联分析报告，将自动提取上下文'
   }
 })
 
@@ -108,27 +100,25 @@ async function generateQuestions() {
       count: form.count,
     }
 
-    if (form.sourceType === 'report_reference') {
-      // source_report_id from route query
+    if (form.sourceType === 'report_reference' && form.sourceReportId) {
+      payload.source_report_id = parseInt(form.sourceReportId)
+    } else {
+      payload.jd_context = form.jdContext
+      payload.resume_context = form.resumeContext
     }
-
-    payload.jd_context = form.jdContext
-    payload.resume_context = form.resumeContext
 
     loadingMessage.value = '正在调用 AI 生成面试题...'
 
-    const response = await fetch('http://localhost:8000/api/interview/questions/generate', {
+    const res = await requestJson<any>('/interview/questions/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
 
-    if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.detail || `HTTP ${response.status}`)
+    if (!res.ok) {
+      throw new Error(res.detail || res.message || `请求失败`)
     }
 
-    const data = await response.json()
+    const data = res.data
     stopProgressTimer()
 
     if (data.success && data.data?.questions) {
@@ -142,7 +132,6 @@ async function generateQuestions() {
   } catch (e: any) {
     stopProgressTimer()
     error.value = e.message || '生成失败，请重试'
-    console.error('生成面试题失败:', e)
   } finally {
     loading.value = false
   }
@@ -161,25 +150,22 @@ async function generatePrepPlan() {
   try {
     const selectedQuestions = questions.value.filter(q => selectedIds.value.includes(q.id))
     
-    const response = await fetch('http://localhost:8000/api/interview/prep-plan/generate', {
+    const res = await requestJson<any>('/interview/prep-plan/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         selected_questions: selectedQuestions,
         prep_depth: 'standard',
       }),
     })
     
-    if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.detail || `HTTP ${response.status}`)
+    if (!res.ok) {
+      throw new Error(res.detail || res.message || `请求失败`)
     }
     
-    const data = await response.json()
+    const data = res.data
     
     if (data.success && data.data?.prep_plans) {
       successMessage.value = `✅ 为 ${selectedIds.value.length} 道题生成了准备计划`
-      // TODO: 可以跳转到准备计划页面或显示模态框
     } else {
       throw new Error('返回格式异常')
     }

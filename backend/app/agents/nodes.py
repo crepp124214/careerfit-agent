@@ -508,22 +508,140 @@ def match_scorer(state: CareerFitState) -> CareerFitState:
 
 def gap_analyzer(state: CareerFitState) -> CareerFitState:
     score_items = state["match_result"]["score_items"]
-    gaps = [
-        {"skill": item["skill"], "reason": "简历缺少可验证证据", "jd_evidence": item["jd_evidence"]}
-        for item in score_items
-        if not item["resume_evidence"]
-    ]
-    strengths = [
-        {"skill": item["skill"], "resume_evidence": item["resume_evidence"]}
-        for item in score_items
-        if item["resume_evidence"]
-    ]
+    settings = get_settings()
+    model_name = settings.llm_model
+    client, error_type = _build_llm_client_with_retry()
+    fallback_error_type = error_type or "llm_unavailable"
+
+    if client is not None:
+        try:
+            prompt = build_gap_analysis_prompt(state["match_result"])
+            result, meta = run_structured_agent(
+                client=client,
+                agent_role="gap_analyzer",
+                prompt=prompt,
+                output_model=GapAnalysisOutput,
+                fallback=lambda: GapAnalysisOutput(**_local_gap_analysis(state)),
+                model_name=model_name,
+            )
+            gaps = _convert_gap_items(result.gaps)
+            strengths = _convert_strength_items(result.strengths)
+            if gaps:
+                gap_skills = [g["skill"] for g in gaps]
+                summary = f"{len(gaps)} 项缺口: {', '.join(gap_skills)}"
+            else:
+                summary = "无能力缺口"
+            return {"gaps": gaps, "strengths": strengths, "_summary": summary, "_execution_meta": meta}
+        except AgentLLMError as exc:
+            logger.warning("[gap_analyzer] LLM JSON 格式错误: %s | errors=%s", str(exc), exc.validation_errors[:3])
+            fallback_error_type = "parse_failed"
+        except Exception as exc:
+            logger.warning("[gap_analyzer] LLM 调用异常: %s: %s", type(exc).__name__, exc)
+            fallback_error_type = "llm_call_error"
+
+    local_result = _local_gap_analysis(state)
+    gaps = local_result["gaps"]
+    strengths = local_result["strengths"]
     if gaps:
         gap_skills = [g["skill"] for g in gaps]
-        summary = f"{len(gaps)} 项高风险: {', '.join(gap_skills)}"
+        summary = f"{len(gaps)} 项缺口: {', '.join(gap_skills)}"
     else:
         summary = "无能力缺口"
-    return {"gaps": gaps, "strengths": strengths, "_summary": summary}
+    return {"gaps": gaps, "strengths": strengths, "_summary": summary,
+            "_execution_meta": _make_fallback_meta("gap_analyzer", model_name, client is not None, fallback_error_type)}
+
+
+def _local_gap_analysis(state: CareerFitState) -> dict:
+    score_items = state["match_result"]["score_items"]
+    gaps = []
+    strengths = []
+    for item in score_items:
+        score = item.get("score", 0)
+        level = item.get("level", "not_mentioned")
+        jd_level = item.get("jd_required_level", "project_practice")
+        weight = item.get("weight", 0.7)
+
+        if not item.get("resume_evidence"):
+            gap_type = "missing_skill"
+            priority = "high" if weight >= 0.7 else "medium"
+        elif score < 50:
+            gap_type = "weak_evidence"
+            priority = "high" if weight >= 0.7 else "medium"
+        elif level in ("mentioned", "basic_usage") and jd_level in ("project_practice", "deep_experience"):
+            gap_type = "expression_gap"
+            priority = "medium" if weight >= 0.5 else "low"
+        elif score < 60 and jd_level == "deep_experience":
+            gap_type = "knowledge_insufficient"
+            priority = "medium"
+        else:
+            gap_type = None
+
+        if gap_type:
+            gaps.append({
+                "skill": item["skill"],
+                "skill_key": item.get("skill_key", item["skill"]),
+                "gap_type": gap_type,
+                "reason": _gap_reason(gap_type, item),
+                "priority": priority,
+                "jd_evidence": item.get("jd_evidence", []),
+            })
+        else:
+            strengths.append({
+                "skill": item["skill"],
+                "resume_evidence": item.get("resume_evidence", []),
+            })
+
+    return {"gaps": gaps, "strengths": strengths}
+
+
+def _gap_reason(gap_type: str, item: dict) -> str:
+    reasons = {
+        "missing_skill": f"简历中未提及 {item['skill']} 的任何经验",
+        "weak_evidence": f"{item['skill']} 证据薄弱（得分{item.get('score', 0)}%），JD要求{item.get('jd_required_level', '')}",
+        "expression_gap": f"{item['skill']} 有相关经验但表达不够充分",
+        "knowledge_insufficient": f"{item['skill']} 知识深度可能不足，JD要求深度经验",
+    }
+    return reasons.get(gap_type, "存在能力缺口")
+
+
+def _convert_gap_items(gaps: list) -> list[dict]:
+    converted = []
+    for item in gaps:
+        if isinstance(item, dict):
+            converted.append({
+                "skill": item.get("skill", item.get("skill_key", "")),
+                "skill_key": item.get("skill_key", item.get("skill", "")),
+                "gap_type": item.get("gap_type", "missing_skill"),
+                "reason": item.get("reason", ""),
+                "priority": item.get("priority", "medium"),
+                "jd_evidence": item.get("jd_evidence", []),
+            })
+        else:
+            converted.append({
+                "skill": getattr(item, "skill_key", "") or getattr(item, "skill", ""),
+                "skill_key": getattr(item, "skill_key", ""),
+                "gap_type": getattr(item, "gap_type", "missing_skill"),
+                "reason": getattr(item, "reason", ""),
+                "priority": getattr(item, "priority", "medium"),
+                "jd_evidence": getattr(item, "jd_evidence", []),
+            })
+    return converted
+
+
+def _convert_strength_items(strengths: list) -> list[dict]:
+    converted = []
+    for item in strengths:
+        if isinstance(item, dict):
+            converted.append({
+                "skill": item.get("skill", item.get("skill_key", "")),
+                "resume_evidence": item.get("resume_evidence", []),
+            })
+        else:
+            converted.append({
+                "skill": getattr(item, "skill", ""),
+                "resume_evidence": getattr(item, "resume_evidence", []),
+            })
+    return converted
 
 
 def _local_resume_suggestions(state: CareerFitState) -> list[dict]:
@@ -538,10 +656,22 @@ def _local_resume_suggestions(state: CareerFitState) -> list[dict]:
             }
         )
     for gap in state.get("gaps", []):
+        gap_type = gap.get("gap_type", "missing_skill")
+        skill = gap["skill"]
+        if gap_type == "missing_skill":
+            suggestion = f"JD要求 {skill} 但简历中未提及。如果确有相关经历，请补充具体项目背景；否则不要编造。"
+        elif gap_type == "weak_evidence":
+            suggestion = f"你在 {skill} 上的证据较薄弱，建议补充更具体的项目细节和技术深度描述。"
+        elif gap_type == "expression_gap":
+            suggestion = f"你有 {skill} 的相关经验，但表达不够充分。建议使用STAR法则重新组织描述，突出技术难点和成果。"
+        elif gap_type == "knowledge_insufficient":
+            suggestion = f"JD要求 {skill} 的深度经验，建议补充架构设计、性能优化等高阶实践描述（如果有真实经历）。"
+        else:
+            suggestion = f"如果确有 {skill} 经历，补充具体项目背景；否则不要编造。"
         suggestions.append(
             {
-                "title": f"补齐 {gap['skill']} 证据",
-                "suggestion": f"如果确有 {gap['skill']} 经历，补充具体项目背景；否则不要编造。",
+                "title": f"补齐 {skill} 证据",
+                "suggestion": suggestion,
                 "integrity": {"risk_level": "low", "risk_codes": []},
             }
         )
@@ -550,22 +680,57 @@ def _local_resume_suggestions(state: CareerFitState) -> list[dict]:
 
 def _local_interview_questions(state: CareerFitState) -> list[dict]:
     score_items = state.get("match_result", {}).get("score_items", [])
-    if score_items:
-        return [
-            {"skill": item["skill"], "question": f"请说明你在 {item['skill']} 上最具体的一次实践。"}
-            for item in score_items
-        ]
+    gaps = state.get("gaps", [])
+    gap_skills = {g.get("skill", g.get("skill_key", "")) for g in gaps}
 
-    # Fallback for INTERVIEW_ONLY mode (no match_result available)
+    if score_items:
+        questions = []
+        for item in score_items:
+            skill = item["skill"]
+            is_gap = skill in gap_skills
+            if is_gap:
+                questions.append({
+                    "skill": skill,
+                    "question": f"请说明你在 {skill} 上最具体的一次实践，包括遇到的技术难点和解决方案。",
+                    "difficulty": "medium",
+                    "type": "behavioral",
+                    "purpose": f"验证 {skill} 实践经验的真实性",
+                    "source": "resume_based",
+                })
+            else:
+                questions.append({
+                    "skill": skill,
+                    "question": f"请详细解释 {skill} 的核心原理和你在项目中的最佳实践。",
+                    "difficulty": "hard",
+                    "type": "technical",
+                    "purpose": f"验证 {skill} 的技术深度",
+                    "source": "jd_based",
+                })
+        return questions
+
     interview_input = state.get("_interview_input", {})
     skills = interview_input.get("skills", [])
     if skills:
         return [
-            {"skill": s, "question": f"请详细说明你在 {s} 方面的技术深度和项目经验。"}
+            {
+                "skill": s,
+                "question": f"请详细说明你在 {s} 方面的技术深度和项目经验。",
+                "difficulty": "medium",
+                "type": "technical",
+                "purpose": f"评估 {s} 的掌握程度",
+                "source": "jd_based",
+            }
             for s in skills
         ]
 
-    return [{"skill": "general", "question": "请介绍你最自豪的技术项目。"}]
+    return [{
+        "skill": "general",
+        "question": "请介绍你最自豪的技术项目。",
+        "difficulty": "easy",
+        "type": "behavioral",
+        "purpose": "了解候选人的技术热情和项目经验",
+        "source": "jd_based",
+    }]
 
 
 def _local_learning_plan(state: CareerFitState) -> list[dict]:
@@ -708,12 +873,22 @@ def _convert_interview_questions(questions: list) -> list[dict]:
                 "skill": item.get("skill", ""),
                 "question": item.get("question", ""),
                 "difficulty": item.get("difficulty", "medium"),
+                "type": item.get("type", "technical"),
+                "purpose": item.get("purpose", ""),
+                "what_it_tests": item.get("what_it_tests", []),
+                "ideal_answer_hints": item.get("ideal_answer_hints", []),
+                "source": item.get("source", "jd_based"),
             })
         else:
             converted.append({
                 "skill": getattr(item, "skill", ""),
                 "question": getattr(item, "question", ""),
                 "difficulty": getattr(item, "difficulty", "medium"),
+                "type": getattr(item, "type", "technical"),
+                "purpose": getattr(item, "purpose", ""),
+                "what_it_tests": getattr(item, "what_it_tests", []),
+                "ideal_answer_hints": getattr(item, "ideal_answer_hints", []),
+                "source": getattr(item, "source", "jd_based"),
             })
     return converted
 

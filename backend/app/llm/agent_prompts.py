@@ -501,7 +501,8 @@ def build_resume_suggestion_prompt(gaps: list, strengths: list) -> str:
 
 def build_interview_prompt(score_items: list, gaps: list) -> str:
     items_text = "\n".join([f"- {i.get('skill', i.get('skill_key'))}: 级别={i.get('level')}, 证据={str(i.get('resume_evidence', []))[:50]}" for i in score_items])
-    gaps_text = "\n".join([f"- {g.get('skill_key') or g.get('skill')}: {g.get('gap_type', 'missing_skill')}" for g in gaps]) if gaps else "- 无明显缺口"
+    gaps_text = "\n".join([f"- {g.get('skill_key') or g.get('skill')}: 类型={g.get('gap_type', 'missing_skill')}, 优先级={g.get('priority', 'medium')}" for g in gaps]) if gaps else "- 无明显缺口"
+    gap_skills = {g.get('skill_key') or g.get('skill') for g in gaps}
     return f"""你是一个资深的技术面试官。根据以下候选人的技能评估结果，生成针对性的面试题。
 
 ## 候选人技能评估：
@@ -509,6 +510,9 @@ def build_interview_prompt(score_items: list, gaps: list) -> str:
 
 ## 能力缺口：
 {gaps_text}
+
+## 缺口技能列表（这些技能需要基于简历深挖）：
+{', '.join(gap_skills) if gap_skills else '无'}
 
 ## 输出要求：
 
@@ -520,7 +524,10 @@ def build_interview_prompt(score_items: list, gaps: list) -> str:
   "question": "具体的面试题内容",
   "difficulty": "medium",
   "type": "behavioral",
-  "purpose": "考察目的说明"
+  "purpose": "考察目的说明",
+  "what_it_tests": ["考察点1", "考察点2"],
+  "ideal_answer_hints": ["理想答案提示1", "提示2"],
+  "source": "jd_based"
 }}
 ```
 
@@ -533,32 +540,32 @@ def build_interview_prompt(score_items: list, gaps: list) -> str:
 - technical: 技术知识题（原理、语法、最佳实践）
 - behavioral: 行为经历题（STAR法则，项目经验）
 - scenario: 场景设计题（系统设计、方案选择）
-- coding: 编程/算法题
+- project_deep_dive: 项目深挖题（针对简历中的具体项目深入追问）
+
+### source 取值（重要！）：
+- **jd_based**: 基于 JD 要求生成的题目（验证候选人是否具备岗位所需技能）
+- **resume_based**: 基于简历弱点生成的题目（验证候选人简历中薄弱环节的真实性）
+
+### source 判定规则：
+- 如果技能在缺口列表中 → source = "resume_based"，type 优先用 "behavioral" 或 "project_deep_dive"
+- 如果技能不在缺口列表中 → source = "jd_based"，type 优先用 "technical" 或 "scenario"
 
 ### 出题策略：
-1. **针对缺口技能**：重点出题，验证是否真的不会
-2. **针对优势技能**：出深度题，验证真实水平
+1. **针对缺口技能（resume_based）**：重点出行为题和项目深挖题，验证简历真实性
+2. **针对优势技能（jd_based）**：出深度技术题和场景题，验证真实水平
 3. **每个核心技能至少1-2道题**
 4. **混合题型**：不要全是技术题或全是行为题
 5. **具体化**：避免"请介绍一下XX"这种泛泛的问题，要具体到场景
-
-### 题目示例：
-```json
-{{
-  "skill": "SQL",
-  "question": "你在项目中遇到过慢查询吗？请描述一次具体的优化过程，包括如何定位问题、使用了什么方法、最终提升了多少性能？",
-  "difficulty": "hard",
-  "type": "behavioral",
-  "purpose": "验证SQL优化实战经验的真实性和深度"
-}}
-```
+6. **what_it_tests**：每道题列出2-3个具体考察点
+7. **ideal_answer_hints**：给出1-2个理想答案的关键点（不是完整答案）
 
 ## ⚠️ 重要约束：
 1. 生成5-10道高质量的面试题
 2. 问题必须具体可回答，不能太宽泛
 3. 每道题都要有明确的考察目的
 4. 根据候选人的实际水平调整难度
-5. 输出纯JSON，不要Markdown代码块标记"""
+5. 缺口技能的题目必须用 source="resume_based"
+6. 输出纯JSON，不要Markdown代码块标记"""
 
 
 def build_learning_plan_prompt(gaps: list, knowledge: dict, questions: list = None) -> str:

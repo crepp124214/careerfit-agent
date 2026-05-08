@@ -50,6 +50,12 @@ export interface IntegrityGuardResult {
 export interface InterviewQuestion {
   skill: string
   question: string
+  difficulty?: 'easy' | 'medium' | 'hard'
+  type?: 'technical' | 'behavioral' | 'scenario' | 'project_deep_dive'
+  purpose?: string
+  whatItTests?: string[]
+  idealAnswerHints?: string[]
+  source?: 'jd_based' | 'resume_based'
 }
 
 export interface LearningPlanItem {
@@ -99,6 +105,12 @@ interface BackendSuggestion {
 interface BackendInterviewQuestion {
   skill: string
   question: string
+  difficulty?: string
+  type?: string
+  purpose?: string
+  what_it_tests?: string[]
+  ideal_answer_hints?: string[]
+  source?: string
 }
 
 interface BackendLearningPlanItem {
@@ -111,7 +123,7 @@ interface BackendReport {
   task_id: number
   final_score: number
   score_breakdown: Record<string, number>
-  gaps?: Array<{ skill: string; reason?: string; jd_evidence?: string[] }>
+  gaps?: Array<{ skill: string; reason?: string; jd_evidence?: string[]; gap_type?: string; priority?: string; skill_key?: string }>
   resume_suggestions?: BackendSuggestion[]
   interview_questions?: BackendInterviewQuestion[]
   learning_plan?: BackendLearningPlanItem[]
@@ -171,6 +183,12 @@ function normalizeReport(payload: Report | BackendReport): Report {
     (item) => ({
       skill: item.skill,
       question: item.question,
+      difficulty: (item.difficulty as InterviewQuestion['difficulty']) ?? 'medium',
+      type: (item.type as InterviewQuestion['type']) ?? 'technical',
+      purpose: item.purpose ?? '',
+      whatItTests: item.what_it_tests ?? [],
+      idealAnswerHints: item.ideal_answer_hints ?? [],
+      source: (item.source as InterviewQuestion['source']) ?? 'jd_based',
     }),
   )
 
