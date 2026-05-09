@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAvailabilityStore } from '@/stores/availability'
 import { useJobsStore } from '@/stores/jobs'
@@ -7,6 +7,7 @@ import { useResumesStore } from '@/stores/resumes'
 import WorkbenchContextPanel from '@/components/workbench/WorkbenchContextPanel.vue'
 import AnalysisActionPanel from '@/components/workbench/AnalysisActionPanel.vue'
 import OnboardingGuide from '@/components/workbench/OnboardingGuide.vue'
+import OnboardingWizard from '@/components/workbench/OnboardingWizard.vue'
 import JobSelector from '@/components/workbench/JobSelector.vue'
 import ResumeSelector from '@/components/workbench/ResumeSelector.vue'
 
@@ -15,9 +16,18 @@ const availability = useAvailabilityStore()
 const jobs = useJobsStore()
 const resumes = useResumesStore()
 
+const wizardDismissed = ref(localStorage.getItem('wizard_dismissed') === 'true')
+const showWizard = ref(false)
+
 const hasJobs = computed(() => jobs.list.length > 0)
 const hasResumes = computed(() => resumes.list.length > 0)
 const showOnboarding = computed(() => !hasJobs.value || !hasResumes.value)
+
+function dismissWizard() {
+  wizardDismissed.value = true
+  showWizard.value = false
+  localStorage.setItem('wizard_dismissed', 'true')
+}
 
 function goToJobs() {
   router.push({ name: 'jobs' })
@@ -47,6 +57,9 @@ onMounted(async () => {
       }
     }
   }
+  if (showOnboarding.value && !wizardDismissed.value) {
+    showWizard.value = true
+  }
 })
 </script>
 
@@ -60,7 +73,9 @@ onMounted(async () => {
         </div>
       </header>
 
-      <OnboardingGuide v-if="showOnboarding" class="workbench-onboarding animate-in animate-in-stagger-1" />
+      <OnboardingGuide v-if="showOnboarding && !showWizard" class="workbench-onboarding animate-in animate-in-stagger-1" />
+
+      <OnboardingWizard v-if="showWizard" @dismiss="dismissWizard" />
 
       <div v-else class="workbench-columns animate-in animate-in-stagger-1">
         <section class="workbench-columns__selectors" aria-label="工作台选择">

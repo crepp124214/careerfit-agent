@@ -231,7 +231,7 @@ describe('ReportView', () => {
 
     it('报告头部 Next Best Action CTA 指向学习任务', async () => {
       const { wrapper } = await mountWithData()
-      expect(wrapper.find('a[href="/learning"]').exists()).toBe(true)
+      expect(wrapper.find('a[href="/interview?tab=learning"]').exists()).toBe(true)
     })
 
     it('数据就绪时渲染 ScoringOverviewCard', async () => {

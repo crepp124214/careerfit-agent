@@ -39,7 +39,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
       routes: [
         { path: '/history', name: 'history', component: HistoryView },
         { path: '/diff', name: 'version-diff', component: VersionDiffView },
-        { path: '/learning', name: 'learning', component: LearningTasksView },
+        { path: '/interview', name: 'interview', component: LearningTasksView },
         { path: '/trace/:taskId', name: 'agent-trace', component: AgentTraceView, props: true },
       ],
     })
@@ -125,7 +125,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
     })
 
     it('learning ready 时渲染生成按钮（disabled）', async () => {
-      const { wrapper, pinia } = await mountAtPath('/learning', LearningTasksView)
+      const { wrapper, pinia } = await mountAtPath('/interview', LearningTasksView)
       const availability = useAvailabilityStore(pinia)
       availability.setCapability('learning', 'ready')
       await nextTick()

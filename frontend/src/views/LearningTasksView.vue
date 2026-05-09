@@ -10,6 +10,7 @@ import AppButton from '@/components/common/AppButton.vue'
 import ErrorBanner from '@/components/feedback/ErrorBanner.vue'
 import LoadingCard from '@/components/feedback/LoadingCard.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import NbaBanner from '@/components/common/NbaBanner.vue'
 import type { LearningTask, LearningTaskStatus } from '@/api/learning'
 
 const availability = useAvailabilityStore()
@@ -223,6 +224,14 @@ watch(
         />
       </div>
     </template>
+
+    <NbaBanner
+      v-if="hasTasks"
+      label="学习任务完成，建议创建新简历版本"
+      description="基于学习成果更新简历，再进行一次匹配分析"
+      cta-to="/resumes"
+      cta-label="创建新简历"
+    />
   </section>
 </template>
 

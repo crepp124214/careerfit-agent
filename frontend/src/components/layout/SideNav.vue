@@ -8,9 +8,7 @@ import {
   FileText,
   Clock,
   GitCompare,
-  BookOpen,
   MessageSquare,
-  Target,
   Settings,
   Lock,
 } from 'lucide-vue-next'
@@ -21,9 +19,7 @@ const ICON_MAP: Record<string, typeof LayoutDashboard> = {
   resumes: FileText,
   history: Clock,
   'version-diff': GitCompare,
-  learning: BookOpen,
   interview: MessageSquare,
-  'interview-bank': Target,
   settings: Settings,
 }
 
@@ -41,9 +37,7 @@ const ITEMS: NavItem[] = [
   { label: '简历', route: '/resumes', name: 'resumes', cap: 'resumes', group: 'core' },
   { label: '历史', route: '/history', name: 'history', cap: 'reports', group: 'insights' },
   { label: '对比', route: '/diff', name: 'version-diff', cap: 'reports', group: 'insights' },
-  { label: '面试准备', route: '/learning', name: 'learning', cap: 'learning', group: 'insights' },
-  { label: '面试训练', route: '/interview', name: 'interview', cap: 'interview', group: 'insights' },
-  { label: '面试题库', route: '/interview-bank', name: 'interview-bank', cap: null, group: 'insights' },
+  { label: '面试', route: '/interview', name: 'interview', cap: 'interview', group: 'insights' },
   { label: '设置', route: '/settings', name: 'settings', cap: null, group: 'system' },
 ]
 

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useInterviewStore } from '@/stores/interview'
 import { useAvailabilityStore } from '@/stores/availability'
 import BackendNotReadyNotice from '@/components/feedback/BackendNotReadyNotice.vue'
+import NbaBanner from '@/components/common/NbaBanner.vue'
 
 const store = useInterviewStore()
 const availability = useAvailabilityStore()
@@ -333,6 +334,14 @@ function scoreLabel(score: number | null): string {
         没有匹配的题目，请调整筛选条件。
       </p>
     </template>
+
+    <NbaBanner
+      v-if="session?.status === 'completed'"
+      label="面试训练完成，查看学习任务"
+      description="针对薄弱环节进行专项学习"
+      cta-to="/interview?tab=learning"
+      cta-label="查看学习任务"
+    />
   </section>
 </template>
 

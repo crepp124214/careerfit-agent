@@ -12,7 +12,7 @@ import AnalysisRunView from '@/views/AnalysisRunView.vue'
 import ReportView from '@/views/ReportView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import VersionDiffView from '@/views/VersionDiffView.vue'
-import LearningTasksView from '@/views/LearningTasksView.vue'
+import InterviewView from '@/views/InterviewView.vue'
 import AgentTraceView from '@/views/AgentTraceView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -33,7 +33,7 @@ const ROUTE_CASES: readonly RouteCase[] = [
   { path: '/reports/task-42', name: 'report', component: ReportView },
   { path: '/history', name: 'history', component: HistoryView },
   { path: '/diff', name: 'version-diff', component: VersionDiffView },
-  { path: '/learning', name: 'learning', component: LearningTasksView },
+  { path: '/interview', name: 'interview', component: InterviewView },
   { path: '/trace/task-42', name: 'agent-trace', component: AgentTraceView },
   { path: '/settings', name: 'settings', component: SettingsView },
 ] as const
@@ -48,8 +48,8 @@ beforeEach(() => {
 })
 
 describe('router smoke', () => {
-  it('注册了 15 条路由（14 主路由 + 1 通配 NotFound）', () => {
-    expect(routes).toHaveLength(15)
+  it('注册了 16 条路由（12 主路由 + 2 重定向 + 1 详情 + 1 通配 NotFound）', () => {
+    expect(routes).toHaveLength(16)
   })
 
   it('每个主路由都能解析到预期 view', async () => {

@@ -39,9 +39,9 @@ async function mountView() {
   setActivePinia(pinia)
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/learning', name: 'learning', component: LearningTasksView }],
+    routes: [{ path: '/interview', name: 'interview', component: LearningTasksView }],
   })
-  await router.push('/learning')
+  await router.push('/interview')
   await router.isReady()
   const wrapper = mount(LearningTasksView, {
     global: { plugins: [pinia, router] },

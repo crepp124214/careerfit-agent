@@ -98,7 +98,7 @@ describe('WorkspaceView', () => {
           headline: '优先补齐 Docker 的可验证证据',
           actionLabel: '查看学习任务',
           state: 'ready',
-          ctaTo: '/learning',
+          ctaTo: '/interview?tab=learning',
         },
       } as Report
       await nextTick()

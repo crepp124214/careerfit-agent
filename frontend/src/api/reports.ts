@@ -209,7 +209,7 @@ function normalizeReport(payload: Report | BackendReport): Report {
       headline: payload.next_best_action?.title ?? '当前没有推荐行动',
       actionLabel: '查看下一步',
       state: payload.next_best_action?.title ? 'ready' : 'empty',
-      ctaTo: '/learning',
+      ctaTo: '/interview?tab=learning',
       waitingReason: payload.next_best_action?.description,
     },
     integrityGuard: {
