@@ -399,34 +399,34 @@ function removeSkill(skill: string) {
 
       <!-- 题目列表 -->
       <div class="question-list">
-        <article 
-          v-for="q in questions" 
-          :key="q.id"
+        <article
+          v-for="(q, idx) in questions"
+          :key="idx"
           class="question-card"
           :class="[`question-card--${q.type}`, `question-card--${q.source || 'unknown'}`]"
         >
           <header class="question-card__header">
-            <span class="question-number">Q{{ q.id }}</span>
-            
+            <span class="question-number">Q{{ idx + 1 }}</span>
+
             <!-- 类型标签 -->
             <span class="badge badge--type">{{ q.category || q.type }}</span>
-            
+
             <!-- 难度标签 -->
             <span :class="['badge', 'badge--difficulty', `badge--${q.difficulty}`]">
               {{ q.difficulty }}
             </span>
-            
+
             <!-- 来源标记 -->
             <span v-if="q.source" class="source-tag" :title="'数据源: ' + q.source">
               {{ q.source === 'jd_based' ? '📋 JD' : q.source === 'resume_based' ? '📄 简历' : '?' }}
             </span>
-            
+
             <!-- 选择框 -->
             <label class="checkbox-wrapper">
-              <input 
+              <input
                 type="checkbox"
-                :checked="selectedIds.includes(q.id)"
-                @change="toggleSelect(q.id)"
+                :checked="selectedIds.includes(idx)"
+                @change="toggleSelect(idx)"
                 class="checkbox-input"
               >
               <span class="checkbox-label">选择此题</span>
