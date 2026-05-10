@@ -9,7 +9,7 @@ const prefs = usePreferencesStore()
 const themeOptions: { value: Theme; label: string; disabled?: boolean }[] = [
   { value: 'system', label: '跟随系统' },
   { value: 'dark', label: '暗色' },
-  { value: 'light', label: '亮色' },
+  { value: 'light', label: '亮色', disabled: true },
 ]
 
 const densityOptions: { value: Density; label: string }[] = [

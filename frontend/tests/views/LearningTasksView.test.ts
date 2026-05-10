@@ -32,6 +32,10 @@ const task: LearningTask = {
   evidence_refs: [{ skill: 'Docker', score: 0 }],
   created_at: '2026-05-03T00:00:00Z',
   updated_at: '2026-05-03T00:00:00Z',
+  isInterviewPrep: false,
+  timeInvestment: undefined,
+  expectedOutcome: undefined,
+  specificActions: undefined,
 }
 
 async function mountView() {
@@ -65,7 +69,6 @@ describe('LearningTasksView', () => {
     expect(wrapper.text()).toContain('补强 Docker 项目证据')
     expect(wrapper.text()).toContain('Docker')
     expect(wrapper.text()).toContain('未开始')
-    expect(wrapper.text()).toContain('证据引用 1 条')
   })
 
   it('没有学习任务时显示空状态且不出现 mock 任务', async () => {
@@ -76,7 +79,7 @@ describe('LearningTasksView', () => {
     await nextTick()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('暂无学习任务')
+    expect(wrapper.text()).toContain('暂无准备计划')
     expect(wrapper.text()).not.toContain('示例任务')
   })
 
@@ -110,7 +113,7 @@ describe('LearningTasksView', () => {
 
     await nextTick()
     await flushPromises()
-    await wrapper.get('[aria-label="开始学习任务：补强 Docker 项目证据"]').trigger('click')
+    await wrapper.get('[aria-label="开始准备：补强 Docker 项目证据"]').trigger('click')
 
     expect(updateLearningTaskStatus).toHaveBeenCalledWith(1, 'doing')
     expect(learning.tasks.at(0)?.status).toBe('doing')

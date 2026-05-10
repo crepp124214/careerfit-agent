@@ -28,6 +28,10 @@ const task: LearningTask = {
   evidence_refs: [],
   created_at: '2026-05-03T00:00:00Z',
   updated_at: '2026-05-03T00:00:00Z',
+  isInterviewPrep: false,
+  timeInvestment: undefined,
+  expectedOutcome: undefined,
+  specificActions: undefined,
 }
 
 describe('learning store', () => {

@@ -7,7 +7,9 @@ import { useAvailabilityStore } from '@/stores/availability'
 import type { HistoryItem } from '@/api/reports'
 
 vi.mock('@/stores/history')
-vi.mock('@/stores/availability')
+vi.mock('@/stores/availability', () => ({
+  useAvailabilityStore: vi.fn(),
+}))
 
 const item1: HistoryItem = {
   taskId: '1',
@@ -37,6 +39,13 @@ const item2: HistoryItem = {
   createdAt: '2026-05-03T11:00:00Z',
 }
 
+function mockAvailability(state: Record<string, string>) {
+  vi.mocked(useAvailabilityStore).mockReturnValue({
+    states: state,
+    probe: vi.fn().mockResolvedValue(undefined),
+  } as any)
+}
+
 describe('HistoryView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -55,9 +64,7 @@ describe('HistoryView', () => {
         load: vi.fn().mockResolvedValue(true),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
 
@@ -79,9 +86,7 @@ describe('HistoryView', () => {
         load: vi.fn().mockResolvedValue(true),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
       const deltaEl = wrapper.find('.history-view__score-delta')
@@ -103,9 +108,7 @@ describe('HistoryView', () => {
         load: vi.fn(),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'unavailable' },
-      } as any)
+      mockAvailability({ reports: 'unavailable' })
 
       const wrapper = mount(HistoryView)
 
@@ -123,9 +126,7 @@ describe('HistoryView', () => {
         load: vi.fn(),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
 
@@ -143,9 +144,7 @@ describe('HistoryView', () => {
         load: vi.fn(),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
 
@@ -163,9 +162,7 @@ describe('HistoryView', () => {
         load: vi.fn().mockResolvedValue(true),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
 
@@ -183,9 +180,7 @@ describe('HistoryView', () => {
         load: vi.fn().mockResolvedValue(true),
         clear: vi.fn(),
       } as any)
-      vi.mocked(useAvailabilityStore).mockReturnValue({
-        states: { reports: 'ready' },
-      } as any)
+      mockAvailability({ reports: 'ready' })
 
       const wrapper = mount(HistoryView)
 

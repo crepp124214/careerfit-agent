@@ -11,6 +11,7 @@ import AgentTraceView from '@/views/AgentTraceView.vue'
 import { useAvailabilityStore } from '@/stores/availability'
 import { fetchLearningTasks } from '@/api/learning'
 import { fetchReportHistory } from '@/api/reports'
+import { fetchResumes } from '@/api/resumes'
 
 vi.mock('@/api/agentRuns', () => ({
   fetchAgentRun: vi.fn(),
@@ -64,6 +65,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
       data: { schemaVersion: '1', items: [] },
     })
     vi.mocked(fetchLearningTasks).mockResolvedValue({ ok: true, data: [] })
+    vi.mocked(fetchResumes).mockResolvedValue({ ok: true, data: [] })
   })
 
   describe('HistoryView', () => {
@@ -114,7 +116,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
 
   describe('LearningTasksView', () => {
     it('learning unavailable 时渲染 BackendNotReadyNotice', async () => {
-      const { wrapper, pinia } = await mountAtPath('/learning', LearningTasksView)
+      const { wrapper, pinia } = await mountAtPath('/interview', LearningTasksView)
       const availability = useAvailabilityStore(pinia)
       availability.setCapability('learning', 'unavailable')
       await nextTick()
@@ -131,7 +133,7 @@ describe('周边视图 — BackendNotReadyNotice smoke tests', () => {
       await nextTick()
       await flushPromises()
       expect(wrapper.findComponent({ name: 'BackendNotReadyNotice' }).exists()).toBe(false)
-      expect(wrapper.text()).toContain('按当前缺口生成学习任务')
+      expect(wrapper.text()).toContain('生成面试准备计划')
     })
   })
 

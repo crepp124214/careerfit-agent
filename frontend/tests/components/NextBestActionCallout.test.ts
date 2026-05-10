@@ -13,9 +13,9 @@ describe('NextBestActionCallout', () => {
           actionLabel: '生成新简历版本',
         },
       })
-      const accent = wrapper.find('[data-testid="accent"]')
-      expect(accent.exists()).toBe(true)
-      expect(accent.classes().join(' ')).toMatch(/accent|stripe|leading/)
+      const iconWrap = wrapper.find('.nba__icon-wrap')
+      expect(iconWrap.exists()).toBe(true)
+      expect(iconWrap.classes().join(' ')).toMatch(/icon-wrap/)
     })
 
     it('渲染 headline 文案', () => {

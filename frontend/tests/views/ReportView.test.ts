@@ -240,11 +240,11 @@ describe('ReportView', () => {
       expect(overview.exists()).toBe(true)
     })
 
-    it('数据就绪时渲染 AgentTraceTimeline（切换到 Trace Tab）', async () => {
+    it('数据就绪时渲染 AgentTraceTimeline（展开技术详情）', async () => {
       const { wrapper } = await mountWithData()
-      const traceToggle = wrapper.find('.report-view__trace-toggle')
-      expect(traceToggle.exists()).toBe(true)
-      await traceToggle.trigger('click')
+      const traceSummary = wrapper.findAll('.dashboard__details-summary').find(el => el.text().includes('Agent Trace'))
+      expect(traceSummary).toBeDefined()
+      await traceSummary!.trigger('click')
       await nextTick()
       const timeline = wrapper.findComponent({ name: 'AgentTraceTimeline' })
       expect(timeline.exists()).toBe(true)
@@ -270,11 +270,11 @@ describe('ReportView', () => {
       return result
     }
 
-    it('有拦截时渲染 ResumeSuggestionReview 组件（切换到建议 Tab）', async () => {
+    it('有拦截时渲染 ResumeSuggestionReview 组件（切换到简历优化 Tab）', async () => {
       const { wrapper } = await mountWithIntegrityGuard()
-      const suggestionsTab = wrapper.find('button[id="tab-resume"]')
-      expect(suggestionsTab.exists()).toBe(true)
-      await suggestionsTab.trigger('click')
+      const resumeTab = wrapper.findAll('.dashboard__tab').find(el => el.text().includes('简历优化'))
+      expect(resumeTab).toBeDefined()
+      await resumeTab!.trigger('click')
       await nextTick()
       const review = wrapper.findComponent({ name: 'ResumeSuggestionReview' })
       expect(review.exists()).toBe(true)
@@ -282,9 +282,9 @@ describe('ReportView', () => {
 
     it('被拦截卡片带有 RiskPill level=high', async () => {
       const { wrapper } = await mountWithIntegrityGuard()
-      const suggestionsTab = wrapper.find('button[id="tab-resume"]')
-      expect(suggestionsTab.exists()).toBe(true)
-      await suggestionsTab.trigger('click')
+      const resumeTab = wrapper.findAll('.dashboard__tab').find(el => el.text().includes('简历优化'))
+      expect(resumeTab).toBeDefined()
+      await resumeTab!.trigger('click')
       await nextTick()
       const highPills = wrapper.findAllComponents({ name: 'RiskPill' }).filter(
         (c) => c.props('level') === 'high',
