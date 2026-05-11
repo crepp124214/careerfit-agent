@@ -1,0 +1,830 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "CareerFit Agent" [level=1] [ref=e78]
+      - generic [ref=e8]:
+        - button "Overview" [ref=e9]
+        - button "Learn" [ref=e10]
+        - button "Deep Dive" [ref=e11]
+    - generic [ref=e13]:
+      - button "Diff OFF" [disabled] [ref=e15]
+      - generic [ref=e17]:
+        - button "Files" [ref=e18]
+        - button "+Classes" [ref=e19]
+      - generic [ref=e20]:
+        - button "Code" [ref=e21]: Code
+        - button "Config" [ref=e23]: Config
+        - button "Docs" [ref=e25]: Docs
+        - button "Infra" [ref=e27]: Infra
+        - button "Data" [ref=e29]: Data
+        - button "Domain" [ref=e31]: Domain
+        - button "Knowledge" [ref=e33]: Knowledge
+      - generic [ref=e79]:
+        - generic [ref=e80]: 31 layers
+        - generic [ref=e81]:
+          - generic [ref=e84]:
+            - text: 项目文档
+            - generic [ref=e85]: (11)
+          - generic [ref=e88]:
+            - text: 仓库配置
+            - generic [ref=e89]: (11)
+          - generic [ref=e92]:
+            - text: 基础设施
+            - generic [ref=e93]: (9)
+          - generic [ref=e96]:
+            - text: 后端入口
+            - generic [ref=e97]: (8)
+          - generic [ref=e100]:
+            - text: 后端 API 层
+            - generic [ref=e101]: (78)
+          - generic [ref=e104]:
+            - text: 后端 Agent 层
+            - generic [ref=e105]: (47)
+          - generic [ref=e108]:
+            - text: 后端服务层
+            - generic [ref=e109]: (75)
+          - generic [ref=e112]:
+            - text: 后端评分引擎
+            - generic [ref=e113]: (15)
+          - generic [ref=e116]:
+            - text: 后端数据模型
+            - generic [ref=e117]: (60)
+          - generic [ref=e120]:
+            - text: 后端 LLM 层
+            - generic [ref=e121]: (81)
+          - generic [ref=e124]:
+            - text: 后端 RAG 层
+            - generic [ref=e125]: (20)
+          - generic [ref=e128]:
+            - text: 后端数据库层
+            - generic [ref=e129]: (37)
+          - generic [ref=e132]:
+            - text: 后端核心
+            - generic [ref=e133]: (24)
+          - generic [ref=e136]:
+            - text: 后端知识种子
+            - generic [ref=e137]: (4)
+          - generic [ref=e140]:
+            - text: 后端测试
+            - generic [ref=e141]: (232)
+          - generic [ref=e144]:
+            - text: 前端入口
+            - generic [ref=e145]: (4)
+          - generic [ref=e148]:
+            - text: 前端路由
+            - generic [ref=e149]: (1)
+          - generic [ref=e152]:
+            - text: 前端状态管理
+            - generic [ref=e153]: (11)
+          - generic [ref=e156]:
+            - text: 前端 API 客户端
+            - generic [ref=e157]: (65)
+          - generic [ref=e160]:
+            - text: 前端组合式函数
+            - generic [ref=e161]: (11)
+          - generic [ref=e164]:
+            - text: 前端工具函数
+            - generic [ref=e165]: (3)
+          - generic [ref=e168]:
+            - text: 前端样式系统
+            - generic [ref=e169]: (4)
+          - generic [ref=e172]:
+            - text: 前端布局组件
+            - generic [ref=e173]: (4)
+          - generic [ref=e176]:
+            - text: 前端通用组件
+            - generic [ref=e177]: (14)
+          - generic [ref=e180]:
+            - text: 前端工作台组件
+            - generic [ref=e181]: (8)
+          - generic [ref=e184]:
+            - text: 前端报告组件
+            - generic [ref=e185]: (16)
+          - generic [ref=e188]:
+            - text: 前端分析组件
+            - generic [ref=e189]: (1)
+          - generic [ref=e192]:
+            - text: 前端历史组件
+            - generic [ref=e193]: (1)
+          - generic [ref=e196]:
+            - text: 前端预览组件
+            - generic [ref=e197]: (2)
+          - generic [ref=e200]:
+            - text: 前端页面视图
+            - generic [ref=e201]: (17)
+          - generic [ref=e204]:
+            - text: 前端测试
+            - generic [ref=e205]: (26)
+    - generic [ref=e35]:
+      - button "Filter" [ref=e37]:
+        - img [ref=e38]
+        - text: Filter
+      - button "Export" [ref=e41]:
+        - img [ref=e42]
+        - text: Export
+      - button "Path" [ref=e44]:
+        - img [ref=e45]
+        - generic [ref=e47]: Path
+      - button "Theme" [ref=e49]:
+        - img [ref=e50]
+        - generic [ref=e56]: Theme
+      - button "Keyboard shortcuts (Shift + ?)" [ref=e57]:
+        - img [ref=e58]
+  - generic [ref=e61]:
+    - img [ref=e62]
+    - textbox "Search nodes by name, summary, or tags..." [ref=e64]
+    - generic [ref=e65]:
+      - button "Fuzzy" [ref=e66]
+      - button "Semantic" [ref=e67]
+  - button "Knowledge graph loaded with 1342 auto-corrections click to expand" [ref=e207]:
+    - img [ref=e208]
+    - img [ref=e210]
+    - generic [ref=e212]: Knowledge graph loaded with 1342 auto-corrections
+    - generic [ref=e213]: click to expand
+  - generic [ref=e68]:
+    - generic [ref=e69]:
+      - generic [ref=e70]:
+        - generic [ref=e215]: Project Overview
+        - application [ref=e216]:
+          - generic [ref=e218]:
+            - generic:
+              - generic:
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-entry":
+                    - generic [ref=e219]:
+                      - generic: "14"
+                - img:
+                  - img "Edge from layer:backend-core to layer:backend-entry":
+                    - generic [ref=e221]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-db to layer:backend-entry":
+                    - generic [ref=e223]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:backend-entry to layer:backend-schemas":
+                    - generic [ref=e225]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-entry to layer:backend-services":
+                    - generic [ref=e227]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-entry to layer:repo-config":
+                    - generic [ref=e229]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:project-docs to layer:repo-config":
+                    - generic [ref=e231]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-core":
+                    - generic [ref=e233]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-llm":
+                    - generic [ref=e235]:
+                      - generic: "8"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-rag":
+                    - generic [ref=e237]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-scoring":
+                    - generic [ref=e239]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-services":
+                    - generic [ref=e241]:
+                      - generic: "5"
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-db":
+                    - generic [ref=e243]:
+                      - generic: "10"
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-schemas":
+                    - generic [ref=e245]:
+                      - generic: "10"
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-services":
+                    - generic [ref=e247]:
+                      - generic: "17"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-api":
+                    - generic [ref=e249]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-core":
+                    - generic [ref=e251]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:backend-api to layer:backend-llm":
+                    - generic [ref=e253]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:backend-core to layer:backend-db":
+                    - generic [ref=e255]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-core to layer:backend-llm":
+                    - generic [ref=e257]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:backend-db to layer:backend-rag":
+                    - generic [ref=e259]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:backend-db to layer:backend-schemas":
+                    - generic [ref=e261]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:backend-core to layer:backend-services":
+                    - generic [ref=e263]:
+                      - generic: "5"
+                - img:
+                  - img "Edge from layer:backend-db to layer:backend-services":
+                    - generic [ref=e265]:
+                      - generic: "10"
+                - img:
+                  - img "Edge from layer:backend-rag to layer:backend-services":
+                    - generic [ref=e267]:
+                      - generic: "4"
+                - img:
+                  - img "Edge from layer:backend-schemas to layer:backend-services":
+                    - generic [ref=e269]:
+                      - generic: "7"
+                - img:
+                  - img "Edge from layer:backend-llm to layer:backend-services":
+                    - generic [ref=e271]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:backend-core to layer:backend-tests":
+                    - generic [ref=e273]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:backend-db to layer:backend-tests":
+                    - generic [ref=e275]:
+                      - generic: "23"
+                - img:
+                  - img "Edge from layer:backend-entry to layer:backend-tests":
+                    - generic [ref=e277]:
+                      - generic: "8"
+                - img:
+                  - img "Edge from layer:backend-llm to layer:backend-tests":
+                    - generic [ref=e279]:
+                      - generic: "6"
+                - img:
+                  - img "Edge from layer:backend-services to layer:backend-tests":
+                    - generic [ref=e281]:
+                      - generic: "9"
+                - img:
+                  - img "Edge from layer:backend-schemas to layer:backend-tests":
+                    - generic [ref=e283]:
+                      - generic: "4"
+                - img:
+                  - img "Edge from layer:backend-scoring to layer:backend-tests":
+                    - generic [ref=e285]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:backend-rag to layer:backend-tests":
+                    - generic [ref=e287]:
+                      - generic: "4"
+                - img:
+                  - img "Edge from layer:backend-agents to layer:backend-tests":
+                    - generic [ref=e289]:
+                      - generic: "6"
+                - img:
+                  - img "Edge from layer:frontend-entry to layer:frontend-layout":
+                    - generic [ref=e291]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-entry to layer:frontend-router":
+                    - generic [ref=e293]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-entry to layer:frontend-styles":
+                    - generic [ref=e295]:
+                      - generic: "4"
+                - img:
+                  - img "Edge from layer:frontend-router to layer:frontend-views":
+                    - generic [ref=e297]:
+                      - generic: "14"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-stores":
+                    - generic [ref=e299]:
+                      - generic: "10"
+                - img:
+                  - img "Edge from layer:frontend-composables to layer:frontend-stores":
+                    - generic [ref=e301]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-layout to layer:frontend-stores":
+                    - generic [ref=e303]:
+                      - generic: "5"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-common":
+                    - generic [ref=e305]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-common to layer:frontend-workbench":
+                    - generic [ref=e307]:
+                      - generic: "10"
+                - img:
+                  - img "Edge from layer:frontend-stores to layer:frontend-workbench":
+                    - generic [ref=e309]:
+                      - generic: "15"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-workbench":
+                    - generic [ref=e311]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:frontend-preview to layer:frontend-workbench":
+                    - generic [ref=e313]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-utils to layer:frontend-workbench":
+                    - generic [ref=e315]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-report":
+                    - generic [ref=e317]:
+                      - generic: "14"
+                - img:
+                  - img "Edge from layer:frontend-common to layer:frontend-report":
+                    - generic [ref=e319]:
+                      - generic: "8"
+                - img:
+                  - img "Edge from layer:frontend-report to layer:frontend-workbench":
+                    - generic [ref=e321]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-history":
+                    - generic [ref=e323]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-preview":
+                    - generic [ref=e325]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-common to layer:frontend-views":
+                    - generic [ref=e327]:
+                      - generic: "48"
+                - img:
+                  - img "Edge from layer:frontend-report to layer:frontend-views":
+                    - generic [ref=e329]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-stores to layer:frontend-views":
+                    - generic [ref=e331]:
+                      - generic: "32"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-views":
+                    - generic [ref=e333]:
+                      - generic: "6"
+                - img:
+                  - img "Edge from layer:frontend-analysis to layer:frontend-views":
+                    - generic [ref=e335]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-history to layer:frontend-views":
+                    - generic [ref=e337]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-utils to layer:frontend-views":
+                    - generic [ref=e339]:
+                      - generic: "4"
+                - img:
+                  - img "Edge from layer:frontend-views to layer:frontend-workbench":
+                    - generic [ref=e341]:
+                      - generic: "6"
+                - img:
+                  - img "Edge from layer:frontend-api to layer:frontend-tests":
+                    - generic [ref=e343]:
+                      - generic: "20"
+                - img:
+                  - img "Edge from layer:frontend-report to layer:frontend-tests":
+                    - generic [ref=e345]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-common to layer:frontend-tests":
+                    - generic [ref=e347]:
+                      - generic: "3"
+                - img:
+                  - img "Edge from layer:frontend-preview to layer:frontend-tests":
+                    - generic [ref=e349]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-tests to layer:frontend-workbench":
+                    - generic [ref=e351]:
+                      - generic: "2"
+                - img:
+                  - img "Edge from layer:frontend-composables to layer:frontend-tests":
+                    - generic [ref=e353]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-router to layer:frontend-tests":
+                    - generic [ref=e355]:
+                      - generic: "1"
+                - img:
+                  - img "Edge from layer:frontend-tests to layer:frontend-views":
+                    - generic [ref=e357]:
+                      - generic: "23"
+                - img:
+                  - img "Edge from layer:frontend-stores to layer:frontend-tests":
+                    - generic [ref=e359]:
+                      - generic: "15"
+              - generic:
+                - group [ref=e361]:
+                  - generic [ref=e365] [cursor=pointer]:
+                    - generic [ref=e366]:
+                      - generic [ref=e367]: Layer
+                      - generic [ref=e369]: complex
+                    - generic [ref=e370]: 项目文档
+                    - generic [ref=e371]: 项目级 Markdown 文档：README、CLAUDE.md、AGENTS.md、设计文档、实施计划
+                    - generic [ref=e372]:
+                      - generic [ref=e373]: 11 files
+                      - generic [ref=e374]: Click to explore →
+                - group [ref=e376]:
+                  - generic [ref=e380] [cursor=pointer]:
+                    - generic [ref=e381]:
+                      - generic [ref=e382]: Layer
+                      - generic [ref=e384]: simple
+                    - generic [ref=e385]: 仓库配置
+                    - generic [ref=e386]: 根目录与子项目配置：package.json、pyproject.toml、tsconfig、vite.config、.env.example
+                    - generic [ref=e387]:
+                      - generic [ref=e388]: 11 files
+                      - generic [ref=e389]: Click to explore →
+                - group [ref=e391]:
+                  - generic [ref=e395] [cursor=pointer]:
+                    - generic [ref=e396]:
+                      - generic [ref=e397]: Layer
+                      - generic [ref=e399]: moderate
+                    - generic [ref=e400]: 基础设施
+                    - generic [ref=e401]: Docker、docker-compose、Nginx、启动脚本
+                    - generic [ref=e402]:
+                      - generic [ref=e403]: 9 files
+                      - generic [ref=e404]: Click to explore →
+                - group [ref=e406]:
+                  - generic [ref=e410] [cursor=pointer]:
+                    - generic [ref=e411]:
+                      - generic [ref=e412]: Layer
+                      - generic [ref=e414]: moderate
+                    - generic [ref=e415]: 后端入口
+                    - generic [ref=e416]: FastAPI 应用入口、app 包初始化、种子数据导入
+                    - generic [ref=e417]:
+                      - generic [ref=e418]: 8 files
+                      - generic [ref=e419]: Click to explore →
+                - group [ref=e421]:
+                  - generic [ref=e425] [cursor=pointer]:
+                    - generic [ref=e426]:
+                      - generic [ref=e427]: Layer
+                      - generic [ref=e429]: moderate
+                    - generic [ref=e430]: 后端 API 层
+                    - generic [ref=e431]: FastAPI 路由处理器、错误处理、API 层初始化
+                    - generic [ref=e432]:
+                      - generic [ref=e433]: 78 files
+                      - generic [ref=e434]: Click to explore →
+                - group [ref=e436]:
+                  - generic [ref=e440] [cursor=pointer]:
+                    - generic [ref=e441]:
+                      - generic [ref=e442]: Layer
+                      - generic [ref=e444]: moderate
+                    - generic [ref=e445]: 后端 Agent 层
+                    - generic [ref=e446]: LangGraph 工作流节点、图组装、runner、共享状态
+                    - generic [ref=e447]:
+                      - generic [ref=e448]: 47 files
+                      - generic [ref=e449]: Click to explore →
+                - group [ref=e451]:
+                  - generic [ref=e455] [cursor=pointer]:
+                    - generic [ref=e456]:
+                      - generic [ref=e457]: Layer
+                      - generic [ref=e459]: moderate
+                    - generic [ref=e460]: 后端服务层
+                    - generic [ref=e461]: 业务编排：分析、面试、岗位、简历、学习任务、导出、事件总线
+                    - generic [ref=e462]:
+                      - generic [ref=e463]: 75 files
+                      - generic [ref=e464]: Click to explore →
+                - group [ref=e466]:
+                  - generic [ref=e470] [cursor=pointer]:
+                    - generic [ref=e471]:
+                      - generic [ref=e472]: Layer
+                      - generic [ref=e474]: moderate
+                    - generic [ref=e475]: 后端评分引擎
+                    - generic [ref=e476]: 确定性评分规则、证据聚合、评分维度（0-100 clamp，非 LLM）
+                    - generic [ref=e477]:
+                      - generic [ref=e478]: 15 files
+                      - generic [ref=e479]: Click to explore →
+                - group [ref=e481]:
+                  - generic [ref=e485] [cursor=pointer]:
+                    - generic [ref=e486]:
+                      - generic [ref=e487]: Layer
+                      - generic [ref=e489]: moderate
+                    - generic [ref=e490]: 后端数据模型
+                    - generic [ref=e491]: Pydantic API 模型：请求/响应形状、分析、面试、岗位、简历、学习任务、知识库
+                    - generic [ref=e492]:
+                      - generic [ref=e493]: 60 files
+                      - generic [ref=e494]: Click to explore →
+                - group [ref=e496]:
+                  - generic [ref=e500] [cursor=pointer]:
+                    - generic [ref=e501]:
+                      - generic [ref=e502]: Layer
+                      - generic [ref=e504]: moderate
+                    - generic [ref=e505]: 后端 LLM 层
+                    - generic [ref=e506]: LLM 客户端、Agent prompt、Agent schema、缓存、并发调度、日志指标
+                    - generic [ref=e507]:
+                      - generic [ref=e508]: 81 files
+                      - generic [ref=e509]: Click to explore →
+                - group [ref=e511]:
+                  - generic [ref=e515] [cursor=pointer]:
+                    - generic [ref=e516]:
+                      - generic [ref=e517]: Layer
+                      - generic [ref=e519]: moderate
+                    - generic [ref=e520]: 后端 RAG 层
+                    - generic [ref=e521]: 知识种子加载、文本嵌入（Sentence-Transformers）、pgvector 检索
+                    - generic [ref=e522]:
+                      - generic [ref=e523]: 20 files
+                      - generic [ref=e524]: Click to explore →
+                - group [ref=e526]:
+                  - generic [ref=e530] [cursor=pointer]:
+                    - generic [ref=e531]:
+                      - generic [ref=e532]: Layer
+                      - generic [ref=e534]: moderate
+                    - generic [ref=e535]: 后端数据库层
+                    - generic [ref=e536]: SQLAlchemy ORM 模型、Repository 仓储、Session 工厂、Base
+                    - generic [ref=e537]:
+                      - generic [ref=e538]: 37 files
+                      - generic [ref=e539]: Click to explore →
+                - group [ref=e541]:
+                  - generic [ref=e545] [cursor=pointer]:
+                    - generic [ref=e546]:
+                      - generic [ref=e547]: Layer
+                      - generic [ref=e549]: moderate
+                    - generic [ref=e550]: 后端核心
+                    - generic [ref=e551]: 配置管理、常量、安全/PII 工具、异常、线程池
+                    - generic [ref=e552]:
+                      - generic [ref=e553]: 24 files
+                      - generic [ref=e554]: Click to explore →
+                - group [ref=e556]:
+                  - generic [ref=e560] [cursor=pointer]:
+                    - generic [ref=e561]:
+                      - generic [ref=e562]: Layer
+                      - generic [ref=e564]: simple
+                    - generic [ref=e565]: 后端知识种子
+                    - generic [ref=e566]: RAG 种子 JSON（后端开发、数据分析、前端全栈、LLM 应用开发技能知识库）
+                    - generic [ref=e567]:
+                      - generic [ref=e568]: 4 files
+                      - generic [ref=e569]: Click to explore →
+                - group [ref=e571]:
+                  - generic [ref=e575] [cursor=pointer]:
+                    - generic [ref=e576]:
+                      - generic [ref=e577]: Layer
+                      - generic [ref=e579]: moderate
+                    - generic [ref=e580]: 后端测试
+                    - generic [ref=e581]: Pytest 测试套件：API、服务、评分、LLM、RAG、简历、面试
+                    - generic [ref=e582]:
+                      - generic [ref=e583]: 232 files
+                      - generic [ref=e584]: Click to explore →
+                - group [ref=e586]:
+                  - generic [ref=e590] [cursor=pointer]:
+                    - generic [ref=e591]:
+                      - generic [ref=e592]: Layer
+                      - generic [ref=e594]: simple
+                    - generic [ref=e595]: 前端入口
+                    - generic [ref=e596]: index.html、main.ts、App.vue、环境类型声明
+                    - generic [ref=e597]:
+                      - generic [ref=e598]: 4 files
+                      - generic [ref=e599]: Click to explore →
+                - group [ref=e601]:
+                  - generic [ref=e605] [cursor=pointer]:
+                    - generic [ref=e606]:
+                      - generic [ref=e607]: Layer
+                      - generic [ref=e609]: simple
+                    - generic [ref=e610]: 前端路由
+                    - generic [ref=e611]: Vue Router 路由配置，定义所有页面导航
+                    - generic [ref=e612]:
+                      - generic [ref=e613]: 1 file
+                      - generic [ref=e614]: Click to explore →
+                - group [ref=e616]:
+                  - generic [ref=e620] [cursor=pointer]:
+                    - generic [ref=e621]:
+                      - generic [ref=e622]: Layer
+                      - generic [ref=e624]: moderate
+                    - generic [ref=e625]: 前端状态管理
+                    - generic [ref=e626]: Pinia stores：分析、可用性、历史、面试、岗位、学习、偏好、简历差异、简历
+                    - generic [ref=e627]:
+                      - generic [ref=e628]: 11 files
+                      - generic [ref=e629]: Click to explore →
+                - group [ref=e631]:
+                  - generic [ref=e635] [cursor=pointer]:
+                    - generic [ref=e636]:
+                      - generic [ref=e637]: Layer
+                      - generic [ref=e639]: moderate
+                    - generic [ref=e640]: 前端 API 客户端
+                    - generic [ref=e641]: Axios/fetch 客户端、SSE 支持、各域 API 模块
+                    - generic [ref=e642]:
+                      - generic [ref=e643]: 65 files
+                      - generic [ref=e644]: Click to explore →
+                - group [ref=e646]:
+                  - generic [ref=e650] [cursor=pointer]:
+                    - generic [ref=e651]:
+                      - generic [ref=e652]: Layer
+                      - generic [ref=e654]: moderate
+                    - generic [ref=e655]: 前端组合式函数
+                    - generic [ref=e656]: Vue composables：无障碍、后端状态、localStorage、响应式
+                    - generic [ref=e657]:
+                      - generic [ref=e658]: 11 files
+                      - generic [ref=e659]: Click to explore →
+                - group [ref=e661]:
+                  - generic [ref=e665] [cursor=pointer]:
+                    - generic [ref=e666]:
+                      - generic [ref=e667]: Layer
+                      - generic [ref=e669]: moderate
+                    - generic [ref=e670]: 前端工具函数
+                    - generic [ref=e671]: 格式化、辅助函数
+                    - generic [ref=e672]:
+                      - generic [ref=e673]: 3 files
+                      - generic [ref=e674]: Click to explore →
+                - group [ref=e676]:
+                  - generic [ref=e680] [cursor=pointer]:
+                    - generic [ref=e681]:
+                      - generic [ref=e682]: Layer
+                      - generic [ref=e684]: moderate
+                    - generic [ref=e685]: 前端样式系统
+                    - generic [ref=e686]: CSS 设计 token、基础样式、动效、无障碍样式
+                    - generic [ref=e687]:
+                      - generic [ref=e688]: 4 files
+                      - generic [ref=e689]: Click to explore →
+                - group [ref=e691]:
+                  - generic [ref=e695] [cursor=pointer]:
+                    - generic [ref=e696]:
+                      - generic [ref=e697]: Layer
+                      - generic [ref=e699]: moderate
+                    - generic [ref=e700]: 前端布局组件
+                    - generic [ref=e701]: AppShell、SideNav、MobileNav、StatusBar
+                    - generic [ref=e702]:
+                      - generic [ref=e703]: 4 files
+                      - generic [ref=e704]: Click to explore →
+                - group [ref=e706]:
+                  - generic [ref=e710] [cursor=pointer]:
+                    - generic [ref=e711]:
+                      - generic [ref=e712]: Layer
+                      - generic [ref=e714]: moderate
+                    - generic [ref=e715]: 前端通用组件
+                    - generic [ref=e716]: AppButton、AppInput、AppTextarea、Breadcrumb、Modal、NbaBanner、StatusBadge、反馈组件（EmptyState、ErrorBanner、LoadingCard、SkeletonBlock）、IntegrityGuard、RiskPill
+                    - generic [ref=e717]:
+                      - generic [ref=e718]: 14 files
+                      - generic [ref=e719]: Click to explore →
+                - group [ref=e721]:
+                  - generic [ref=e725] [cursor=pointer]:
+                    - generic [ref=e726]:
+                      - generic [ref=e727]: Layer
+                      - generic [ref=e729]: moderate
+                    - generic [ref=e730]: 前端工作台组件
+                    - generic [ref=e731]: AnalysisLauncher、JobSelector、ResumeSelector、NextBestActionCallout、OnboardingGuide/Wizard、WorkbenchContextPanel
+                    - generic [ref=e732]:
+                      - generic [ref=e733]: 8 files
+                      - generic [ref=e734]: Click to explore →
+                - group [ref=e736]:
+                  - generic [ref=e740] [cursor=pointer]:
+                    - generic [ref=e741]:
+                      - generic [ref=e742]: Layer
+                      - generic [ref=e744]: moderate
+                    - generic [ref=e745]: 前端报告组件
+                    - generic [ref=e746]: ScoringOverviewCard、ScoreDimensionGrid、EvidenceChainTable、CapabilityGapCard、ResumeSuggestionReview、InterviewQuestionCard、LearningPathTimeline、AgentTraceTimeline、ReportDashboard
+                    - generic [ref=e747]:
+                      - generic [ref=e748]: 16 files
+                      - generic [ref=e749]: Click to explore →
+                - group [ref=e751]:
+                  - generic [ref=e755] [cursor=pointer]:
+                    - generic [ref=e756]:
+                      - generic [ref=e757]: Layer
+                      - generic [ref=e759]: moderate
+                    - generic [ref=e760]: 前端分析组件
+                    - generic [ref=e761]: AgentTerminal 终端视图
+                    - generic [ref=e762]:
+                      - generic [ref=e763]: 1 file
+                      - generic [ref=e764]: Click to explore →
+                - group [ref=e766]:
+                  - generic [ref=e770] [cursor=pointer]:
+                    - generic [ref=e771]:
+                      - generic [ref=e772]: Layer
+                      - generic [ref=e774]: moderate
+                    - generic [ref=e775]: 前端历史组件
+                    - generic [ref=e776]: ScoreTrendChart 分数趋势
+                    - generic [ref=e777]:
+                      - generic [ref=e778]: 1 file
+                      - generic [ref=e779]: Click to explore →
+                - group [ref=e781]:
+                  - generic [ref=e785] [cursor=pointer]:
+                    - generic [ref=e786]:
+                      - generic [ref=e787]: Layer
+                      - generic [ref=e789]: moderate
+                    - generic [ref=e790]: 前端预览组件
+                    - generic [ref=e791]: JdPreviewCard、ResumePreviewCard
+                    - generic [ref=e792]:
+                      - generic [ref=e793]: 2 files
+                      - generic [ref=e794]: Click to explore →
+                - group [ref=e796]:
+                  - generic [ref=e800] [cursor=pointer]:
+                    - generic [ref=e801]:
+                      - generic [ref=e802]: Layer
+                      - generic [ref=e804]: complex
+                    - generic [ref=e805]: 前端页面视图
+                    - generic [ref=e806]: WorkspaceView、ReportView、JobsView、ResumesView、InterviewView、LearningTasksView、HistoryView、VersionDiffView、AgentTraceView、SettingsView、NotFoundView
+                    - generic [ref=e807]:
+                      - generic [ref=e808]: 17 files
+                      - generic [ref=e809]: Click to explore →
+                - group [ref=e811]:
+                  - generic [ref=e815] [cursor=pointer]:
+                    - generic [ref=e816]:
+                      - generic [ref=e817]: Layer
+                      - generic [ref=e819]: moderate
+                    - generic [ref=e820]: 前端测试
+                    - generic [ref=e821]: Vitest 测试：组件、composables、stores、views、路由
+                    - generic [ref=e822]:
+                      - generic [ref=e823]: 26 files
+                      - generic [ref=e824]: Click to explore →
+          - img
+          - generic "Control Panel" [ref=e826]:
+            - button "Zoom In" [ref=e827] [cursor=pointer]:
+              - img [ref=e828]
+            - button "Zoom Out" [ref=e830] [cursor=pointer]:
+              - img [ref=e831]
+            - button "Fit View" [ref=e833] [cursor=pointer]:
+              - img [ref=e834]
+            - button "Toggle Interactivity" [ref=e836] [cursor=pointer]:
+              - img [ref=e837]
+          - img "Mini Map" [ref=e840]
+          - link "React Flow attribution" [ref=e873] [cursor=pointer]:
+            - /url: https://reactflow.dev
+            - text: React Flow
+      - generic:
+        - text: Press
+        - generic: "?"
+        - text: for keyboard shortcuts
+    - complementary [ref=e72]:
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - button "Info" [ref=e75]
+          - button "Files" [ref=e76]
+        - generic [ref=e875]:
+          - generic [ref=e876]:
+            - heading "Project Tour" [level=2] [ref=e877]
+            - paragraph [ref=e878]: 18 steps · Guided walkthrough of the codebase
+          - button "Start Tour" [ref=e879]
+          - generic [ref=e880]:
+            - heading "Steps" [level=3] [ref=e881]
+            - generic [ref=e882]:
+              - generic [ref=e883]: "1."
+              - generic [ref=e884]: 项目概览
+            - generic [ref=e885]:
+              - generic [ref=e886]: "2."
+              - generic [ref=e887]: 开发规范与约束
+            - generic [ref=e888]:
+              - generic [ref=e889]: "3."
+              - generic [ref=e890]: 基础设施与部署
+            - generic [ref=e891]:
+              - generic [ref=e892]: "4."
+              - generic [ref=e893]: 后端入口与配置
+            - generic [ref=e894]:
+              - generic [ref=e895]: "5."
+              - generic [ref=e896]: 数据库与 ORM
+            - generic [ref=e897]:
+              - generic [ref=e898]: "6."
+              - generic [ref=e899]: API 路由层
+            - generic [ref=e900]:
+              - generic [ref=e901]: "7."
+              - generic [ref=e902]: Agent 工作流核心
+            - generic [ref=e903]:
+              - generic [ref=e904]: "8."
+              - generic [ref=e905]: 确定性评分引擎
+            - generic [ref=e906]:
+              - generic [ref=e907]: "9."
+              - generic [ref=e908]: LLM 与 Agent 服务
+            - generic [ref=e909]:
+              - generic [ref=e910]: "10."
+              - generic [ref=e911]: RAG 知识检索
+            - generic [ref=e912]:
+              - generic [ref=e913]: "11."
+              - generic [ref=e914]: 业务服务编排
+            - generic [ref=e915]:
+              - generic [ref=e916]: "12."
+              - generic [ref=e917]: 前端入口与路由
+            - generic [ref=e918]:
+              - generic [ref=e919]: "13."
+              - generic [ref=e920]: 前端状态管理
+            - generic [ref=e921]:
+              - generic [ref=e922]: "14."
+              - generic [ref=e923]: 前端 API 客户端
+            - generic [ref=e924]:
+              - generic [ref=e925]: "15."
+              - generic [ref=e926]: 工作台页面
+            - generic [ref=e927]:
+              - generic [ref=e928]: "16."
+              - generic [ref=e929]: 报告页面
+            - generic [ref=e930]:
+              - generic [ref=e931]: "17."
+              - generic [ref=e932]: 样式与设计系统
+            - generic [ref=e933]:
+              - generic [ref=e934]: "18."
+              - generic [ref=e935]: 测试套件

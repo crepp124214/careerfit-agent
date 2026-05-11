@@ -8,11 +8,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class InterviewQuestionGenerateRequest(BaseModel):
     """生成面试题的请求"""
+
     skills: list[str] = Field(
-        ...,
-        min_length=1,
+        default=[],
         max_length=10,
-        description="目标技能列表，如 ['SQL', 'Python', 'A/B测试']"
+        description="目标技能列表，如 ['SQL', 'Python', 'A/B测试']。引用模式下可省略，自动从报告提取",
     )
 
     target_job: str = Field(

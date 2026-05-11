@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import ReportCard from './ReportCard.vue'
 import ScoringOverviewCard from './ScoringOverviewCard.vue'
 import SkillsRadarChart from './SkillsRadarChart.vue'
@@ -13,6 +14,8 @@ import EvidenceChainTable from './EvidenceChainTable.vue'
 import AgentTraceTimeline from './AgentTraceTimeline.vue'
 import Breadcrumb from '@/components/common/Breadcrumb.vue'
 
+const router = useRouter()
+
 const props = defineProps<{
   report: Record<string, any>
   nodes: any[]
@@ -23,6 +26,15 @@ const emit = defineEmits<{
   (e: 'export-markdown'): void
   (e: 'print'): void
 }>()
+
+function goToQuestionBank() {
+  const reportId = props.report?.id
+  if (reportId) {
+    router.push(`/interview?tab=bank&source=analysis_report&report_id=${reportId}`)
+  } else {
+    router.push('/interview?tab=bank')
+  }
+}
 
 const showEvidence = ref(false)
 const showAgentTrace = ref(false)
@@ -124,6 +136,9 @@ const visibleTabs = computed(() => tabs.value.filter(t => t.visible))
         <template #cta>
           <button type="button" class="dashboard__card-cta" @click="emit('start-interview')">
             开始面试训练
+          </button>
+          <button type="button" class="dashboard__card-cta dashboard__card-cta--secondary" @click="goToQuestionBank">
+            生成更多面试题
           </button>
         </template>
       </ReportCard>
@@ -282,6 +297,17 @@ const visibleTabs = computed(() => tabs.value.filter(t => t.visible))
 
 .dashboard__card-cta:hover {
   background-color: var(--color-primary-hover);
+}
+
+.dashboard__card-cta--secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  margin-top: var(--space-xs);
+}
+
+.dashboard__card-cta--secondary:hover {
+  background-color: var(--color-surface-2);
 }
 
 .dashboard__tabs {

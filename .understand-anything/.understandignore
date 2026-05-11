@@ -1,0 +1,75 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+
+# --- Project-specific noise (ACTIVE) ---
+# Playwright MCP traces — hundreds of console logs and page snapshots
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# IDE / tool caches
+.gstack/
+.superpowers/
+.trae/
+.agent-browser/
+.claude/
+
+# Backend artifacts
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/careerfit_agent_backend.egg-info/
+backend/e2e_screenshots_v2/
+
+# Frontend build/test artifacts
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+frontend/e2e-*.png
+
+# Databases and local data
+*.db
+*.sqlite
+*.sqlite3
+careerfit_dev.db
+backend/careerfit_dev.db
+
+# Env files (do not analyze — may contain secrets)
+.env
+.env.docker
+!.env.example
+
+# Misc Windows artifacts
+nul
+backend/nul
+
+# Understand-anything's own output
+.understand-anything/intermediate/
+.understand-anything/tmp/
+
+# --- From .gitignore (commented suggestions — uncomment to exclude) ---
+
+# *.py[cod]
+# *$py.class
+# *.so
+# .Python
+# *.egg-info/
+# *.egg
+
+# --- Detected directories (uncomment to exclude if you don't want them analyzed) ---
+
+# docs/                   # design docs (likely worth keeping)
+# backend/tests/          # backend tests (may want to include for coverage)
+# frontend/tests/         # frontend tests
+# backend/seeds/          # seed data
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# *.test.*
+# *.spec.*
+# *.snap

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
 import { requestJson } from '@/api/client'
@@ -18,7 +18,6 @@ const form = reactive({
   sourceReportId: '' as string,
 })
 
-// UI 状态
 const loading = ref(false)
 const loadingProgress = ref(0)
 const loadingMessage = ref('')
@@ -56,13 +55,17 @@ function stopProgressTimer() {
   loadingProgress.value = 100
 }
 
-onMounted(async () => {
+function applyReportReference() {
   if (route.query.source === 'analysis_report' && route.query.report_id) {
     form.sourceType = 'report_reference'
     form.sourceReportId = route.query.report_id as string
     successMessage.value = '✅ 已关联分析报告，将自动提取上下文'
   }
-})
+}
+
+onMounted(applyReportReference)
+
+watch(() => route.query, applyReportReference)
 
 // 切换题型
 function toggleQuestionType(type: string) {
@@ -380,7 +383,7 @@ function removeSkill(skill: string) {
           variant="primary"
           size="lg"
           :loading="loading"
-          :disabled="form.skills.length === 0"
+          :disabled="form.sourceType === 'manual' && form.skills.length === 0"
           @click="generateQuestions"
         >
           🚀 {{ loading ? '生成中...' : '生成面试题' }}

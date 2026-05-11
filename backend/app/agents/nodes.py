@@ -832,10 +832,37 @@ def interview_coach(state: CareerFitState) -> CareerFitState:
     if client is not None:
         try:
             score_items = state.get("match_result", {}).get("score_items", [])
+            gaps = state.get("gaps", [])
+            interview_input = state.get("_interview_input", {})
+
+            if not score_items and interview_input:
+                skills = interview_input.get("skills", [])
+                score_items = [
+                    {"skill": s, "level": "unknown", "resume_evidence": [], "score": 0}
+                    for s in skills
+                ]
+                gap_skills = set(skills[:len(skills)//2])
+                gaps = [
+                    {"skill_key": s, "skill": s, "gap_type": "weak_evidence", "priority": "medium"}
+                    for s in gap_skills
+                ]
+
             prompt = build_interview_prompt(
                 score_items=score_items,
-                gaps=state.get("gaps", []),
+                gaps=gaps,
             )
+
+            interview_input_context = ""
+            if interview_input:
+                jd_ctx = interview_input.get("jd_context", "")
+                resume_ctx = interview_input.get("resume_context", "")
+                q_types = interview_input.get("question_types", [])
+                difficulty = interview_input.get("difficulty", "mixed")
+                count = interview_input.get("count", 10)
+                if jd_ctx or resume_ctx:
+                    interview_input_context = f"\n## 额外上下文：\nJD: {jd_ctx[:500]}\n简历: {resume_ctx[:500]}\n题型偏好: {q_types}\n难度: {difficulty}\n数量: {count}\n"
+                prompt = prompt + interview_input_context
+
             result, meta = run_structured_agent(
                 client=client,
                 agent_role="interview_coach",

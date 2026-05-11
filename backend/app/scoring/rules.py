@@ -258,7 +258,13 @@ def score_match(jd_profile: dict, resume_profile: dict, rag_results: dict | None
             basic_requirement_score = 20
     
     jd_skill_keys = {d.get("canonical_key", d.get("name", "")) for d in dimensions}
-    resume_skills = set(resume_profile.get("skills", []))
+    raw_resume_skills = resume_profile.get("skills", [])
+    resume_skills = set()
+    for s in raw_resume_skills:
+        if isinstance(s, str):
+            resume_skills.add(s)
+        elif isinstance(s, dict):
+            resume_skills.add(s.get("canonical_key", s.get("name", "")))
     resume_evidence_keys = set(resume_profile.get("evidence", {}).keys())
     relevant_count = len(jd_skill_keys & (resume_skills | resume_evidence_keys))
     total_jd_skills = len(jd_skill_keys) or 1

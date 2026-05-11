@@ -266,6 +266,9 @@ class InterviewService:
         """
         from app.schemas.interview import InterviewQuestionGenerateRequest, InterviewQuestionRead
         
+        if not request.source_report_id and not request.skills:
+            raise ValueError("必须提供 skills 或 source_report_id")
+        
         if request.source_report_id:
             logger.info(f"[InterviewService] 使用引用模式: report_id={request.source_report_id}")
             report = self._get_report(db, request.source_report_id)
